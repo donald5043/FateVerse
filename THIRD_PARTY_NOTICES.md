@@ -12,6 +12,8 @@
 | Tailwind CSS | 樣式系統 | MIT |
 | Zustand | 狀態管理 | MIT |
 | lunar-javascript | 公農曆與四柱計算 | MIT |
+| astronomy-engine | 地心黃道位置、恆星時與西洋星盤基礎計算 | MIT |
+| iztro | 紫微斗數十二宮與星曜排盤 | MIT |
 | Tesseract.js | 瀏覽器 OCR | Apache-2.0 |
 | Fuse.js | 籤詩模糊比對 | Apache-2.0 |
 | idb-keyval | IndexedDB 封裝 | Apache-2.0 |

@@ -25,7 +25,7 @@ export function buildReportUserPrompt(input: FateReportInput): string {
   "summary": "string",
   "sharedPatterns": ["string"],
   "differences": ["string"],
-  "sections": { "bazi": "string", "zodiac": "string", "astrology": "string", "numerology": "string", "name": "optional string" },
+  "sections": { "bazi": "string", "zodiac": "string", "astrology": "string", "ziwei": "optional string", "numerology": "string", "name": "optional string" },
   "focusAnalysis": [{ "topic": "string", "analysis": "string", "suggestions": ["string"] }],
   "cautions": ["string"]
 }
@@ -34,4 +34,46 @@ export function buildReportUserPrompt(input: FateReportInput): string {
 
 結構化資料：
 ${JSON.stringify(input)}`;
+}
+
+function compactReportInput(input: FateReportInput) {
+  return {
+    focus: input.userFocus,
+    bazi: {
+      dayMaster: input.bazi.dayMaster,
+      dayMasterElement: input.bazi.dayMasterElement,
+      pillars: input.bazi.pillars.map((pillar) => pillar.value),
+      strongestElements: input.fiveElements.strongest,
+      weakestElements: input.fiveElements.weakest,
+    },
+    zodiac: { animal: input.zodiac.animal, traits: input.zodiac.positiveTraits.slice(0, 2) },
+    astrology: {
+      sunSign: input.astrology.sunSign,
+      moonSign: input.astrology.moonSign,
+      strengths: input.astrology.strengths.slice(0, 2),
+    },
+    numerology: {
+      number: input.numerology.lifePathNumber,
+      title: input.numerology.title,
+      strengths: input.numerology.strengths.slice(0, 2),
+    },
+    ziwei: input.ziwei ? {
+      soul: input.ziwei.soul,
+      body: input.ziwei.body,
+      fiveElementsClass: input.ziwei.fiveElementsClass,
+      soulPalace: input.ziwei.palaces.find((palace) => palace.name === '命宮')?.majorStars.map((star) => star.name),
+    } : undefined,
+  };
+}
+
+export function buildFastReportUserPrompt(input: FateReportInput): string {
+  return `只整理下列已計算資料，不要重算。輸出精簡 JSON：
+{
+  "summary": "2句、最多120字的跨系統摘要",
+  "sharedPattern": "1項共同點",
+  "difference": "1項不同視角",
+  "suggestions": ["2項具體且溫和的行動"]
+}
+只輸出 JSON，不要 Markdown。資料：
+${JSON.stringify(compactReportInput(input))}`;
 }

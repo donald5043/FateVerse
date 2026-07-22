@@ -15,8 +15,10 @@
   },
   "dependencies": {
     "@mlc-ai/web-llm": "0.2.84",
+    "astronomy-engine": "2.1.19",
     "fuse.js": "7.5.0",
     "idb-keyval": "^6.2.2",
+    "iztro": "2.5.8",
     "lucide-react": "^0.468.0",
     "lunar-javascript": "1.7.7",
     "react": "^19.0.0",

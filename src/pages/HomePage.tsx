@@ -17,7 +17,7 @@ export default function HomePage() {
           <div className="mb-8"><BrandMark /></div>
           <p className="eyebrow mb-4">一次看懂東西方命理</p>
           <h1 className="display-title max-w-3xl">同一個你，在不同文化中會被如何解讀？</h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-mist">從八字、星座、生命靈數到籤詩，以不同文化視角探索性格、方向與人生課題。</p>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-mist">從八字十神與大運、紫微十二宮、西洋行星星盤、生命靈數到籤詩，以不同文化視角探索性格、方向與人生課題。</p>
           <div className="mt-5 flex flex-wrap gap-2 text-xs text-mist"><span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">Browser-only</span><span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">No API key</span><span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">Fallback always available</span></div>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link to="/profile" className="btn-primary">開始探索 <ArrowRight size={18} /></Link>
@@ -48,9 +48,9 @@ export default function HomePage() {
 
       <section className="page-container page-section">
         <div className="grid gap-8 rounded-[2rem] border border-white/10 bg-gradient-to-br from-white/[0.065] to-white/[0.025] p-6 sm:p-8 lg:grid-cols-[0.72fr_1.28fr] lg:items-center">
-          <div><p className="eyebrow">How it works</p><h2 className="section-title mt-3">計算歸計算，解讀歸解讀</h2><p className="mt-4 leading-7 text-mist">能精確得到的四柱、生肖、星座與靈數，先由程式整理成結構化資料；文字報告只解釋現有結果，不替你重算，也不補猜。</p><div className="mt-5 flex items-start gap-3 rounded-2xl border border-emerald-200/15 bg-emerald-300/[0.06] p-4 text-sm leading-6 text-emerald-100"><ShieldCheck className="mt-0.5 shrink-0" size={18} />沒有 WebGPU 或不下載模型，仍可使用完整規則式報告。</div></div>
+          <div><p className="eyebrow">How it works</p><h2 className="section-title mt-3">計算歸計算，解讀歸解讀</h2><p className="mt-4 leading-7 text-mist">能精確得到的八字、紫微宮位、行星位置與靈數，先由程式整理成結構化資料；文字報告只解釋現有結果，不替你重算，也不補猜。</p><div className="mt-5 flex items-start gap-3 rounded-2xl border border-emerald-200/15 bg-emerald-300/[0.06] p-4 text-sm leading-6 text-emerald-100"><ShieldCheck className="mt-0.5 shrink-0" size={18} />沒有 WebGPU 或不下載模型，仍可使用完整規則式報告。</div></div>
           <div className="grid gap-3 sm:grid-cols-3">
-            {[{ icon: Calculator, step: '01', title: '精確計算', text: '八字、五行、生肖、星座、靈數' }, { icon: Database, step: '02', title: '結構化資料', text: '來源、數值與解讀內容清楚分層' }, { icon: BrainCircuit, step: '03', title: '溫和整理', text: '規則模板或使用者主動啟用的本地 AI' }].map(({ icon: Icon, step, title, text }) => <article className="rounded-2xl border border-white/10 bg-[#0e152a]/80 p-5" key={step}><div className="flex items-center justify-between"><Icon className="text-gold" size={22} /><span className="text-xs font-semibold text-gold/70">{step}</span></div><h3 className="mt-5 font-serif text-lg font-semibold text-cream">{title}</h3><p className="mt-2 text-sm leading-6 text-mist">{text}</p></article>)}
+            {[{ icon: Calculator, step: '01', title: '精確計算', text: '八字、紫微、行星星盤、生肖與靈數' }, { icon: Database, step: '02', title: '結構化資料', text: '來源、數值與解讀內容清楚分層' }, { icon: BrainCircuit, step: '03', title: '溫和整理', text: '完整規則報告加上可選的短篇本地 AI 增強' }].map(({ icon: Icon, step, title, text }) => <article className="rounded-2xl border border-white/10 bg-[#0e152a]/80 p-5" key={step}><div className="flex items-center justify-between"><Icon className="text-gold" size={22} /><span className="text-xs font-semibold text-gold/70">{step}</span></div><h3 className="mt-5 font-serif text-lg font-semibold text-cream">{title}</h3><p className="mt-2 text-sm leading-6 text-mist">{text}</p></article>)}
           </div>
         </div>
       </section>

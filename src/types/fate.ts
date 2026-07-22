@@ -55,6 +55,18 @@ export interface BaziPillar {
   branchElement: ElementName;
   naYin: string;
   tenGod: string;
+  hiddenStems: string[];
+  hiddenTenGods: string[];
+  lifeStage: string;
+  xunKong: string;
+}
+
+export interface BaziLuckCycle {
+  ganZhi: string;
+  startYear: number;
+  endYear: number;
+  startAge: number;
+  endAge: number;
 }
 
 export interface BaziResult {
@@ -65,6 +77,18 @@ export interface BaziResult {
   dayMasterElement: ElementName;
   zodiac: string;
   seasonalNode: string;
+  taiYuan: string;
+  taiXi: string;
+  mingGong: string;
+  shenGong: string;
+  luckCycles?: BaziLuckCycle[];
+  luckStart?: {
+    direction: 'forward' | 'backward';
+    years: number;
+    months: number;
+    days: number;
+    startDate: string;
+  };
   timezone: string;
   trueSolarTimeApplied: false;
 }
@@ -93,6 +117,10 @@ export interface PlanetPosition {
   name: string;
   longitude: number;
   sign: string;
+  degreeInSign: number;
+  latitude: number;
+  retrograde: boolean;
+  house?: number;
 }
 
 export interface HousePosition {
@@ -105,6 +133,7 @@ export interface AspectResult {
   second: string;
   type: string;
   orb: number;
+  angle: number;
 }
 
 export interface AstrologyResult {
@@ -119,6 +148,45 @@ export interface AstrologyResult {
   planets?: PlanetPosition[];
   houses?: HousePosition[];
   aspects?: AspectResult[];
+  calculatedAtUtc?: string;
+  calculationLevel?: 'sun-only' | 'planetary';
+  source?: DataSource;
+  houseSystem?: 'equal';
+}
+
+export interface ZiweiStar {
+  name: string;
+  type: string;
+  brightness?: string;
+  mutagen?: string;
+}
+
+export interface ZiweiPalace {
+  index: number;
+  name: string;
+  heavenlyStem: string;
+  earthlyBranch: string;
+  isBodyPalace: boolean;
+  isOriginalPalace: boolean;
+  majorStars: ZiweiStar[];
+  minorStars: ZiweiStar[];
+  changsheng12: string;
+  decadalRange: [number, number];
+}
+
+export interface ZiweiResult {
+  solarDate: string;
+  lunarDate: string;
+  time: string;
+  timeRange: string;
+  soul: string;
+  body: string;
+  fiveElementsClass: string;
+  soulPalaceBranch: string;
+  bodyPalaceBranch: string;
+  palaces: ZiweiPalace[];
+  calculationNote: string;
+  source: DataSource;
 }
 
 export interface NumerologyResult {
@@ -172,6 +240,7 @@ export interface FateReportInput {
   fiveElements: FiveElementResult;
   zodiac: ZodiacResult;
   astrology: AstrologyResult;
+  ziwei?: ZiweiResult;
   numerology: NumerologyResult;
   nameAnalysis?: NameAnalysisResult;
 }
@@ -184,6 +253,7 @@ export interface AiFateReport {
     bazi: string;
     zodiac: string;
     astrology: string;
+    ziwei?: string;
     numerology: string;
     name?: string;
   };

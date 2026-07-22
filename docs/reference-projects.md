@@ -16,7 +16,8 @@
 | [WebLLM](https://github.com/mlc-ai/web-llm) | `2131456` | 瀏覽器本地 LLM | Apache-2.0 | 是，鎖定 `0.2.84` | 主動載入、進度、Web Worker、JSON mode、interrupt、Zod 驗證與規則式 fallback |
 | [Tesseract.js](https://github.com/naptha/tesseract.js) | `a1ca80d` | 瀏覽器 OCR | Apache-2.0 | 是，目前鎖定 `6.0.1` | 延遲載入、worker 重用、進度、PSM、取消與釋放；不把語言模型提交到 Git |
 | [Fuse.js](https://github.com/krisk/Fuse) | `457fe76` | 小型資料集的 client-side 模糊搜尋 | Apache-2.0 | 是，鎖定 `7.5.0` | 加權欄位、`includeScore`、`ignoreLocation` 與文字正規化，再疊加逐句 OCR 容錯 |
-| [Astronomy Engine](https://github.com/cosinekitty/astronomy) | `865d3da` | 天文位置計算 | MIT | 否；Phase 2 候選 `2.1.19` | 保留獨立 adapter 與 UTC／黃道經度介面，不混入占星文案 |
+| [Astronomy Engine](https://github.com/cosinekitty/astronomy) | `865d3da` | 天文位置計算 | MIT | 是，鎖定 `2.1.19` | 獨立 adapter 計算 UTC／黃道經度、逆行、相位與恆星時，不混入占星文案 |
+| [iztro](https://github.com/SylarLong/iztro) | `106d038` | 紫微斗數排盤 | MIT | 是，鎖定 `2.5.8` | 使用公開 NPM 排盤 API 取得十二宮與星曜結構；不使用其付費 Chat API、模型、網站圖片或文案 |
 | [AstroDraw/AstroChart](https://github.com/AstroDraw/AstroChart) | `d8fb56f` | SVG 星盤繪圖 | MIT | 否；Phase 2/3 | 只研究行星角度輸入、SVG/RWD 與計算／繪圖分離 |
 | [CircularNatalHoroscopeJS](https://github.com/0xStarcat/CircularNatalHoroscopeJS) | `76e150f` | 完整星盤資料結構參考 | Unlicense | 否；Phase 2/3 評估 | 研究日期、時間、經緯度、宮位、行星、相位與多語欄位；最後 commit 為 2021，整合前須重驗維護性與依賴 |
 | [vite-plugin-pwa](https://github.com/vite-pwa/vite-plugin-pwa) | `05670fc` | Vite PWA／Workbox | MIT | 開發相依，目標 `1.3.0` | prompt 更新、shell／靜態 JSON precache；排除 WebLLM 權重與 OCR 語言資料 |
@@ -32,7 +33,8 @@
 | `@mlc-ai/web-llm` | 0.2.84 / Apache-2.0 | 0.2.84 | 使用目前 API；不得啟動時自動下載模型 |
 | `tesseract.js` | 7.0.0 / Apache-2.0 | 6.0.1 | 暫不在 OCR 修正中順便升 major；現有實作依 6.0.1 型別與 API 驗證 |
 | `fuse.js` | 7.5.0 / Apache-2.0 | 7.5.0 | 使用目前安裝版本 |
-| `astronomy-engine` | 2.1.19 / MIT | 未安裝 | 第一版只保留介面，不阻擋 MVP |
+| `astronomy-engine` | 2.1.19 / MIT | 2.1.19 | 計算十個星體的地心真黃道位置、逆行、相位、上升與等宮制宮頭 |
+| `iztro` | 2.5.8 / MIT | 2.5.8 | 通行排法、繁體輸出的紫微十二宮 adapter；付費 AI API 不採用 |
 | `vite-plugin-pwa` | 1.3.0 / MIT | 1.3.0 | 已取代手寫 cache-first service worker，提供更新提示；大型 WebLLM runtime 不進入預快取 |
 
 `package-lock.json` 是部署的傳遞相依版本準據；`package.json` 的第一方直接相依應使用明確版本，避免 caret 在全新安裝時靜默改變排盤或模型 API。
@@ -61,6 +63,13 @@
 - 目前 API 使用 `CreateMLCEngine`／`CreateWebWorkerMLCEngine`、`initProgressCallback`、OpenAI-compatible chat completion、`response_format: { type: "json_object" }`、`interruptGenerate()` 與 `unload()`。
 - 模型初始化必須由設定頁明確觸發；失敗、WebGPU 不支援或記憶體不足時保留規則式報告。
 - 模型權重不得進 precache 或 Git；AI 產出仍須通過 Zod schema，且不得修改結構化排盤事實。
+- WebLLM issue #753 記錄 iOS Safari 載入較大模型可能因記憶體限制終止分頁；FateVerse 保留 0.6B 模型，手機只要求短篇增強，並以首 token、停滯與總時間 watchdog 強制結束失去回應的 Worker。
+
+### iztro
+
+- NPM `2.5.8` 與 repository LICENSE 均為 MIT；`astro.bySolar(date, timeIndex, gender, fixLeap, "zh-TW")` 可產生十二宮、命身主、五行局、主輔星、亮度、四化與大限資料。
+- 上游同時宣傳需要 API key 的 hosted AI 服務；FateVerse 只依賴本地開源排盤套件，不呼叫其 Chat API，也不複製其解讀文案或圖片。
+- 紫微流派眾多，因此 adapter 固定記錄套件版本與通行排法，UI 明示四化、亮度、晚子時、閏月規則可能存在流派差異。
 
 ### Tesseract.js
 
@@ -76,7 +85,8 @@
 ### Astronomy／AstroChart
 
 - Astronomy Engine 負責天文向量與座標；文化解讀是另一層。AstroChart 只畫 SVG，不算行星位置。
-- 第一版保留 adapter 與 placeholder，月亮、上升、宮位、相位和真太陽時不阻擋 MVP。
+- 已直接使用 Astronomy Engine `2.1.19` 的 `GeoVector`、`Ecliptic`、`EclipticGeoMoon`、`SiderealTime` 與真黃赤交角，計算十個星體、逆行、主要相位；有經緯度時再計算上升與等宮制宮頭。
+- SVG 星盤由 FateVerse 自行繪製，不複製 AstroChart 圖形或程式。文化解讀維持自編靜態詞庫，與天文位置 adapter 分離。
 
 ### PWA／圖表
 

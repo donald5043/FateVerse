@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { generateFallbackReport } from '../src/ai/fallback-report';
-import { parseAiReport } from '../src/ai/schemas';
+import { parseAiReport, parseAiReportEnhancement } from '../src/ai/schemas';
 import { calculateSunSign } from '../src/engines/astrology-engine';
 import { calculateBazi } from '../src/engines/bazi-engine';
 import { calculateFiveElements } from '../src/engines/five-elements-engine';
@@ -16,6 +16,10 @@ describe('報告', () => {
     expect(parseAiReport(raw).mode).toBe('ai');
   });
   it('拒絕無效 WebLLM JSON', () => expect(() => parseAiReport('{bad')).toThrow('輕量模式'));
+  it('驗證手機快速模式的短篇 AI 增強 JSON', () => {
+    const result = parseAiReportEnhancement(JSON.stringify({ summary: '摘要', sharedPattern: '共同', difference: '差異', suggestions: ['行動一', '行動二'] }));
+    expect(result.suggestions).toHaveLength(2);
+  });
   it('缺少姓名與完整星盤仍可產生 fallback', () => {
     const report = generateFallbackReport(input);
     expect(report.mode).toBe('template');

@@ -1,4 +1,6 @@
-import type { AstrologyResult } from '../types/fate';
+import type { AspectResult, AstrologyResult, PlanetPosition, ProfileInput } from '../types/fate';
+import { localDateTimeToUtc } from '../utils/timezone';
+import { calculateAscendant, calculatePlanetPositions, zodiacPosition } from './astronomy-adapter';
 
 interface SignData extends AstrologyResult { start: [number, number]; end: [number, number] }
 
@@ -36,5 +38,81 @@ export function calculateSunSign(birthDate: string): AstrologyResult {
     description: sign.description,
     strengths: sign.strengths,
     blindSpots: sign.blindSpots,
+    calculationLevel: 'sun-only',
+  };
+}
+
+const aspectDefinitions = [
+  { type: '合相', angle: 0, orb: 7 },
+  { type: '六合', angle: 60, orb: 4 },
+  { type: '四分相', angle: 90, orb: 6 },
+  { type: '三分相', angle: 120, orb: 6 },
+  { type: '對分相', angle: 180, orb: 7 },
+] as const;
+
+export function calculateMajorAspects(planets: PlanetPosition[]): AspectResult[] {
+  const aspects: AspectResult[] = [];
+  for (let firstIndex = 0; firstIndex < planets.length; firstIndex += 1) {
+    for (let secondIndex = firstIndex + 1; secondIndex < planets.length; secondIndex += 1) {
+      const first = planets[firstIndex];
+      const second = planets[secondIndex];
+      const separation = Math.abs(((first.longitude - second.longitude + 540) % 360) - 180);
+      const match = aspectDefinitions
+        .map((definition) => ({ ...definition, actualOrb: Math.abs(separation - definition.angle) }))
+        .filter((definition) => definition.actualOrb <= definition.orb)
+        .sort((left, right) => left.actualOrb - right.actualOrb)[0];
+      if (match) {
+        aspects.push({
+          first: first.name,
+          second: second.name,
+          type: match.type,
+          orb: Number(match.actualOrb.toFixed(2)),
+          angle: Number(separation.toFixed(2)),
+        });
+      }
+    }
+  }
+  return aspects.sort((left, right) => left.orb - right.orb);
+}
+
+export function calculateAstrology(input: Pick<ProfileInput, 'birthDate' | 'birthTime' | 'timezone'> & Partial<Pick<ProfileInput, 'latitude' | 'longitude'>>): AstrologyResult {
+  const utcDate = localDateTimeToUtc(input.birthDate, input.birthTime, input.timezone);
+  const planets = calculatePlanetPositions(utcDate);
+  const sun = planets.find((planet) => planet.name === '太陽');
+  const moon = planets.find((planet) => planet.name === '月亮');
+  if (!sun || !moon) throw new Error('天文位置計算缺少太陽或月亮資料。');
+  const sign = SIGNS.find((item) => item.sunSign === sun.sign);
+  if (!sign) throw new Error('太陽黃道位置無法對應星座。');
+
+  const hasCoordinates = typeof input.latitude === 'number' && typeof input.longitude === 'number';
+  const ascendantLongitude = hasCoordinates ? calculateAscendant(utcDate, input.latitude as number, input.longitude as number) : undefined;
+  const risingSign = ascendantLongitude === undefined ? undefined : zodiacPosition(ascendantLongitude).sign;
+  const houses = ascendantLongitude === undefined ? undefined : Array.from({ length: 12 }, (_, index) => ({ house: index + 1, cusp: (ascendantLongitude + index * 30) % 360 }));
+  const planetsWithHouses = houses ? planets.map((planet) => ({
+    ...planet,
+    house: Math.floor(((planet.longitude - ascendantLongitude! + 360) % 360) / 30) + 1,
+  })) : planets;
+
+  return {
+    sunSign: sun.sign,
+    moonSign: moon.sign,
+    risingSign,
+    element: sign.element,
+    modality: sign.modality,
+    description: sign.description,
+    strengths: sign.strengths,
+    blindSpots: sign.blindSpots,
+    planets: planetsWithHouses,
+    houses,
+    houseSystem: houses ? 'equal' : undefined,
+    aspects: calculateMajorAspects(planetsWithHouses),
+    calculatedAtUtc: utcDate.toISOString(),
+    calculationLevel: 'planetary',
+    source: {
+      sourceName: 'Astronomy Engine 2.1.19',
+      sourceUrl: 'https://github.com/cosinekitty/astronomy',
+      license: 'MIT',
+      notes: '地心、真黃道（日期當下）位置；本版未計算上升與宮位。',
+    },
   };
 }

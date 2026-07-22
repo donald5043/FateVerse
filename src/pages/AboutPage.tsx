@@ -2,7 +2,7 @@ import { BrainCircuit, Calculator, Database, ScanLine, ShieldCheck } from 'lucid
 import Disclaimer from '../components/common/Disclaimer';
 
 const principles = [
-  { icon: Calculator, title: '可計算的，不交給 AI 猜', text: '四柱、五行、生肖、星座、靈數與籤詩比對，都先由程式或正式套件產生結構化結果。' },
+  { icon: Calculator, title: '可計算的，不交給 AI 猜', text: '八字、大運、紫微十二宮、行星星盤、靈數與籤詩比對，都先由程式或正式套件產生結構化結果。' },
   { icon: BrainCircuit, title: 'AI 是可選的文字整理', text: '本地模型只重新組織已提供資料；不支援 WebGPU 時，規則式報告仍是完整可用路徑。' },
   { icon: Database, title: '來源與內容分層', text: '原始籤文、資料來源、傳統說明與 FateVerse 現代化整理分開呈現，不用模糊文案掩蓋缺漏。' },
   { icon: ShieldCheck, title: '保留決策界線', text: '所有結果都是文化觀察與反思素材，不作醫療診斷、法律結論、投資保證或災難預言。' },

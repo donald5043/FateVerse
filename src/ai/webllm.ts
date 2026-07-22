@@ -1,19 +1,73 @@
 import type { ChatCompletionRequestStreaming, MLCEngineInterface } from '@mlc-ai/web-llm';
 import type { AiFateReport, FateReportInput } from '../types/fate';
-import { buildReportUserPrompt, SYSTEM_PROMPT } from './prompts';
-import { parseAiReport } from './schemas';
+import { generateFallbackReport } from './fallback-report';
+import { buildFastReportUserPrompt, SYSTEM_PROMPT } from './prompts';
+import { parseAiReportEnhancement } from './schemas';
 
 let engine: MLCEngineInterface | null = null;
 let engineWorker: Worker | null = null;
 let cancelRequested = false;
 let generationCancelRequested = false;
 
-export const AI_GENERATION_TIMEOUT_MS = 180_000;
+export const AI_GENERATION_TIMEOUT_MS = 150_000;
+export const IOS_AI_GENERATION_TIMEOUT_MS = 90_000;
 
 export interface AiGenerationProgress {
   phase: 'preparing' | 'generating' | 'validating';
   message: string;
   generatedCharacters: number;
+}
+
+interface GenerationProfile {
+  id: 'mobile-fast' | 'balanced';
+  maxTokens: number;
+  firstTokenTimeoutMs: number;
+  inactivityTimeoutMs: number;
+  totalTimeoutMs: number;
+}
+
+function isAppleMobile(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+export function getGenerationProfile(appleMobile = isAppleMobile()): GenerationProfile {
+  return appleMobile
+    ? { id: 'mobile-fast', maxTokens: 220, firstTokenTimeoutMs: 35_000, inactivityTimeoutMs: 20_000, totalTimeoutMs: IOS_AI_GENERATION_TIMEOUT_MS }
+    : { id: 'balanced', maxTokens: 320, firstTokenTimeoutMs: 50_000, inactivityTimeoutMs: 30_000, totalTimeoutMs: AI_GENERATION_TIMEOUT_MS };
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => globalThis.setTimeout(resolve, ms));
+}
+
+async function interruptEngine(forceReset: boolean): Promise<void> {
+  const activeEngine = engine;
+  if (!activeEngine) return;
+  const interrupted = await Promise.race([
+    Promise.resolve().then(() => activeEngine.interruptGenerate()).then(() => true).catch(() => false),
+    wait(1_500).then(() => false),
+  ]);
+  if (forceReset || !interrupted) {
+    engineWorker?.terminate();
+    engineWorker = null;
+    engine = null;
+  }
+}
+
+export async function nextWithTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  let timer: ReturnType<typeof globalThis.setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = globalThis.setTimeout(() => reject(new Error('AI_STREAM_TIMEOUT')), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) globalThis.clearTimeout(timer);
+  }
 }
 
 export async function detectWebGPU(): Promise<{ supported: boolean; reason: string }> {
@@ -56,7 +110,7 @@ export function cancelModelLoad(): void { cancelRequested = true; engineWorker?.
 export function isModelReady(): boolean { return engine !== null; }
 export async function cancelAiGeneration(): Promise<void> {
   generationCancelRequested = true;
-  await engine?.interruptGenerate();
+  await interruptEngine(true);
 }
 
 export async function clearModelCache(modelId: string): Promise<void> {
@@ -66,13 +120,14 @@ export async function clearModelCache(modelId: string): Promise<void> {
   await deleteModelAllInfoInCache(modelId);
 }
 
-export function buildAiCompletionRequest(input: FateReportInput): ChatCompletionRequestStreaming {
+export function buildAiCompletionRequest(input: FateReportInput, appleMobile = isAppleMobile()): ChatCompletionRequestStreaming {
+  const profile = getGenerationProfile(appleMobile);
   return {
     stream: true,
     stream_options: { include_usage: true },
-    messages: [{ role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: buildReportUserPrompt(input) }],
+    messages: [{ role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: buildFastReportUserPrompt(input) }],
     temperature: 0.2,
-    max_tokens: 850,
+    max_tokens: profile.maxTokens,
     response_format: { type: 'json_object' },
     // Qwen3 defaults to a hidden thinking pass. It is unnecessary for this
     // structured rewrite and can make a small device appear to be frozen.
@@ -86,22 +141,32 @@ export async function generateAiReport(
 ): Promise<AiFateReport> {
   if (!engine) throw new Error('本地模型尚未載入。請先到設定頁主動啟用智慧模式。');
   generationCancelRequested = false;
-  let timedOut = false;
-  const timeout = globalThis.setTimeout(() => {
-    timedOut = true;
-    void engine?.interruptGenerate();
-  }, AI_GENERATION_TIMEOUT_MS);
+  const profile = getGenerationProfile();
+  const startedAt = Date.now();
+  let receivedFirstToken = false;
 
   try {
-    onProgress({ phase: 'preparing', message: '正在整理結構化資料…', generatedCharacters: 0 });
-    const chunks = await engine.chat.completions.create(buildAiCompletionRequest(input));
+    onProgress({ phase: 'preparing', message: profile.id === 'mobile-fast' ? '正在啟動手機快速模式…' : '正在整理結構化資料…', generatedCharacters: 0 });
+    const chunks = await nextWithTimeout(
+      engine.chat.completions.create(buildAiCompletionRequest(input)),
+      Math.min(20_000, profile.firstTokenTimeoutMs),
+    );
+    const iterator = chunks[Symbol.asyncIterator]();
     let content = '';
     let lastUpdateAt = 0;
 
-    for await (const chunk of chunks) {
+    while (true) {
       if (generationCancelRequested) throw new Error('AI_GENERATION_CANCELLED');
+      const elapsed = Date.now() - startedAt;
+      const remaining = profile.totalTimeoutMs - elapsed;
+      if (remaining <= 0) throw new Error('AI_GENERATION_TIMEOUT');
+      const chunkTimeout = receivedFirstToken ? profile.inactivityTimeoutMs : profile.firstTokenTimeoutMs;
+      const next = await nextWithTimeout(iterator.next(), Math.min(chunkTimeout, remaining));
+      if (next.done) break;
+      const chunk = next.value;
       const delta = chunk.choices[0]?.delta?.content ?? '';
       if (!delta) continue;
+      receivedFirstToken = true;
       content += delta;
       const now = Date.now();
       if (now - lastUpdateAt >= 200) {
@@ -114,21 +179,33 @@ export async function generateAiReport(
       }
     }
 
-    if (timedOut) throw new Error('AI_GENERATION_TIMEOUT');
     if (generationCancelRequested) throw new Error('AI_GENERATION_CANCELLED');
     if (!content.trim()) throw new Error('EMPTY_RESPONSE');
     onProgress({ phase: 'validating', message: '正在驗證報告格式…', generatedCharacters: content.length });
-    return parseAiReport(content);
+    const enhancement = parseAiReportEnhancement(content);
+    const fallback = generateFallbackReport(input);
+    const focusAnalysis = fallback.focusAnalysis.map((focus, index) => index === 0
+      ? { ...focus, suggestions: [...enhancement.suggestions, ...focus.suggestions].slice(0, 3) }
+      : focus);
+    return {
+      ...fallback,
+      summary: enhancement.summary,
+      sharedPatterns: [enhancement.sharedPattern, ...fallback.sharedPatterns].slice(0, 3),
+      differences: [enhancement.difference, ...fallback.differences].slice(0, 2),
+      focusAnalysis,
+      mode: 'ai',
+    };
   } catch (reason) {
-    if (timedOut || (reason instanceof Error && reason.message.includes('AI_GENERATION_TIMEOUT'))) {
-      throw new Error('本地 AI 生成超過 3 分鐘，已停止並保留規則模板報告。你可以稍後重試。');
+    const message = reason instanceof Error ? reason.message : '';
+    if (message.includes('AI_GENERATION_TIMEOUT') || message.includes('AI_STREAM_TIMEOUT')) {
+      await interruptEngine(true);
+      const elapsedSeconds = Math.max(1, Math.ceil((Date.now() - startedAt) / 1_000));
+      throw new Error(`本地 AI 連續 ${elapsedSeconds} 秒未能持續回應，已強制停止並保留完整模板報告。若要重試，請回設定重新啟用模型。`);
     }
     if (generationCancelRequested || (reason instanceof Error && reason.message.includes('AI_GENERATION_CANCELLED'))) {
       throw new Error('已停止本地 AI 生成，並保留原本的規則模板報告。');
     }
     if (reason instanceof Error && reason.message.includes('格式無法驗證')) throw reason;
     throw new Error('本地 AI 產生報告時發生錯誤，已保留原本的規則模板報告。');
-  } finally {
-    globalThis.clearTimeout(timeout);
   }
 }

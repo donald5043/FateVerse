@@ -11,6 +11,15 @@ interface ParsedBirth {
   minute: number;
 }
 
+const traditionalTerms: Record<string, string> = {
+  劫财: '劫財', 伤官: '傷官', 偏财: '偏財', 正财: '正財', 七杀: '七殺',
+  临官: '臨官', 长生: '長生', 养: '養',
+};
+
+function traditionalTerm(value: string): string {
+  return traditionalTerms[value] ?? value;
+}
+
 export function parseBirthDateTime(birthDate: string, birthTime: string, timezone: string): ParsedBirth {
   const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(birthDate);
   if (!dateMatch) throw new Error('出生日期格式無效，請使用西元年、月、日。');
@@ -27,7 +36,7 @@ export function parseBirthDateTime(birthDate: string, birthTime: string, timezon
   return { year, month, day, hour, minute };
 }
 
-export function calculateBazi(input: Pick<ProfileInput, 'birthDate' | 'birthTime' | 'timezone'>): BaziResult {
+export function calculateBazi(input: Pick<ProfileInput, 'birthDate' | 'birthTime' | 'timezone'> & Partial<Pick<ProfileInput, 'gender'>>): BaziResult {
   const parsed = parseBirthDateTime(input.birthDate, input.birthTime, input.timezone);
   try {
     const lunar = Solar.fromYmdHms(parsed.year, parsed.month, parsed.day, parsed.hour, parsed.minute, 0).getLunar();
@@ -36,7 +45,11 @@ export function calculateBazi(input: Pick<ProfileInput, 'birthDate' | 'birthTime
     const stems = [eightChar.getYearGan(), eightChar.getMonthGan(), eightChar.getDayGan(), eightChar.getTimeGan()];
     const branches = [eightChar.getYearZhi(), eightChar.getMonthZhi(), eightChar.getDayZhi(), eightChar.getTimeZhi()];
     const naYin = [eightChar.getYearNaYin(), eightChar.getMonthNaYin(), eightChar.getDayNaYin(), eightChar.getTimeNaYin()];
-    const tenGods = [eightChar.getYearShiShenGan(), eightChar.getMonthShiShenGan(), '日主', eightChar.getTimeShiShenGan()];
+    const tenGods = [eightChar.getYearShiShenGan(), eightChar.getMonthShiShenGan(), '日主', eightChar.getTimeShiShenGan()].map(traditionalTerm);
+    const hiddenStems = [eightChar.getYearHideGan(), eightChar.getMonthHideGan(), eightChar.getDayHideGan(), eightChar.getTimeHideGan()];
+    const hiddenTenGods = [eightChar.getYearShiShenZhi(), eightChar.getMonthShiShenZhi(), eightChar.getDayShiShenZhi(), eightChar.getTimeShiShenZhi()].map((items) => items.map(traditionalTerm));
+    const lifeStages = [eightChar.getYearDiShi(), eightChar.getMonthDiShi(), eightChar.getDayDiShi(), eightChar.getTimeDiShi()].map(traditionalTerm);
+    const xunKong = [eightChar.getYearXunKong(), eightChar.getMonthXunKong(), eightChar.getDayXunKong(), eightChar.getTimeXunKong()];
     const labels = ['年柱', '月柱', '日柱', '時柱'];
     const pillars: BaziPillar[] = values.map((value, index) => ({
       label: labels[index],
@@ -47,6 +60,19 @@ export function calculateBazi(input: Pick<ProfileInput, 'birthDate' | 'birthTime
       branchElement: branchToElement(branches[index]),
       naYin: naYin[index],
       tenGod: tenGods[index],
+      hiddenStems: hiddenStems[index],
+      hiddenTenGods: hiddenTenGods[index],
+      lifeStage: lifeStages[index],
+      xunKong: xunKong[index],
+    }));
+    const genderValue = input.gender === 'male' ? 1 : input.gender === 'female' ? 0 : undefined;
+    const yun = genderValue === undefined ? undefined : eightChar.getYun(genderValue, 2);
+    const luckCycles = yun?.getDaYun(9).filter((cycle) => cycle.getIndex() > 0).slice(0, 8).map((cycle) => ({
+      ganZhi: cycle.getGanZhi(),
+      startYear: cycle.getStartYear(),
+      endYear: cycle.getEndYear(),
+      startAge: cycle.getStartAge(),
+      endAge: cycle.getEndAge(),
     }));
     return {
       solarDate: `${input.birthDate} ${input.birthTime}`,
@@ -56,6 +82,18 @@ export function calculateBazi(input: Pick<ProfileInput, 'birthDate' | 'birthTime
       dayMasterElement: stemToElement(eightChar.getDayGan()),
       zodiac: normalizeZodiacAnimal(lunar.getYearShengXiao()),
       seasonalNode: lunar.getJieQi() || lunar.getNextJie().getName(),
+      taiYuan: eightChar.getTaiYuan(),
+      taiXi: eightChar.getTaiXi(),
+      mingGong: eightChar.getMingGong(),
+      shenGong: eightChar.getShenGong(),
+      luckCycles,
+      luckStart: yun ? {
+        direction: yun.isForward() ? 'forward' : 'backward',
+        years: yun.getStartYear(),
+        months: yun.getStartMonth(),
+        days: yun.getStartDay(),
+        startDate: yun.getStartSolar().toYmd(),
+      } : undefined,
       timezone: input.timezone,
       trueSolarTimeApplied: false,
     };

@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { calculateSunSign } from '../src/engines/astrology-engine';
+import { calculateAstrology, calculateSunSign } from '../src/engines/astrology-engine';
 import { calculateBazi, parseBirthDateTime } from '../src/engines/bazi-engine';
 import { branchToElement, calculateFiveElements, stemToElement } from '../src/engines/five-elements-engine';
 import { calculateNumerology } from '../src/engines/numerology-engine';
 import { getZodiacResult } from '../src/engines/zodiac-engine';
+import { birthHourToZiweiIndex, calculateZiwei } from '../src/engines/ziwei-engine';
+import { localDateTimeToUtc } from '../src/utils/timezone';
 
 describe('八字與日期', () => {
   it('解析日期、午夜與時區欄位', () => expect(parseBirthDateTime('1990-01-02', '00:00', 'Asia/Taipei')).toEqual({ year: 1990, month: 1, day: 2, hour: 0, minute: 0 }));
@@ -15,6 +17,13 @@ describe('八字與日期', () => {
     expect(first.pillars).toHaveLength(4);
     expect(second.pillars).toHaveLength(4);
     expect(first.solarDate).not.toBe(second.solarDate);
+    expect(first.pillars.every((pillar) => pillar.hiddenStems.length > 0)).toBe(true);
+    expect(first.mingGong).toHaveLength(2);
+  });
+  it('指定排盤性別時產生起運與八組大運', () => {
+    const result = calculateBazi({ birthDate: '1990-01-02', birthTime: '10:30', timezone: 'Asia/Taipei', gender: 'male' });
+    expect(result.luckCycles).toHaveLength(8);
+    expect(result.luckStart?.startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
   it.each([
     [1984, '鼠'], [1985, '牛'], [1986, '虎'], [1987, '兔'],
@@ -40,6 +49,41 @@ describe('五行', () => {
 
 describe('太陽星座交界', () => {
   it.each([['2000-03-20', '雙魚座'], ['2000-03-21', '牡羊座'], ['2000-04-19', '牡羊座'], ['2000-04-20', '金牛座'], ['2000-12-21', '射手座'], ['2000-12-22', '摩羯座']])('%s 是 %s', (date, sign) => expect(calculateSunSign(date).sunSign).toBe(sign));
+});
+
+describe('完整西洋天文位置', () => {
+  it('正確將臺北當地時間換成 UTC', () => {
+    expect(localDateTimeToUtc('1990-01-02', '10:30', 'Asia/Taipei').toISOString()).toBe('1990-01-02T02:30:00.000Z');
+  });
+  it('計算十個星體、月亮星座與主要相位', () => {
+    const result = calculateAstrology({ birthDate: '1990-01-02', birthTime: '10:30', timezone: 'Asia/Taipei' });
+    expect(result.sunSign).toBe('摩羯座');
+    expect(result.moonSign).toBe('雙魚座');
+    expect(result.planets).toHaveLength(10);
+    expect(result.aspects?.length).toBeGreaterThan(0);
+    expect(result.calculationLevel).toBe('planetary');
+  });
+  it('提供經緯度時加入上升與等宮制十二宮', () => {
+    const result = calculateAstrology({ birthDate: '1990-01-02', birthTime: '10:30', timezone: 'Asia/Taipei', longitude: 121.5654, latitude: 25.033 });
+    expect(result.risingSign).toBe('處女座');
+    expect(result.houses).toHaveLength(12);
+    expect(result.houseSystem).toBe('equal');
+    expect(result.planets?.every((planet) => typeof planet.house === 'number')).toBe(true);
+  });
+});
+
+describe('紫微斗數排盤', () => {
+  it.each([['00:30', 0], ['01:00', 1], ['22:59', 11], ['23:00', 12]])('%s 對應時辰索引 %i', (time, index) => expect(birthHourToZiweiIndex(time)).toBe(index));
+  it('產生十二宮、命身主與五行局', () => {
+    const result = calculateZiwei({ birthDate: '1990-01-02', birthTime: '10:30', gender: 'male' });
+    expect(result?.palaces).toHaveLength(12);
+    expect(result?.soul).toBe('廉貞');
+    expect(result?.body).toBe('天機');
+    expect(result?.fiveElementsClass).toBe('金四局');
+  });
+  it('未指定排盤性別時明確略過', () => {
+    expect(calculateZiwei({ birthDate: '1990-01-02', birthTime: '10:30', gender: 'other' })).toBeUndefined();
+  });
 });
 
 describe('生命靈數', () => {

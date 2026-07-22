@@ -3,12 +3,13 @@ import { FormEvent, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generateFallbackReport } from '../ai/fallback-report';
 import BirthChartPreview from '../components/profile/BirthChartPreview';
-import { calculateSunSign } from '../engines/astrology-engine';
+import { calculateAstrology } from '../engines/astrology-engine';
 import { calculateBazi } from '../engines/bazi-engine';
 import { calculateFiveElements } from '../engines/five-elements-engine';
 import { analyzeName } from '../engines/name-engine';
 import { calculateNumerology } from '../engines/numerology-engine';
 import { getZodiacResult } from '../engines/zodiac-engine';
+import { calculateZiwei } from '../engines/ziwei-engine';
 import { useFateStore } from '../store/useFateStore';
 import type { ProfileInput } from '../types/fate';
 import { loadPreferences, saveAnalysis } from '../utils/storage';
@@ -31,12 +32,12 @@ export default function ProfilePage() {
     const dateLabel = Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day) ? `${year} 年 ${month} 月 ${day} 日` : form.birthDate;
     if (!form.birthTime) return { dateLabel, message: '日期已收到；再填出生時間即可試算四柱。' };
     try {
-      const bazi = calculateBazi({ birthDate: form.birthDate, birthTime: form.birthTime, timezone: form.timezone });
+      const bazi = calculateBazi({ birthDate: form.birthDate, birthTime: form.birthTime, timezone: form.timezone, gender: form.gender });
       return { dateLabel, message: `已套用 ${form.timezone}，下方為目前輸入的即時試算。`, bazi, fiveElements: calculateFiveElements(bazi.pillars) };
     } catch (reason) {
       return { dateLabel, message: reason instanceof Error ? reason.message : '目前無法試算這組出生資料。' };
     }
-  }, [form.birthDate, form.birthTime, form.timezone]);
+  }, [form.birthDate, form.birthTime, form.gender, form.timezone]);
 
   const update = <K extends keyof ProfileInput>(key: K, value: ProfileInput[K]) => {
     setError('');
@@ -66,7 +67,8 @@ export default function ProfilePage() {
         bazi,
         fiveElements,
         zodiac: getZodiacResult(bazi.zodiac),
-        astrology: calculateSunSign(form.birthDate),
+        astrology: calculateAstrology(form),
+        ziwei: calculateZiwei(form),
         numerology: calculateNumerology(form.birthDate),
         nameAnalysis: form.name.trim() ? analyzeName(form.name, fiveElements.weakest, manualStrokes) : undefined,
       };
@@ -88,7 +90,7 @@ export default function ProfilePage() {
 
   return (
     <section className="page-container page-section pb-28 lg:pb-14">
-      <div className="max-w-3xl"><p className="eyebrow">Cross-cultural profile</p><h1 className="display-title mt-3">探索命盤</h1><p className="mt-5 muted">精確計算四柱、五行、生肖、太陽星座與生命靈數，再以不同文化視角交叉整理。</p></div>
+      <div className="max-w-3xl"><p className="eyebrow">Cross-cultural profile</p><h1 className="display-title mt-3">探索命盤</h1><p className="mt-5 muted">精確計算四柱、十神、大運、紫微十二宮、行星黃道位置、生肖與生命靈數，再以不同文化視角交叉整理。</p></div>
       <div className="mt-9 notice flex items-start gap-3"><LockKeyhole className="mt-0.5 shrink-0 text-gold" size={19} /><p>所有資料只在目前瀏覽器中運算，不會上傳至伺服器。出生資料預設不會永久保存。</p></div>
       <ol className="mt-6 grid grid-cols-3 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035]" aria-label="建立報告流程">
         {['出生資料', '關注主題', '萬象報告'].map((step, index) => <li className="flex items-center gap-2 border-r border-white/10 px-3 py-3 text-xs text-mist last:border-r-0 sm:px-5 sm:text-sm" key={step}><span className={`grid size-6 shrink-0 place-items-center rounded-full text-xs font-semibold ${index === 0 ? 'bg-gold text-ink' : 'bg-white/10 text-cream'}`}>{index + 1}</span><span>{step}</span></li>)}
@@ -112,7 +114,7 @@ export default function ProfilePage() {
         <aside className="glass-card p-5 sm:p-7 lg:sticky lg:top-24">
           <div className="flex items-center gap-3"><Sparkles className="text-gold" /><h2 className="font-serif text-xl font-semibold">想了解的主題</h2></div>
           <div className="mt-5 flex flex-wrap gap-2">{focusOptions.map((value) => <button key={value} type="button" onClick={() => toggleFocus(value)} className={`chip ${form.focus.includes(value) ? 'chip-active' : ''}`} aria-pressed={form.focus.includes(value)}>{labels[value]}</button>)}</div>
-          <div className="mt-6 rounded-xl bg-white/[0.04] p-4 text-sm leading-6 text-mist"><p className="font-semibold text-cream">計算範圍</p><p className="mt-2">東方命理採 `lunar-javascript` 計算四柱；西方分析第一版只含太陽星座，不含月亮、上升與宮位。</p></div>
+          <div className="mt-6 rounded-xl bg-white/[0.04] p-4 text-sm leading-6 text-mist"><p className="font-semibold text-cream">計算範圍</p><p className="mt-2">八字採 lunar-javascript；紫微採 iztro 通行排法；西洋星盤採 Astronomy Engine 計算十個星體與主要相位。目前尚未計算上升與十二宮。</p></div>
           {error && <div className="mt-5 flex items-start gap-2 rounded-xl border border-rose-300/20 bg-rose-300/10 p-3 text-sm text-rose-100" role="alert"><AlertCircle className="mt-0.5 shrink-0" size={17} />{error}</div>}
           <button className="btn-primary mt-6 w-full" type="submit" disabled={busy}>{busy ? '正在計算…' : '完成計算並查看報告'}<ArrowRight size={18} /></button>
         </aside>
