@@ -78,6 +78,8 @@ export function calculateZiwei(
         nominalAge: horoscope.age.nominalAge,
         decadal: mapHoroscopeLayer(horoscope.decadal),
         yearly: mapHoroscopeLayer(horoscope.yearly),
+        monthly: mapHoroscopeLayer(horoscope.monthly),
+        daily: mapHoroscopeLayer(horoscope.daily),
       },
       palaces: chart.palaces.map((palace) => ({
         index: palace.index,

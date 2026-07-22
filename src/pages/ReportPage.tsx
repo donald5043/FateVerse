@@ -15,18 +15,28 @@ import ZiweiChart from '../components/report/ZiweiChart';
 import { useFateStore } from '../store/useFateStore';
 import { ELEMENT_LABELS } from '../utils/constants';
 
+function toDateInputValue(value?: string): string {
+  if (!value) return new Date().toISOString().slice(0, 10);
+  const [year, month, day] = value.split('-');
+  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+}
+
 export default function ReportPage() {
   const report = useFateStore((state) => state.report);
   const input = useFateStore((state) => state.reportInput);
   const profile = useFateStore((state) => state.profileInput);
   const model = useFateStore((state) => state.model);
   const setReport = useFateStore((state) => state.setReport);
+  const setReportData = useFateStore((state) => state.setReportData);
   const setModel = useFateStore((state) => state.setModel);
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState('');
   const [aiNotice, setAiNotice] = useState('');
   const [aiStatus, setAiStatus] = useState('');
   const [aiElapsed, setAiElapsed] = useState(0);
+  const [ziweiTargetDate, setZiweiTargetDate] = useState(() => toDateInputValue(input?.ziwei?.currentHoroscope?.targetDate));
+  const [ziweiBusy, setZiweiBusy] = useState(false);
+  const [ziweiError, setZiweiError] = useState('');
 
   if (!report || !input) return (
     <section className="page-container page-section text-center">
@@ -47,6 +57,7 @@ export default function ReportPage() {
       const nextReport = await generateAiReport(input, (progress) => setAiStatus(progress.message));
       setReport(nextReport);
       setAiNotice('本地 AI 已成功產生新摘要與行動建議，完整計算資料仍維持原值。');
+      window.setTimeout(() => document.getElementById('ai-insight')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     } catch (reason) {
       setReport(generateFallbackReport(input));
       const { isModelReady } = await import('../ai/webllm');
@@ -62,6 +73,24 @@ export default function ReportPage() {
     const { cancelAiGeneration } = await import('../ai/webllm');
     setAiStatus('正在停止生成…');
     await cancelAiGeneration();
+  };
+
+  const updateZiweiTarget = async () => {
+    if (!profile || !input.ziwei || ziweiBusy) return;
+    setZiweiBusy(true); setZiweiError('');
+    try {
+      const { calculateZiwei } = await import('../engines/ziwei-engine');
+      const ziwei = calculateZiwei(profile, ziweiTargetDate);
+      if (!ziwei) throw new Error('目前排盤資料未包含可用的命理排盤性別。');
+      const nextInput = { ...input, ziwei };
+      setReportData(nextInput, generateFallbackReport(nextInput));
+      setAiError('');
+      setAiNotice('紫微運限已依新日期重算；原 AI 文字已清除，避免和新盤面混用。');
+    } catch (reason) {
+      setZiweiError(reason instanceof Error ? reason.message : '紫微運限日期更新失敗。');
+    } finally {
+      setZiweiBusy(false);
+    }
   };
 
   const systems = [
@@ -97,7 +126,7 @@ export default function ReportPage() {
     }] : []),
   ];
   const sectionLinks = [
-    ['summary', '總覽'], ['bazi', '八字五行'], ['astrology', '西洋星盤'],
+    ['summary', '總覽'], ...(report.aiEnhancement ? [['ai-insight', '本地 AI 原文']] : []), ['bazi', '八字五行'], ['astrology', '西洋星盤'],
     ...(input.ziwei ? [['ziwei', '紫微十二宮']] : []),
     ['systems', '多系統觀點'], ['patterns', '共同與差異'], ['focus', '行動建議'], ['raw', '原始資料'],
   ];
@@ -127,6 +156,8 @@ export default function ReportPage() {
         </div>
       </article>
 
+      {report.aiEnhancement && <section id="ai-insight" data-testid="ai-enhancement" className="mt-8 scroll-mt-36 overflow-hidden rounded-3xl border border-emerald-200/25 bg-gradient-to-br from-emerald-300/[0.09] to-cyan-300/[0.04] p-5 sm:p-7" aria-labelledby="ai-insight-title"><div className="flex flex-wrap items-start justify-between gap-3"><div className="flex items-center gap-3"><span className="grid size-11 place-items-center rounded-2xl bg-emerald-200/10 text-emerald-100"><BrainCircuit size={22} /></span><div><p className="eyebrow text-emerald-100">Generated locally</p><h2 id="ai-insight-title" className="mt-1 font-serif text-2xl font-semibold text-cream">本地 AI 生成內容</h2></div></div><span className="rounded-full border border-emerald-200/20 px-3 py-1 text-[11px] text-emerald-100">AI 原文 · 已通過 JSON 驗證</span></div><div className="mt-6 rounded-2xl border border-white/10 bg-ink/35 p-4 sm:p-5"><h3 className="text-xs font-semibold tracking-wider text-emerald-100">AI 摘要</h3><p className="mt-3 font-serif text-lg leading-8 text-cream">{report.aiEnhancement.summary}</p></div><div className="mt-4 grid gap-3 sm:grid-cols-2">{report.aiEnhancement.suggestions.map((suggestion, index) => <article data-testid="ai-suggestion" className="rounded-2xl border border-white/10 bg-white/[0.035] p-4" key={`${suggestion}-${index}`}><span className="text-[10px] font-semibold tracking-wider text-emerald-100">AI 建議 {index + 1}</span><p className="mt-2 leading-7 text-mist">{suggestion}</p></article>)}</div><p className="mt-4 text-xs leading-5 text-mist">只有此卡文字由 {report.aiEnhancement.modelId} 在目前裝置生成；八字、星盤、紫微、靈數與其他規則報告沒有交給模型重算。生成時間：{new Date(report.aiEnhancement.generatedAt).toLocaleString('zh-TW')}。</p></section>}
+
       <section id="bazi" className="mt-14 scroll-mt-36">
         <div className="mb-6"><p className="eyebrow">Eastern foundation</p><h2 className="section-title mt-2">八字與五行結構</h2><p className="mt-2 text-sm leading-6 text-mist">排盤資料由 lunar-javascript 計算；五行圖僅統計四柱八個主元素，不等同完整旺衰論命。</p></div>
         <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
@@ -142,6 +173,8 @@ export default function ReportPage() {
 
       {input.ziwei && <section id="ziwei" className="mt-14 scroll-mt-36">
         <div className="mb-6"><p className="eyebrow">Twelve palaces</p><h2 className="section-title mt-2">紫微斗數十二宮</h2><p className="mt-2 text-sm leading-6 text-mist">以 iztro 2.5.8 產生通行排法盤面，呈現命身主、五行局、十二宮、主輔星、亮度、四化與大限範圍。</p></div>
+        <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-gold/20 bg-gold/[0.055] p-4 sm:flex-row sm:items-end"><label className="min-w-0 flex-1"><span className="label">運限目標日期</span><input className="input-field" type="date" min="1900-01-01" max="2100-12-31" value={ziweiTargetDate} onChange={(event) => setZiweiTargetDate(event.target.value)} /></label><button className="btn-secondary shrink-0" type="button" disabled={ziweiBusy || !ziweiTargetDate} onClick={() => void updateZiweiTarget()}>{ziweiBusy ? '正在重算…' : '更新大限／流年／流月／流日'}</button></div>
+        {ziweiError && <div className="mb-4 rounded-xl border border-rose-200/20 bg-rose-200/[0.08] p-3 text-sm text-rose-100" role="alert">{ziweiError}</div>}
         <article className="glass-card overflow-hidden p-3 sm:p-6"><ZiweiChart result={input.ziwei} /><ZiweiKeyPalaceInsights result={input.ziwei} /></article>
       </section>}
 

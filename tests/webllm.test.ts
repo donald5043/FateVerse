@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { AI_GENERATION_TIMEOUT_MS, buildAiCompletionRequest, buildModelHealthCheckRequest, getGenerationProfile, IOS_AI_GENERATION_TIMEOUT_MS, nextWithTimeout } from '../src/ai/webllm';
+import { AI_GENERATION_TIMEOUT_MS, attachAiEnhancement, buildAiCompletionRequest, buildModelHealthCheckRequest, getGenerationProfile, IOS_AI_GENERATION_TIMEOUT_MS, nextWithTimeout } from '../src/ai/webllm';
+import { generateFallbackReport } from '../src/ai/fallback-report';
 import { calculateSunSign } from '../src/engines/astrology-engine';
 import { calculateBazi } from '../src/engines/bazi-engine';
 import { calculateFiveElements } from '../src/engines/five-elements-engine';
@@ -18,6 +19,8 @@ describe('WebLLM 生成設定', () => {
     expect(request.extra_body).toBeUndefined();
     expect(request.response_format?.schema).toContain('suggestions');
     expect(request.max_tokens).toBeLessThanOrEqual(180);
+    expect(request.messages[1]?.content).toContain('相對突出五行');
+    expect(request.messages[1]?.content).toContain('兩項建議不可重複摘要');
   });
 
   it('舊 Qwen3 模型仍會明確關閉思考模式', () => {
@@ -40,6 +43,25 @@ describe('WebLLM 生成設定', () => {
     expect(request.stream).toBe(false);
     expect(request.response_format).toBeUndefined();
     expect(request.max_tokens).toBe(8);
+  });
+
+  it('AI 原文獨立保存，不覆寫規則摘要或混入規則建議', () => {
+    const fallback = generateFallbackReport(reportInput);
+    const result = attachAiEnhancement(
+      fallback,
+      { summary: '這是模型原文摘要', suggestions: ['模型建議一', '模型建議二'] },
+      'test-model',
+      '2026-07-22T00:00:00.000Z',
+    );
+
+    expect(result.summary).toBe(fallback.summary);
+    expect(result.focusAnalysis).toEqual(fallback.focusAnalysis);
+    expect(result.aiEnhancement).toEqual({
+      summary: '這是模型原文摘要',
+      suggestions: ['模型建議一', '模型建議二'],
+      modelId: 'test-model',
+      generatedAt: '2026-07-22T00:00:00.000Z',
+    });
   });
 
   it('Worker 沒有回應時 deadline 會拒絕而不是永遠等待', async () => {

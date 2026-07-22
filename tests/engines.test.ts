@@ -84,6 +84,10 @@ describe('紫微斗數排盤', () => {
     expect(result?.currentHoroscope.targetDate).toBe('2026-7-22');
     expect(result?.currentHoroscope.decadal.palaceName).toBe('命宮');
     expect(result?.currentHoroscope.yearly.mutagens.map((item) => item.type)).toEqual(['祿', '權', '科', '忌']);
+    expect(result?.currentHoroscope.monthly.name).toBe('流月');
+    expect(result?.currentHoroscope.daily.name).toBe('流日');
+    expect(result?.currentHoroscope.monthly.mutagens).toHaveLength(4);
+    expect(result?.currentHoroscope.daily.mutagens).toHaveLength(4);
   });
   it('未指定排盤性別時明確略過', () => {
     expect(calculateZiwei({ birthDate: '1990-01-02', birthTime: '10:30', gender: 'other' })).toBeUndefined();

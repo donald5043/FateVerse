@@ -193,6 +193,8 @@ export interface ZiweiCurrentHoroscope {
   nominalAge: number;
   decadal: ZiweiHoroscopeLayer;
   yearly: ZiweiHoroscopeLayer;
+  monthly: ZiweiHoroscopeLayer;
+  daily: ZiweiHoroscopeLayer;
 }
 
 export interface ZiweiSurroundedPalace {
@@ -295,6 +297,12 @@ export interface AiFateReport {
   }[];
   cautions: string[];
   mode: 'ai' | 'template';
+  aiEnhancement?: {
+    summary: string;
+    suggestions: string[];
+    modelId: string;
+    generatedAt: string;
+  };
 }
 
 export interface DailyGuidanceCard {

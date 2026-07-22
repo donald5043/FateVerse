@@ -3,7 +3,7 @@ import type { AiFateReport, FateReportInput } from '../types/fate';
 import { generateFallbackReport } from './fallback-report';
 import { DEFAULT_LOCAL_MODEL_ID } from './model-options';
 import { buildFastReportUserPrompt, SYSTEM_PROMPT } from './prompts';
-import { parseAiReportEnhancement } from './schemas';
+import { parseAiReportEnhancement, type AiReportEnhancement } from './schemas';
 
 let engine: MLCEngineInterface | null = null;
 let engineWorker: Worker | null = null;
@@ -159,8 +159,8 @@ export async function clearModelCache(modelId: string): Promise<void> {
 const AI_ENHANCEMENT_JSON_SCHEMA = JSON.stringify({
   type: 'object',
   properties: {
-    summary: { type: 'string' },
-    suggestions: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'string' } },
+    summary: { type: 'string', minLength: 20, maxLength: 90 },
+    suggestions: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'string', minLength: 8, maxLength: 40 } },
   },
   required: ['summary', 'suggestions'],
   additionalProperties: false,
@@ -182,6 +182,24 @@ export function buildAiCompletionRequest(
     // Kept for users with an older cached Qwen3 model. Qwen2.5 does not have
     // a thinking stage and therefore receives no model-specific extra field.
     ...(modelId.startsWith('Qwen3-') ? { extra_body: { enable_thinking: false } } : {}),
+  };
+}
+
+export function attachAiEnhancement(
+  fallback: AiFateReport,
+  enhancement: AiReportEnhancement,
+  modelId: string,
+  generatedAt = new Date().toISOString(),
+): AiFateReport {
+  return {
+    ...fallback,
+    mode: 'ai',
+    aiEnhancement: {
+      summary: enhancement.summary,
+      suggestions: enhancement.suggestions,
+      modelId,
+      generatedAt,
+    },
   };
 }
 
@@ -234,15 +252,9 @@ export async function generateAiReport(
     onProgress({ phase: 'validating', message: '正在驗證報告格式…', generatedCharacters: content.length });
     const enhancement = parseAiReportEnhancement(content);
     const fallback = generateFallbackReport(input);
-    const focusAnalysis = fallback.focusAnalysis.map((focus, index) => index === 0
-      ? { ...focus, suggestions: [...enhancement.suggestions, ...focus.suggestions].slice(0, 3) }
-      : focus);
-    return {
-      ...fallback,
-      summary: enhancement.summary,
-      focusAnalysis,
-      mode: 'ai',
-    };
+    // Keep deterministic content unchanged. AI text is stored separately so
+    // the UI can show exactly which words came from the local model.
+    return attachAiEnhancement(fallback, enhancement, loadedModelId ?? DEFAULT_LOCAL_MODEL_ID);
   } catch (reason) {
     const message = reason instanceof Error ? reason.message : '';
     if (message.includes('AI_GENERATION_TIMEOUT') || message.includes('AI_STREAM_TIMEOUT')) {

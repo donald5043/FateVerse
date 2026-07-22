@@ -17,6 +17,11 @@ export const SYSTEM_PROMPT = `你是 FateVerse 的命理文化解讀助手。
 11. 內容保持精簡，整份報告控制在約 700 個繁體中文字內。
 只能輸出符合指定結構的 JSON，不得加入 Markdown code fence。`;
 
+const FOCUS_LABELS: Record<string, string> = {
+  personality: '個性', career: '工作', love: '感情', finance: '財務', family: '家庭',
+  relationships: '人際', direction: '人生方向', all: '全部',
+};
+
 export function buildReportUserPrompt(input: FateReportInput): string {
   return `請根據以下 FateReportInput 產生報告。不要重新計算任何欄位。缺少的月亮星座、上升星座、宮位或姓名資料應直接略過，不可補猜。
 
@@ -38,32 +43,32 @@ ${JSON.stringify(input)}`;
 
 function compactReportInput(input: FateReportInput) {
   return {
-    focus: input.userFocus,
-    bazi: {
-      dayMaster: input.bazi.dayMaster,
-      dayMasterElement: input.bazi.dayMasterElement,
-      pillars: input.bazi.pillars.map((pillar) => pillar.value),
-      strongestElements: input.fiveElements.strongest,
-      weakestElements: input.fiveElements.weakest,
+    關注主題: input.userFocus.map((focus) => FOCUS_LABELS[focus] ?? focus),
+    八字: {
+      日主: input.bazi.dayMaster,
+      日主五行: input.bazi.dayMasterElement,
+      四柱: input.bazi.pillars.map((pillar) => pillar.value),
+      相對突出五行: input.fiveElements.strongest,
+      相對較少五行: input.fiveElements.weakest,
     },
-    zodiac: { animal: input.zodiac.animal, traits: input.zodiac.positiveTraits.slice(0, 2) },
-    astrology: {
-      sunSign: input.astrology.sunSign,
-      moonSign: input.astrology.moonSign,
-      strengths: input.astrology.strengths.slice(0, 2),
+    生肖: { 動物: input.zodiac.animal, 正向特質: input.zodiac.positiveTraits.slice(0, 2) },
+    西洋占星: {
+      太陽星座: input.astrology.sunSign,
+      月亮星座: input.astrology.moonSign,
+      優勢: input.astrology.strengths.slice(0, 2),
     },
-    numerology: {
-      number: input.numerology.lifePathNumber,
-      title: input.numerology.title,
-      strengths: input.numerology.strengths.slice(0, 2),
+    生命靈數: {
+      數字: input.numerology.lifePathNumber,
+      主題: input.numerology.title,
+      優勢: input.numerology.strengths.slice(0, 2),
     },
-    ziwei: input.ziwei ? {
-      soul: input.ziwei.soul,
-      body: input.ziwei.body,
-      fiveElementsClass: input.ziwei.fiveElementsClass,
-      soulPalace: input.ziwei.palaces.find((palace) => palace.name === '命宮')?.majorStars.map((star) => star.name),
-      decadalPalace: input.ziwei.currentHoroscope.decadal.palaceName,
-      yearlyPalace: input.ziwei.currentHoroscope.yearly.palaceName,
+    紫微斗數: input.ziwei ? {
+      命主: input.ziwei.soul,
+      身主: input.ziwei.body,
+      五行局: input.ziwei.fiveElementsClass,
+      命宮主星: input.ziwei.palaces.find((palace) => palace.name === '命宮')?.majorStars.map((star) => star.name),
+      大限命宮: input.ziwei.currentHoroscope?.decadal.palaceName,
+      流年命宮: input.ziwei.currentHoroscope?.yearly.palaceName,
     } : undefined,
   };
 }
@@ -72,8 +77,10 @@ export function buildFastReportUserPrompt(input: FateReportInput): string {
   return `根據下列已計算資料，輸出一個很短的繁體中文 JSON。不要重算，不要加入其他欄位：
 {
   "summary": "最多70字的跨系統摘要",
-  "suggestions": ["最多25字的行動一", "最多25字的行動二"]
+  "suggestions": ["12至25字的行動一", "12至25字的行動二"]
 }
 第一個字必須是 {，最後一個字必須是 }。只輸出 JSON，不要 Markdown、解釋或思考過程。資料：
+摘要第一句寫兩個系統支持的共同傾向，第二句寫一個不同視角；直接描述傾向，不可使用「結論」、「影響」、「很重要」、「被接受」等空泛詞。
+兩項建議不可重複摘要，每項12至25字，必須以「記錄、安排、確認、拆分、練習、比較」其中一個動詞開頭；至少包含「本週、三次、30分鐘」其中一個可查核條件，不可叫使用者選擇或相信某種命理。
 ${JSON.stringify(compactReportInput(input))}`;
 }

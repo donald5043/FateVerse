@@ -17,8 +17,12 @@ describe('報告', () => {
   });
   it('拒絕無效 WebLLM JSON', () => expect(() => parseAiReport('{bad')).toThrow('輕量模式'));
   it('驗證手機快速模式的短篇 AI 增強 JSON', () => {
-    const result = parseAiReportEnhancement(JSON.stringify({ summary: '摘要', suggestions: ['行動一', '行動二'] }));
+    const result = parseAiReportEnhancement(JSON.stringify({ summary: '這是一段完整且清楚的跨系統摘要內容', suggestions: ['記錄本週三次專注工作的時段', '安排週末半小時回顧完成事項'] }));
     expect(result.suggestions).toHaveLength(2);
+  });
+  it('拒絕模型照抄提示指令的假內容', () => {
+    const leaked = JSON.stringify({ summary: '摘要第一句寫共同傾向，摘要第二句寫差異', suggestions: ['12至25字的行動一', '12至25字的行動二'] });
+    expect(() => parseAiReportEnhancement(leaked)).toThrow('格式無法驗證');
   });
   it('缺少姓名與完整星盤仍可產生 fallback', () => {
     const report = generateFallbackReport(input);

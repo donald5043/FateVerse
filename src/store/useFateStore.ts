@@ -20,6 +20,7 @@ interface FateState {
   model: ModelState;
   uiTheme: 'dark' | 'system';
   setProfile: (profileInput: ProfileInput, reportInput: FateReportInput, report: AiFateReport) => void;
+  setReportData: (reportInput: FateReportInput, report: AiFateReport) => void;
   setReport: (report: AiFateReport) => void;
   setOcrText: (ocrText: string) => void;
   selectFortune: (selectedFortune?: FortuneStick) => void;
@@ -39,6 +40,7 @@ export const useFateStore = create<FateState>((set) => ({
   model: initialModel,
   uiTheme: 'dark',
   setProfile: (profileInput, reportInput, report) => set({ profileInput, reportInput, report }),
+  setReportData: (reportInput, report) => set({ reportInput, report }),
   setReport: (report) => set({ report }),
   setOcrText: (ocrText) => set({ ocrText }),
   selectFortune: (selectedFortune) => set({ selectedFortune }),

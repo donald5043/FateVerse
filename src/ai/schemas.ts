@@ -12,9 +12,16 @@ export const aiFateReportSchema = z.object({
   cautions: z.array(z.string()),
 });
 
+const PROMPT_LEAK_PATTERNS = ['摘要第一句', '摘要第二句', '12至25字', '行動一', '行動二', '指定 JSON'];
+
 export const aiReportEnhancementSchema = z.object({
   summary: z.string().min(1).max(180),
-  suggestions: z.array(z.string().min(1).max(80)).length(2),
+  suggestions: z.array(z.string().min(8).max(80)).length(2),
+}).superRefine((value, context) => {
+  const output = [value.summary, ...value.suggestions].join('\n');
+  if (PROMPT_LEAK_PATTERNS.some((pattern) => output.includes(pattern))) {
+    context.addIssue({ code: 'custom', message: '模型輸出包含提示指令' });
+  }
 });
 
 export type AiReportEnhancement = z.infer<typeof aiReportEnhancementSchema>;
