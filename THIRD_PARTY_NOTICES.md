@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | React、React DOM、React Router | UI 與路由 | MIT |
 | Vite | 前端建置 | MIT |
+| vite-plugin-pwa / Workbox | PWA 建置、更新提示與離線快取 | MIT |
 | Tailwind CSS | 樣式系統 | MIT |
 | Zustand | 狀態管理 | MIT |
 | lunar-javascript | 公農曆與四柱計算 | MIT |
@@ -34,6 +35,7 @@ TypeScript、ESLint、Prettier、Vitest、Testing Library、PostCSS、Autoprefix
 ## FateVerse 示範資料
 
 - `public/data/fortune-sticks/*.json`：FateVerse 自編格式示範，不是特定廟宇正式籤文，CC BY 4.0。
+- `public/data/fortune-sticks/user-samples.json`：使用者提供照片的短篇籤文轉錄；每筆來源與解讀範圍標示於資料內，不併入 FateVerse 自編資料授權聲明。
 - `public/data/daily-guidance.json`：FateVerse 自編自我反思卡，CC BY 4.0。
 - 生肖、星座、生命靈數、姓名示範內容與現代化報告模板：FateVerse 自編基礎內容，CC BY 4.0。
 

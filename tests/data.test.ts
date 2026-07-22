@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import dailyCards from '../public/data/daily-guidance.json';
 import guanyinSticks from '../public/data/fortune-sticks/guanyin-100.json';
 import jiaziSticks from '../public/data/fortune-sticks/sixty-jiazi.json';
+import userSamples from '../public/data/fortune-sticks/user-samples.json';
 
 describe('靜態資料契約', () => {
   it('今日指引至少 30 張且 id 唯一', () => {
@@ -21,5 +22,11 @@ describe('靜態資料契約', () => {
       expect(stick.actions.length).toBeGreaterThan(0);
       expect(stick.risks.length).toBeGreaterThan(0);
     });
+  });
+
+  it('照片收錄樣本保留逐字籤文與來源說明', () => {
+    expect(userSamples).toHaveLength(1);
+    expect(userSamples[0].poem).toContain('舉頭三尺有神明');
+    expect(userSamples[0].dataSource.notes).toContain('照片');
   });
 });

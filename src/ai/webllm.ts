@@ -1,17 +1,10 @@
-import type { MLCEngine } from '@mlc-ai/web-llm';
-import type { AiFateReport, FateReportInput, LocalModelOption } from '../types/fate';
+import type { MLCEngineInterface } from '@mlc-ai/web-llm';
+import type { AiFateReport, FateReportInput } from '../types/fate';
 import { buildReportUserPrompt, SYSTEM_PROMPT } from './prompts';
 import { parseAiReport } from './schemas';
 
-export const LOCAL_MODELS: LocalModelOption[] = [{
-  id: 'Qwen3-0.6B-q4f16_1-MLC',
-  name: 'Qwen3 0.6B（WebLLM）',
-  approximateSize: '約 650 MB（依瀏覽器快取與版本而異）',
-  recommendedMemory: '建議至少 4 GB 系統記憶體、約 1.5 GB 可用 GPU 記憶體',
-  description: 'WebLLM 預建清單中的小型中文模型，適合短篇結構化整理；輸出品質仍可能不穩定。',
-}];
-
-let engine: MLCEngine | null = null;
+let engine: MLCEngineInterface | null = null;
+let engineWorker: Worker | null = null;
 let cancelRequested = false;
 
 export async function detectWebGPU(): Promise<{ supported: boolean; reason: string }> {
@@ -28,28 +21,35 @@ export async function loadLocalModel(modelId: string, onProgress: (progress: num
   const support = await detectWebGPU();
   if (!support.supported) throw new Error(support.reason);
   cancelRequested = false;
+  let nextWorker: Worker | null = null;
   try {
     const webllm = await import('@mlc-ai/web-llm');
-    engine = await webllm.CreateMLCEngine(modelId, {
+    nextWorker = new Worker(new URL('./webllm-worker.ts', import.meta.url), { type: 'module' });
+    engineWorker = nextWorker;
+    engine = await webllm.CreateWebWorkerMLCEngine(nextWorker, modelId, {
       initProgressCallback: (report) => {
         if (cancelRequested) throw new Error('MODEL_LOAD_CANCELLED');
         onProgress(Math.round(report.progress * 100), report.text || '正在載入本地模型…');
       },
       logLevel: 'WARN',
     });
-    if (cancelRequested) { await engine.unload(); engine = null; throw new Error('MODEL_LOAD_CANCELLED'); }
+    if (cancelRequested) { await engine.unload(); engine = null; nextWorker.terminate(); engineWorker = null; throw new Error('MODEL_LOAD_CANCELLED'); }
   } catch (reason) {
+    nextWorker?.terminate();
+    if (engineWorker === nextWorker) engineWorker = null;
     engine = null;
-    if (reason instanceof Error && reason.message.includes('MODEL_LOAD_CANCELLED')) throw new Error('已取消模型載入，網站維持輕量模式。');
+    if (cancelRequested || (reason instanceof Error && reason.message.includes('MODEL_LOAD_CANCELLED'))) throw new Error('已取消模型載入，網站維持輕量模式。');
     throw new Error('本地模型載入失敗，已切回輕量模式。請確認裝置記憶體與網路後再試。');
   }
 }
 
-export function cancelModelLoad(): void { cancelRequested = true; }
+export function cancelModelLoad(): void { cancelRequested = true; engineWorker?.terminate(); engineWorker = null; }
 export function isModelReady(): boolean { return engine !== null; }
+export function cancelAiGeneration(): void { engine?.interruptGenerate(); }
 
 export async function clearModelCache(modelId: string): Promise<void> {
   if (engine) { await engine.unload(); engine = null; }
+  engineWorker?.terminate(); engineWorker = null;
   const { deleteModelAllInfoInCache } = await import('@mlc-ai/web-llm');
   await deleteModelAllInfoInCache(modelId);
 }

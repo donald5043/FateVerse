@@ -10,11 +10,12 @@ import { TOPIC_LABELS } from '../utils/constants';
 
 type FortuneSystem = 'sixty-jiazi' | 'guanyin-100' | 'custom';
 type OcrState = 'idle' | 'initializing' | 'loading' | 'recognizing' | 'done' | 'error' | 'cancelled';
+type OcrLayout = 'vertical' | 'horizontal';
 
 const systems: { value: FortuneSystem; label: string; note: string }[] = [
   { value: 'sixty-jiazi', label: '六十甲子籤', note: '目前為 3 筆自編示範' },
   { value: 'guanyin-100', label: '觀音一百籤', note: '目前為 3 筆格式示範' },
-  { value: 'custom', label: '其他／不確定', note: '搜尋全部示範資料' },
+  { value: 'custom', label: '全部已收錄（推薦）', note: '跨資料集搜尋，含照片收錄樣本' },
 ];
 const topics: FortuneTopic[] = ['overall', 'career', 'jobChange', 'love', 'wealth', 'family', 'health', 'study', 'travel', 'custom'];
 const imageModes: { value: ImageMode; label: string }[] = [{ value: 'original', label: '原圖' }, { value: 'grayscale', label: '灰階' }, { value: 'contrast', label: '高對比' }, { value: 'binary', label: '黑白二值化' }];
@@ -22,9 +23,10 @@ const imageModes: { value: ImageMode; label: string }[] = [{ value: 'original', 
 function release(url?: string) { if (url) URL.revokeObjectURL(url); }
 
 export default function FortunePage() {
-  const [system, setSystem] = useState<FortuneSystem>('sixty-jiazi');
+  const [system, setSystem] = useState<FortuneSystem>('custom');
   const [preview, setPreview] = useState<PreparedImage>();
   const [mode, setMode] = useState<ImageMode>('original');
+  const [ocrLayout, setOcrLayout] = useState<OcrLayout>('vertical');
   const [ocrState, setOcrState] = useState<OcrState>('idle');
   const [progress, setProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState('尚未開始辨識');
@@ -32,7 +34,10 @@ export default function FortunePage() {
   const [matches, setMatches] = useState<FortuneMatch[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
   const originalCanvas = useRef<HTMLCanvasElement | undefined>(undefined);
+  const previewUrlRef = useRef<string | undefined>(undefined);
   const workerRef = useRef<Worker | null>(null);
+  const workerLanguageRef = useRef<string | null>(null);
+  const cancelRequestedRef = useRef(false);
   const ocrText = useFateStore((state) => state.ocrText);
   const setOcrText = useFateStore((state) => state.setOcrText);
   const selected = useFateStore((state) => state.selectedFortune);
@@ -42,10 +47,11 @@ export default function FortunePage() {
   const customQuestion = useFateStore((state) => state.customQuestion);
   const setCustomQuestion = useFateStore((state) => state.setCustomQuestion);
 
-  useEffect(() => () => { release(preview?.objectUrl); void workerRef.current?.terminate(); }, [preview?.objectUrl]);
+  useEffect(() => () => { release(previewUrlRef.current); void workerRef.current?.terminate(); }, []);
 
   const replacePreview = (next: PreparedImage) => {
-    release(preview?.objectUrl);
+    release(previewUrlRef.current);
+    previewUrlRef.current = next.objectUrl;
     setPreview(next);
   };
 
@@ -84,53 +90,84 @@ export default function FortunePage() {
   };
 
   const clearImage = async () => {
-    release(preview?.objectUrl); setPreview(undefined); originalCanvas.current = undefined; setMode('original'); setProgress(0); setOcrState('idle'); setStatusMessage('尚未開始辨識');
-    if (workerRef.current) { await workerRef.current.terminate(); workerRef.current = null; }
+    release(previewUrlRef.current); previewUrlRef.current = undefined; setPreview(undefined); originalCanvas.current = undefined; setMode('original'); setProgress(0); setOcrState('idle'); setStatusMessage('尚未開始辨識');
+    if (workerRef.current) { await workerRef.current.terminate(); workerRef.current = null; workerLanguageRef.current = null; }
+  };
+
+  const findMatches = async (text: string) => {
+    if (!text.trim() || loadingMatches) return [];
+    setLoadingMatches(true); setError(''); selectFortune(undefined);
+    try {
+      const sticks = await loadFortuneSticks(system);
+      const next = matchFortuneSticks(text, sticks);
+      setMatches(next);
+      if (!next.length) setError('尚未在小型資料庫中找到相似籤詩。你仍可修改 OCR 文字後重試；未收錄的籤不會被假裝成其他籤。');
+      return next;
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : '籤詩資料載入失敗。');
+      return [];
+    } finally {
+      setLoadingMatches(false);
+    }
   };
 
   const runOcr = async () => {
-    if (!preview || workerRef.current) return;
+    if (!preview || ['initializing', 'loading', 'recognizing'].includes(ocrState)) return;
+    cancelRequestedRef.current = false;
     setError(''); setProgress(0); setOcrState('initializing'); setStatusMessage('正在初始化 OCR…');
     try {
       const tesseract = await import('tesseract.js');
-      const worker = await tesseract.createWorker('chi_tra', tesseract.OEM.LSTM_ONLY, {
-        logger: (message: LoggerMessage) => {
-          if (message.status.includes('loading')) { setOcrState('loading'); setStatusMessage('正在下載或載入繁體中文語言資料…'); }
-          else if (message.status.includes('recognizing')) { setOcrState('recognizing'); setStatusMessage('正在辨識籤詩文字…'); }
-          if (typeof message.progress === 'number') setProgress(Math.round(message.progress * 100));
-        },
-      });
-      workerRef.current = worker;
+      const isVertical = ocrLayout === 'vertical';
+      const language = isVertical ? 'chi_tra_vert' : 'chi_tra';
+      if (workerRef.current && workerLanguageRef.current !== language) {
+        await workerRef.current.terminate();
+        workerRef.current = null;
+        workerLanguageRef.current = null;
+      }
+      let worker = workerRef.current;
+      if (!worker) {
+        worker = await tesseract.createWorker(language, tesseract.OEM.LSTM_ONLY, {
+          logger: (message: LoggerMessage) => {
+            if (message.status.includes('loading')) { setOcrState('loading'); setStatusMessage('正在下載或載入繁體中文語言資料…'); }
+            else if (message.status.includes('recognizing')) { setOcrState('recognizing'); setStatusMessage('正在辨識籤詩文字…'); }
+            if (typeof message.progress === 'number') setProgress(Math.round(message.progress * 100));
+          },
+        });
+        if (cancelRequestedRef.current) { await worker.terminate(); throw new Error('OCR_CANCELLED'); }
+        workerRef.current = worker;
+        workerLanguageRef.current = language;
+      }
+      await worker.setParameters({ tessedit_pageseg_mode: isVertical ? tesseract.PSM.SINGLE_BLOCK_VERT_TEXT : tesseract.PSM.AUTO });
       const result = await worker.recognize(preview.canvas);
-      setOcrText(result.data.text.trim());
-      setOcrState('done'); setProgress(100); setStatusMessage('辨識完成。請先校對文字，再進行籤詩比對。');
-      await worker.terminate(); workerRef.current = null;
+      const recognizedText = result.data.text
+        .replace(/([\p{Script=Han}])\s+(?=[\p{Script=Han}])/gu, '$1')
+        .replace(/[ \t]+/g, ' ')
+        .trim();
+      setOcrText(recognizedText);
+      const next = await findMatches(recognizedText);
+      setOcrState('done'); setProgress(100);
+      setStatusMessage(next.length ? `辨識完成，已找到 ${next.length} 筆候選；請校對後選擇。` : '辨識完成，但資料庫尚無可靠候選；可校對文字後重新比對。');
     } catch (reason) {
-      workerRef.current = null; setOcrState('error'); setError('OCR 辨識失敗。請確認網路後重試，或直接手動輸入籤文。'); setStatusMessage(reason instanceof Error ? reason.message : '辨識程序無法完成。');
+      await workerRef.current?.terminate(); workerRef.current = null; workerLanguageRef.current = null;
+      if (reason instanceof Error && reason.message.includes('OCR_CANCELLED')) return;
+      setOcrState('error'); setError('OCR 辨識失敗。請確認網路後重試，或直接手動輸入籤文。'); setStatusMessage(reason instanceof Error ? reason.message : '辨識程序無法完成。');
     }
   };
 
   const cancelOcr = async () => {
-    await workerRef.current?.terminate(); workerRef.current = null; setOcrState('cancelled'); setStatusMessage('已取消 OCR。你可以重新開始或手動輸入。'); setProgress(0);
+    cancelRequestedRef.current = true; await workerRef.current?.terminate(); workerRef.current = null; workerLanguageRef.current = null; setOcrState('cancelled'); setStatusMessage('已取消 OCR。你可以重新開始或手動輸入。'); setProgress(0);
   };
 
   const search = async () => {
     if (!ocrText.trim() || loadingMatches) { if (!ocrText.trim()) setError('請先輸入或辨識籤號、標題或籤文。'); return; }
-    setLoadingMatches(true); setError(''); selectFortune(undefined);
-    try {
-      const sticks = await loadFortuneSticks(system);
-      const next = matchFortuneSticks(ocrText, sticks);
-      setMatches(next);
-      if (!next.length) setError('找不到相似籤詩。可修改辨識文字、只輸入籤號，或切換「其他／不確定」再搜尋。');
-    } catch (reason) { setError(reason instanceof Error ? reason.message : '籤詩資料載入失敗。'); }
-    finally { setLoadingMatches(false); }
+    await findMatches(ocrText);
   };
 
   const topicInterpretation = (stick: FortuneStick) => topic === 'custom' ? `${stick.interpretations.overall} 針對「${customQuestion || '你的問題'}」，建議先把問題拆成可觀察的事實與下一個小步驟。` : stick.interpretations[topic] ?? stick.interpretations.overall;
 
   return (
     <section className="page-container page-section">
-      <div className="max-w-3xl"><p className="eyebrow">Fortune Lens</p><h1 className="display-title mt-3">拍籤解籤</h1><p className="mt-5 muted">圖片先在瀏覽器縮小與處理，OCR 文字由你確認後，才與內建示範籤詩進行模糊比對。</p></div>
+      <div className="max-w-3xl"><p className="eyebrow">Fortune Lens</p><h1 className="display-title mt-3">拍籤解籤</h1><p className="mt-5 muted">針對常見直排籤詩使用專用繁體中文 OCR，辨識後自動與已收錄資料逐句容錯比對；文字仍可由你校正。</p></div>
       <div className="mt-8 grid gap-7 lg:grid-cols-[0.82fr_1.18fr]">
         <div className="space-y-6">
           <article className="glass-card p-5 sm:p-6"><span className="eyebrow">01 籤詩來源</span><div className="mt-4 space-y-2">{systems.map((item) => <label key={item.value} className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition ${system === item.value ? 'border-gold/60 bg-gold/10' : 'border-white/10 bg-white/[0.03]'}`}><input type="radio" name="system" value={item.value} checked={system === item.value} onChange={() => { setSystem(item.value); setMatches([]); selectFortune(undefined); }} /><span><strong className="block text-cream">{item.label}</strong><span className="text-xs text-mist">{item.note}</span></span></label>)}</div></article>
@@ -140,14 +177,14 @@ export default function FortunePage() {
         </div>
 
         <div className="space-y-6">
-          <article className="glass-card p-5 sm:p-6"><div className="flex items-center justify-between gap-3"><span className="eyebrow">03 OCR 與文字校對</span>{['initializing','loading','recognizing'].includes(ocrState) && <button className="text-sm text-mist hover:text-cream" type="button" onClick={() => void cancelOcr()}><X className="inline" size={16} /> 取消</button>}</div><div className="mt-4 rounded-xl bg-white/5 p-3 text-sm text-mist" role="status"><div className="flex justify-between gap-3"><span>{statusMessage}</span><span>{progress}%</span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full bg-gold transition-all" style={{ width: `${progress}%` }} /></div></div><button className="btn-primary mt-4 w-full" type="button" onClick={() => void runOcr()} disabled={!preview || ['initializing','loading','recognizing'].includes(ocrState)}><ScanLine size={18} />{ocrState === 'done' ? '重新 OCR 辨識' : '開始 OCR 辨識'}</button><label className="mt-5 block"><span className="label">辨識文字（可手動修正）</span><textarea className="input-field min-h-40 resize-y" value={ocrText} onChange={(e) => setOcrText(e.target.value)} placeholder="也可以直接輸入籤號、標題，或至少前兩句籤文。" /></label><button className="btn-secondary mt-3 w-full" type="button" disabled={loadingMatches} onClick={() => void search()}>{loadingMatches ? '正在比對…' : '比對示範籤詩'}</button></article>
+          <article className="glass-card p-5 sm:p-6"><div className="flex items-center justify-between gap-3"><span className="eyebrow">03 OCR 與文字校對</span>{['initializing','loading','recognizing'].includes(ocrState) && <button className="text-sm text-mist hover:text-cream" type="button" onClick={() => void cancelOcr()}><X className="inline" size={16} /> 取消</button>}</div><div className="mt-4"><span className="label">籤詩排版</span><div className="mt-2 grid grid-cols-2 gap-2"><button type="button" className={`chip justify-center ${ocrLayout === 'vertical' ? 'chip-active' : ''}`} onClick={() => setOcrLayout('vertical')}>直排（常見）</button><button type="button" className={`chip justify-center ${ocrLayout === 'horizontal' ? 'chip-active' : ''}`} onClick={() => setOcrLayout('horizontal')}>橫排</button></div><p className="mt-2 text-xs leading-5 text-mist">像你提供的照片請選直排；選錯排版會大幅降低中文辨識率。</p></div><div className="mt-4 rounded-xl bg-white/5 p-3 text-sm text-mist" role="status" aria-live="polite"><div className="flex justify-between gap-3"><span>{statusMessage}</span><span>{progress}%</span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full bg-gold transition-all" style={{ width: `${progress}%` }} /></div></div><button className="btn-primary mt-4 w-full" type="button" onClick={() => void runOcr()} disabled={!preview || ['initializing','loading','recognizing'].includes(ocrState)}><ScanLine size={18} />{ocrState === 'done' ? '重新 OCR 並比對' : '開始 OCR 並自動比對'}</button><label className="mt-5 block"><span className="label">辨識文字（可手動修正）</span><textarea className="input-field min-h-40 resize-y" value={ocrText} onChange={(e) => setOcrText(e.target.value)} placeholder="也可以直接輸入籤號、標題，或至少前兩句籤文。" /></label><button className="btn-secondary mt-3 w-full" type="button" disabled={loadingMatches} onClick={() => void search()}>{loadingMatches ? '正在比對…' : '用校正文字重新比對'}</button></article>
           {error && <div className="flex items-start gap-3 rounded-2xl border border-rose-300/20 bg-rose-300/10 p-4 text-sm text-rose-100" role="alert"><AlertCircle className="mt-0.5 shrink-0" size={18} />{error}</div>}
           {matches.length > 0 && <article className="glass-card p-5 sm:p-6"><span className="eyebrow">04 候選籤詩</span><div className="mt-4 space-y-3">{matches.map(({ item, confidence }) => <div key={item.id} className={`rounded-2xl border p-4 ${selected?.id === item.id ? 'border-gold/60 bg-gold/[0.08]' : 'border-white/10 bg-white/[0.025]'}`}><div className="flex items-start justify-between gap-3"><div><span className="text-xs text-gold">第 {item.number} 籤 · {item.level}</span><h3 className="mt-1 font-serif text-lg font-semibold">{item.title}</h3></div><span className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-mist">符合度 {Math.round(confidence * 100)}%</span></div><p className="mt-3 text-sm leading-6 text-mist">{item.poem.join('　')}</p><button className="btn-secondary mt-3 w-full" type="button" onClick={() => selectFortune(item)}>{selected?.id === item.id ? <><Check size={17} />已選擇</> : '選擇這支籤'}</button></div>)}</div></article>}
         </div>
       </div>
 
       {selected && <article className="glass-card mt-8 overflow-hidden"><div className="border-b border-white/10 p-6 sm:p-8"><span className="eyebrow">05 確認主題與解籤</span><div className="mt-5 flex flex-wrap gap-2">{topics.map((item) => <button className={`chip ${topic === item ? 'chip-active' : ''}`} type="button" onClick={() => setTopic(item)} key={item}>{TOPIC_LABELS[item]}</button>)}</div>{topic === 'custom' && <label className="mt-4 block max-w-2xl"><span className="label">想問的問題</span><textarea className="input-field min-h-24" value={customQuestion} onChange={(e) => setCustomQuestion(e.target.value)} placeholder="請避免輸入可識別他人的敏感資料。" /></label>}</div>
-        <div className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[0.72fr_1fr]"><div><span className="text-sm text-gold">{selected.sourceName}</span><h2 className="mt-2 font-serif text-3xl font-semibold">第 {selected.number} 籤 · {selected.title}</h2><span className="mt-3 inline-block rounded-full border border-gold/30 px-3 py-1 text-sm text-gold">{selected.level}</span><blockquote className="mt-6 space-y-2 border-l border-gold/40 pl-5 font-serif text-lg leading-8 text-cream">{selected.poem.map((line) => <p key={line}>{line}</p>)}</blockquote></div><div className="space-y-5"><section><h3 className="font-semibold text-gold">傳統籤意／資料原文</h3><p className="mt-2 leading-7 text-mist">此筆為自編示範籤，沒有冒用傳統籤意。原始籤文如左，資料中的典故說明為：{selected.story ?? '未提供典故。'}</p></section><section><h3 className="font-semibold text-gold">現代化整理</h3><p className="mt-2 leading-7 text-mist">白話解釋：{selected.summary}</p><p className="mt-2 leading-7 text-mist">你詢問的主題：{TOPIC_LABELS[topic]}。{topicInterpretation(selected)}</p></section><section><h3 className="font-semibold text-gold">可採取的行動</h3><ul className="mt-2 space-y-2 text-mist">{selected.actions.map((item) => <li key={item}>• {item}</li>)}</ul></section><section><h3 className="font-semibold text-gold">需要留意的風險</h3><ul className="mt-2 space-y-2 text-mist">{selected.risks.map((item) => <li key={item}>• {item}</li>)}</ul></section><section className="rounded-xl bg-white/5 p-4 text-xs leading-5 text-mist"><strong className="text-cream">原始資料來源：</strong>{selected.dataSource.sourceName} · {selected.dataSource.license ?? '未標示授權'}<br />{selected.dataSource.notes}<br /><strong className="text-cream">解讀模式：</strong>規則模板解讀</section></div></div>
+        <div className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[0.72fr_1fr]"><div><span className="text-sm text-gold">{selected.sourceName}</span><h2 className="mt-2 font-serif text-3xl font-semibold">第 {selected.number} 籤 · {selected.title}</h2><span className="mt-3 inline-block rounded-full border border-gold/30 px-3 py-1 text-sm text-gold">{selected.level}</span><blockquote className="mt-6 space-y-2 border-l border-gold/40 pl-5 font-serif text-lg leading-8 text-cream">{selected.poem.map((line) => <p key={line}>{line}</p>)}</blockquote></div><div className="space-y-5"><section><h3 className="font-semibold text-gold">籤文與資料說明</h3><p className="mt-2 leading-7 text-mist">{selected.story ?? '未提供籤文背景。'}</p></section><section><h3 className="font-semibold text-gold">現代化整理</h3><p className="mt-2 leading-7 text-mist">白話解釋：{selected.summary}</p><p className="mt-2 leading-7 text-mist">你詢問的主題：{TOPIC_LABELS[topic]}。{topicInterpretation(selected)}</p></section><section><h3 className="font-semibold text-gold">可採取的行動</h3><ul className="mt-2 space-y-2 text-mist">{selected.actions.map((item) => <li key={item}>• {item}</li>)}</ul></section><section><h3 className="font-semibold text-gold">需要留意的風險</h3><ul className="mt-2 space-y-2 text-mist">{selected.risks.map((item) => <li key={item}>• {item}</li>)}</ul></section><section className="rounded-xl bg-white/5 p-4 text-xs leading-5 text-mist"><strong className="text-cream">原始資料來源：</strong>{selected.dataSource.sourceName} · {selected.dataSource.license ?? '未標示授權'}<br />{selected.dataSource.notes}<br /><strong className="text-cream">解讀模式：</strong>規則模板解讀</section></div></div>
         {topic === 'health' && <div className="px-6 pb-6 sm:px-8"><Disclaimer health /></div>}
       </article>}
       <div className="mt-8"><Disclaimer /></div>

@@ -1,5 +1,6 @@
 import { AlertCircle, CheckCircle2, Cpu, Database, Download, LoaderCircle, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { LOCAL_MODELS } from '../ai/model-options';
 import { useFateStore } from '../store/useFateStore';
 import { clearLocalData, defaultPreferences, loadPreferences, savePreferences, type LocalPreferences } from '../utils/storage';
 
@@ -7,7 +8,7 @@ export default function SettingsPage() {
   const [preferences, setPreferences] = useState<LocalPreferences>(defaultPreferences);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
-  const [modelOption, setModelOption] = useState<{ id: string; name: string; approximateSize: string; recommendedMemory: string; description: string }>();
+  const [modelOption] = useState(LOCAL_MODELS[0]);
   const model = useFateStore((state) => state.model);
   const setModel = useFateStore((state) => state.setModel);
   const clearSession = useFateStore((state) => state.clearSession);
@@ -15,8 +16,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     void loadPreferences().then((value) => { setPreferences(value); setUiTheme(value.theme); }).catch(() => setError('無法讀取 IndexedDB 偏好設定；本次仍可使用，但設定可能不會保存。'));
-    void import('../ai/webllm').then(async ({ LOCAL_MODELS, detectWebGPU }) => {
-      setModelOption(LOCAL_MODELS[0]);
+    void import('../ai/webllm').then(async ({ detectWebGPU }) => {
       const support = await detectWebGPU();
       setModel({ supported: support.supported, message: support.reason });
     }).catch(() => setModel({ supported: false, status: 'error', message: 'WebLLM 模組載入失敗。' }));

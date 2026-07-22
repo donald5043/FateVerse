@@ -18,13 +18,29 @@ const labels: Record<(typeof focusOptions)[number], string> = { personality: '�
 export default function ProfilePage() {
   const navigate = useNavigate();
   const setProfile = useFateStore((state) => state.setProfile);
-  const [form, setForm] = useState<ProfileInput>({ name: '', birthDate: '', birthTime: '', gender: 'other', region: '臺灣', timezone: 'Asia/Taipei', city: '', focus: ['all'] });
+  const previousProfile = useFateStore((state) => state.profileInput);
+  const [form, setForm] = useState<ProfileInput>(() => previousProfile ?? { name: '', birthDate: '', birthTime: '', gender: 'other', region: '臺灣', timezone: 'Asia/Taipei', city: '', focus: ['all'] });
   const [manualStrokes, setManualStrokes] = useState<Record<string, number>>({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const nameCharacters = useMemo(() => [...form.name.trim().replace(/\s+/g, '')], [form.name]);
+  const birthPreview = useMemo(() => {
+    if (!form.birthDate) return undefined;
+    const [year, month, day] = form.birthDate.split('-').map(Number);
+    const dateLabel = Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day) ? `${year} 年 ${month} 月 ${day} 日` : form.birthDate;
+    if (!form.birthTime) return { dateLabel, message: '日期已收到；再填出生時間即可試算四柱。' };
+    try {
+      const bazi = calculateBazi({ birthDate: form.birthDate, birthTime: form.birthTime, timezone: form.timezone });
+      return { dateLabel, message: `已套用 ${form.timezone}，四柱試算：${bazi.pillars.map((pillar) => `${pillar.label}${pillar.value}`).join('・')}` };
+    } catch (reason) {
+      return { dateLabel, message: reason instanceof Error ? reason.message : '目前無法試算這組出生資料。' };
+    }
+  }, [form.birthDate, form.birthTime, form.timezone]);
 
-  const update = <K extends keyof ProfileInput>(key: K, value: ProfileInput[K]) => setForm((current) => ({ ...current, [key]: value }));
+  const update = <K extends keyof ProfileInput>(key: K, value: ProfileInput[K]) => {
+    setError('');
+    setForm((current) => ({ ...current, [key]: value }));
+  };
   const toggleFocus = (value: string) => setForm((current) => {
     if (value === 'all') return { ...current, focus: ['all'] };
     const withoutAll = current.focus.filter((item) => item !== 'all');
@@ -37,7 +53,8 @@ export default function ProfilePage() {
     setError('');
     setBusy(true);
     try {
-      if (!form.name.trim()) throw new Error('請填寫姓名。');
+      if (!form.birthDate) throw new Error('請先選擇出生日期。');
+      if (!form.birthTime) throw new Error('請填寫出生時間；若不確定，可先用最接近的時間試算。');
       if (!form.gender || !form.region.trim() || !form.timezone.trim()) throw new Error('請完成性別、出生地區與時區欄位。');
       if (!form.focus.length) throw new Error('請至少選擇一個想了解的主題。');
       const bazi = calculateBazi(form);
@@ -49,7 +66,7 @@ export default function ProfilePage() {
         zodiac: getZodiacResult(bazi.zodiac),
         astrology: calculateSunSign(form.birthDate),
         numerology: calculateNumerology(form.birthDate),
-        nameAnalysis: analyzeName(form.name, fiveElements.weakest, manualStrokes),
+        nameAnalysis: form.name.trim() ? analyzeName(form.name, fiveElements.weakest, manualStrokes) : undefined,
       };
       const report = generateFallbackReport(reportInput);
       setProfile(form, reportInput, report);
@@ -74,7 +91,7 @@ export default function ProfilePage() {
       <form onSubmit={submit} className="mt-7 grid items-start gap-7 lg:grid-cols-[1fr_0.72fr]" noValidate>
         <div className="glass-card space-y-6 p-5 sm:p-7">
           <div className="grid gap-5 sm:grid-cols-2">
-            <label className="sm:col-span-2"><span className="label">姓名 *</span><input className="input-field" value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="例：林安晨" autoComplete="name" required /></label>
+            <label className="sm:col-span-2"><span className="label">姓名（選填）</span><input className="input-field" value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="例：林安晨；留空仍可建立出生資料報告" autoComplete="name" /></label>
             <label><span className="label">出生日期 *</span><input className="input-field" type="date" min="1900-01-01" max="2100-12-31" value={form.birthDate} onChange={(e) => update('birthDate', e.target.value)} required /></label>
             <label><span className="label">出生時間 *</span><input className="input-field" type="time" value={form.birthTime} onChange={(e) => update('birthTime', e.target.value)} required /><span className="mt-1.5 block text-xs text-mist">採用所在地標準時間；第一版不猜測真太陽時。</span></label>
             <label><span className="label">命理排盤性別 *</span><select className="input-field" value={form.gender} onChange={(e) => update('gender', e.target.value as ProfileInput['gender'])}><option value="other">不指定／其他</option><option value="female">女性</option><option value="male">男性</option></select></label>
@@ -84,6 +101,7 @@ export default function ProfilePage() {
             <label><span className="label">經度（選填）</span><input className="input-field" type="number" min="-180" max="180" step="0.0001" value={form.longitude ?? ''} onChange={(e) => update('longitude', e.target.value ? Number(e.target.value) : undefined)} /></label>
             <label><span className="label">緯度（選填）</span><input className="input-field" type="number" min="-90" max="90" step="0.0001" value={form.latitude ?? ''} onChange={(e) => update('latitude', e.target.value ? Number(e.target.value) : undefined)} /></label>
           </div>
+          {birthPreview && <div className="rounded-xl border border-gold/25 bg-gold/[0.07] p-4" role="status" aria-live="polite"><p className="text-sm font-semibold text-gold">出生資料已生效：{birthPreview.dateLabel}</p><p className="mt-1.5 text-sm leading-6 text-mist">{birthPreview.message}</p></div>}
           {nameCharacters.length > 0 && <div><h2 className="label">姓名筆畫資料（選填修正）</h2><p className="mb-3 text-xs leading-5 text-mist">未輸入時使用少量示範現代筆畫；沒有資料的字不會偽造。手動值會在報告標示來源。</p><div className="flex flex-wrap gap-3">{nameCharacters.map((character, index) => <label key={`${character}-${index}`} className="flex items-center gap-2 rounded-xl border border-white/10 p-2"><span className="grid size-9 place-items-center rounded-lg bg-white/5 font-serif">{character}</span><input aria-label={`${character}的手動筆畫`} className="w-20 rounded-lg border border-white/10 bg-ink px-2 py-2" type="number" min="1" max="64" placeholder="筆畫" value={manualStrokes[character] ?? ''} onChange={(e) => setManualStrokes((current) => ({ ...current, [character]: Number(e.target.value) || 0 }))} /></label>)}</div></div>}
         </div>
         <aside className="glass-card p-5 sm:p-7 lg:sticky lg:top-24">
@@ -91,9 +109,9 @@ export default function ProfilePage() {
           <div className="mt-5 flex flex-wrap gap-2">{focusOptions.map((value) => <button key={value} type="button" onClick={() => toggleFocus(value)} className={`chip ${form.focus.includes(value) ? 'chip-active' : ''}`} aria-pressed={form.focus.includes(value)}>{labels[value]}</button>)}</div>
           <div className="mt-6 rounded-xl bg-white/[0.04] p-4 text-sm leading-6 text-mist"><p className="font-semibold text-cream">計算範圍</p><p className="mt-2">東方命理採 `lunar-javascript` 計算四柱；西方分析第一版只含太陽星座，不含月亮、上升與宮位。</p></div>
           {error && <div className="mt-5 flex items-start gap-2 rounded-xl border border-rose-300/20 bg-rose-300/10 p-3 text-sm text-rose-100" role="alert"><AlertCircle className="mt-0.5 shrink-0" size={17} />{error}</div>}
-          <button className="btn-primary mt-6 w-full" disabled={busy}>{busy ? '正在計算…' : '建立萬象報告'}<ArrowRight size={18} /></button>
+          <button className="btn-primary mt-6 w-full" type="submit" disabled={busy}>{busy ? '正在計算…' : '完成計算並查看報告'}<ArrowRight size={18} /></button>
         </aside>
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-ink/95 p-3 backdrop-blur lg:hidden"><button className="btn-primary w-full" disabled={busy}>{busy ? '正在計算…' : '建立萬象報告'}<ArrowRight size={18} /></button></div>
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-ink/95 p-3 backdrop-blur lg:hidden"><button className="btn-primary w-full" type="submit" disabled={busy}>{busy ? '正在計算…' : '完成計算並查看報告'}<ArrowRight size={18} /></button></div>
       </form>
     </section>
   );

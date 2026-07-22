@@ -15,8 +15,21 @@ const ZODIAC: Record<string, ZodiacResult> = {
   豬: { animal: '豬', branch: '亥', symbol: '包容與豐足', positiveTraits: ['真誠寬厚', '樂於分享', '享受生活'], blindSpots: ['可能不易拒絕', '需要留意資源界線'] },
 };
 
+const ZODIAC_ALIASES: Record<string, string> = {
+  龙: '龍',
+  马: '馬',
+  鸡: '雞',
+  猪: '豬',
+};
+
+export function normalizeZodiacAnimal(animal: string): string {
+  const clean = animal.trim();
+  return ZODIAC_ALIASES[clean] ?? clean;
+}
+
 export function getZodiacResult(animal: string): ZodiacResult {
-  const result = ZODIAC[animal];
-  if (!result) throw new Error('生肖基礎資料暫時無法取得。');
+  const canonicalAnimal = normalizeZodiacAnimal(animal);
+  const result = ZODIAC[canonicalAnimal];
+  if (!result) throw new Error(`無法辨識生肖「${animal || '空值'}」，請重新確認出生日期。`);
   return result;
 }

@@ -131,7 +131,7 @@ https://donald5043.github.io/FateVerse/
 4. 把資料加入對應 JSON，並更新 `public/sw.js`（若新增新檔）。
 5. 為完整文、OCR 錯字、籤號與查無結果加入 matcher 測試。
 
-目前兩份籤詩 JSON 各只有 3 筆 FateVerse 自編示範，並非特定廟宇正式籤本。
+目前兩份籤詩 JSON 各只有 3 筆 FateVerse 自編示範，另有使用者照片逐字轉錄的可追溯樣本；仍不是完整的廟宇正式籤本。
 
 ## 擴充基礎資料
 

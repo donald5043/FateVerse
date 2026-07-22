@@ -1,4 +1,4 @@
-import { BrainCircuit, ChevronRight, ListTree, RefreshCw, ShieldCheck, Sparkles } from 'lucide-react';
+import { BrainCircuit, ChevronRight, ListTree, RefreshCw, ShieldCheck, Sparkles, Square } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Disclaimer from '../components/common/Disclaimer';
@@ -23,6 +23,10 @@ export default function ReportPage() {
     catch (reason) { setReport(generateFallbackReport(input)); setAiError(reason instanceof Error ? reason.message : '本地 AI 報告產生失敗，已切回模板報告。'); }
     finally { setAiBusy(false); }
   };
+  const cancelAi = async () => {
+    const { cancelAiGeneration } = await import('../ai/webllm');
+    cancelAiGeneration();
+  };
   const views = [
     ['八字觀點', report.sections.bazi], ['生肖觀點', report.sections.zodiac], ['星座觀點', report.sections.astrology], ['生命靈數觀點', report.sections.numerology], ...(report.sections.name ? [['姓名觀點', report.sections.name]] : []),
   ];
@@ -43,7 +47,7 @@ export default function ReportPage() {
       <details className="glass-card mt-10 p-5"><summary className="cursor-pointer font-semibold text-cream">展開原始計算資料</summary><div className="mt-6 grid gap-6 md:grid-cols-2"><div><h3 className="font-semibold text-gold">四柱</h3><div className="mt-3 grid grid-cols-4 gap-2">{input.bazi.pillars.map((pillar) => <div key={pillar.label} className="rounded-xl bg-white/5 p-3 text-center"><span className="text-xs text-mist">{pillar.label}</span><p className="mt-1 font-serif text-xl">{pillar.value}</p><p className="mt-1 text-xs text-mist">{pillar.naYin} · {pillar.tenGod}</p></div>)}</div><p className="mt-3 text-sm text-mist">農曆：{input.bazi.lunarDate}｜節氣參考：{input.bazi.seasonalNode}｜真太陽時：未套用</p></div><div className="space-y-3 text-sm text-mist"><p><strong className="text-cream">生肖：</strong>{input.zodiac.animal}（{input.zodiac.branch}）</p><p><strong className="text-cream">太陽星座：</strong>{input.astrology.sunSign}；月亮、上升與相位未計算</p><p><strong className="text-cream">生命靈數：</strong>{input.numerology.birthDateDigits.join(' + ')} → {input.numerology.calculationSteps.join(' → ')} = {input.numerology.lifePathNumber}</p><p><strong className="text-cream">姓名筆畫來源：</strong>{input.nameAnalysis?.strokeNotice ?? '未提供姓名分析'}</p></div></div></details>
       <div className="mt-7"><Disclaimer health /></div>
       {aiError && <div className="mt-5 rounded-xl border border-rose-300/20 bg-rose-300/10 p-3 text-sm text-rose-100" role="alert">{aiError}</div>}
-      <div className="mt-7 flex flex-wrap gap-3"><Link className="btn-secondary" to="/profile"><RefreshCw size={17} />重新建立</Link>{model.status === 'ready' ? <button className="btn-primary" type="button" disabled={aiBusy} onClick={() => void generateWithAi()}><BrainCircuit size={17} />{aiBusy ? '本地 AI 整理中…' : '用本地 AI 重新整理'}</button> : <Link className="btn-primary" to="/settings">啟用本地 AI 增強</Link>}</div>
+      <div className="mt-7 flex flex-wrap gap-3"><Link className="btn-secondary" to="/profile"><RefreshCw size={17} />重新建立</Link>{model.status === 'ready' ? <><button className="btn-primary" type="button" disabled={aiBusy} onClick={() => void generateWithAi()}><BrainCircuit size={17} />{aiBusy ? '本地 AI 整理中…' : '用本地 AI 重新整理'}</button>{aiBusy && <button className="btn-secondary" type="button" onClick={() => void cancelAi()}><Square size={15} />停止生成</button>}</> : <Link className="btn-primary" to="/settings">啟用本地 AI 增強</Link>}</div>
     </section>
   );
 }

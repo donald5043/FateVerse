@@ -3,6 +3,7 @@ import { calculateSunSign } from '../src/engines/astrology-engine';
 import { calculateBazi, parseBirthDateTime } from '../src/engines/bazi-engine';
 import { branchToElement, calculateFiveElements, stemToElement } from '../src/engines/five-elements-engine';
 import { calculateNumerology } from '../src/engines/numerology-engine';
+import { getZodiacResult } from '../src/engines/zodiac-engine';
 
 describe('八字與日期', () => {
   it('解析日期、午夜與時區欄位', () => expect(parseBirthDateTime('1990-01-02', '00:00', 'Asia/Taipei')).toEqual({ year: 1990, month: 1, day: 2, hour: 0, minute: 0 }));
@@ -14,6 +15,15 @@ describe('八字與日期', () => {
     expect(first.pillars).toHaveLength(4);
     expect(second.pillars).toHaveLength(4);
     expect(first.solarDate).not.toBe(second.solarDate);
+  });
+  it.each([
+    [1984, '鼠'], [1985, '牛'], [1986, '虎'], [1987, '兔'],
+    [1988, '龍'], [1989, '蛇'], [1990, '馬'], [1991, '羊'],
+    [1992, '猴'], [1993, '雞'], [1994, '狗'], [1995, '豬'],
+  ])('%i 年生肖正規化為繁體 %s', (year, expected) => {
+    const result = calculateBazi({ birthDate: `${year}-07-01`, birthTime: '12:00', timezone: 'Asia/Taipei' });
+    expect(result.zodiac).toBe(expected);
+    expect(getZodiacResult(result.zodiac).animal).toBe(expected);
   });
 });
 

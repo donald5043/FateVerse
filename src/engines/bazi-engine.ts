@@ -1,6 +1,7 @@
 import { Solar } from 'lunar-javascript';
 import type { BaziPillar, BaziResult, ProfileInput } from '../types/fate';
 import { branchToElement, stemToElement } from './five-elements-engine';
+import { normalizeZodiacAnimal } from './zodiac-engine';
 
 interface ParsedBirth {
   year: number;
@@ -53,7 +54,7 @@ export function calculateBazi(input: Pick<ProfileInput, 'birthDate' | 'birthTime
       pillars,
       dayMaster: eightChar.getDayGan(),
       dayMasterElement: stemToElement(eightChar.getDayGan()),
-      zodiac: lunar.getYearShengXiao(),
+      zodiac: normalizeZodiacAnimal(lunar.getYearShengXiao()),
       seasonalNode: lunar.getJieQi() || lunar.getNextJie().getName(),
       timezone: input.timezone,
       trueSolarTimeApplied: false,

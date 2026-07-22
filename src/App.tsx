@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import AppLayout from './layouts/AppLayout';
 import LoadingScreen from './components/common/LoadingScreen';
 import StorageHydrator from './components/common/StorageHydrator';
+import PwaUpdatePrompt from './components/common/PwaUpdatePrompt';
 
 const HomePage = lazy(() => import('./pages/HomePage'));
 const FortunePage = lazy(() => import('./pages/FortunePage'));
@@ -15,7 +16,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 
 export default function App() {
   return (
-    <><StorageHydrator /><Suspense fallback={<LoadingScreen />}>
+    <><StorageHydrator /><PwaUpdatePrompt /><Suspense fallback={<LoadingScreen />}>
       <Routes>
         <Route element={<AppLayout />}>
           <Route index element={<HomePage />} />
