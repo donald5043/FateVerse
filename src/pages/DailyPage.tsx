@@ -69,13 +69,13 @@ export default function DailyPage() {
   return (
     <section className="page-container page-section">
       <div className="mx-auto max-w-3xl text-center">
-        <p className="eyebrow">Daily Reflection</p>
+        <p className="eyebrow text-violet-400">Daily Reflection</p>
         <h1 className="display-title mt-3">今日指引</h1>
         <p className="mx-auto mt-5 max-w-xl muted">
-          每天依日期得到一張固定指引卡，也可以自由重抽。它提供一個可行動的反思問題，不是真實預言。
+          每天有一張固定的卡片，也可以自由重抽，給自己一個小小的反思問題。它不是真實預言。
         </p>
         <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-mist">
-          <CalendarDays size={16} className="text-gold" />
+          <CalendarDays size={16} className="text-violet-400" />
           {todayLabel}
         </div>
       </div>
@@ -85,40 +85,40 @@ export default function DailyPage() {
         </div>
       )}
       {card && (
-        <article key={card.id} className="card-reveal relative mx-auto mt-10 max-w-3xl overflow-hidden rounded-[2rem] border border-gold/25 bg-gradient-to-br from-[#182143] via-[#11182f] to-[#0b1020] p-1 shadow-glow">
-          <div className="pointer-events-none absolute -right-20 -top-24 size-72 rounded-full border border-gold/10" />
-          <div className="pointer-events-none absolute -left-20 -bottom-24 size-64 rounded-full border border-gold/10" />
+        <article key={card.id} className="card-reveal-glow relative mx-auto mt-10 max-w-3xl overflow-hidden rounded-[2rem] border border-violet-400/[0.28] bg-gradient-to-br from-[#1c1a3d] via-[#11182f] to-[#0b1020] p-1">
+          <div className="pointer-events-none absolute -right-20 -top-24 size-72 rounded-full border border-violet-400/10" />
+          <div className="pointer-events-none absolute -left-20 -bottom-24 size-64 rounded-full border border-violet-400/10" />
           <div className="relative rounded-[1.75rem] border border-white/[0.07] px-6 py-9 text-center sm:px-12 sm:py-12">
-            <div className="guidance-spark mx-auto grid size-14 place-items-center rounded-full border border-gold/30 bg-gold/10 text-gold">
+            <div className="pulse-glow-fast mx-auto grid size-14 place-items-center rounded-full border border-violet-400/[0.35] bg-violet-400/10 text-violet-300">
               <Sparkles size={25} />
             </div>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-              <span className="eyebrow">今日主題 · {card.keyword}</span>
+              <span className="eyebrow text-violet-300">今日主題 · {card.keyword}</span>
               <span className="rounded-full bg-white/[0.06] px-2.5 py-1 text-[11px] text-mist">
                 {drawMode === 'daily' ? '日期固定卡' : '自由重抽卡'}
               </span>
             </div>
             <h2 className="mt-4 font-serif text-3xl font-semibold sm:text-5xl">{card.title}</h2>
-            <div className="mx-auto mt-6 h-px w-20 bg-gradient-to-r from-transparent via-gold to-transparent" />
+            <div className="mx-auto mt-6 h-px w-20 bg-gradient-to-r from-transparent via-violet-400 to-transparent" />
             <p className="mx-auto mt-7 max-w-xl font-serif text-xl leading-9 text-cream sm:text-2xl sm:leading-10">
               {card.message}
             </p>
             <div className="mt-9 grid gap-4 text-left sm:grid-cols-2">
               <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-5">
-                <span className="text-xs font-semibold tracking-wider text-gold">
+                <span className="text-xs font-semibold tracking-wider text-violet-300">
                   REFLECTION · 反思問題
                 </span>
                 <p className="mt-3 leading-7 text-mist">{card.reflectionQuestion}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-5">
-                <span className="text-xs font-semibold tracking-wider text-gold">
+                <span className="text-xs font-semibold tracking-wider text-violet-300">
                   ACTION · 今日小行動
                 </span>
                 <p className="mt-3 leading-7 text-mist">{card.suggestedAction}</p>
               </div>
             </div>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <button className="btn-primary" type="button" onClick={redraw}>
+              <button className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-violet-400 px-5 py-3 font-semibold text-ink transition hover:-translate-y-0.5 hover:bg-violet-300 hover:shadow-[0_12px_30px_rgba(167,139,250,0.4)] focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-2 focus:ring-offset-ink active:scale-[0.98]" type="button" onClick={redraw}>
                 <RefreshCw size={17} />
                 重新抽取
               </button>

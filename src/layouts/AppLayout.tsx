@@ -2,13 +2,14 @@ import { Menu, Settings, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import BrandMark from '../components/common/BrandMark';
+import Starfield from '../components/common/Starfield';
 import { useRouteScrollReset } from '../hooks/useRouteScrollReset';
 
 const links = [
   ['/', '首頁'],
-  ['/fortune', '拍籤解籤'],
   ['/profile', '探索命盤'],
   ['/daily', '今日指引'],
+  ['/fortune', '拍籤解籤'],
   ['/about', '關於'],
 ] as const;
 
@@ -18,7 +19,8 @@ export default function AppLayout() {
   useRouteScrollReset(location.pathname);
   const focusMainContent = () => document.getElementById('main-content')?.focus();
   return (
-    <div className="min-h-screen">
+    <div className="relative min-h-screen">
+      <Starfield />
       <button type="button" onClick={focusMainContent} className="sr-only z-[70] rounded-lg bg-gold px-4 py-2 font-semibold text-ink focus:not-sr-only focus:fixed focus:left-3 focus:top-3">跳到主要內容</button>
       <header data-app-header className="sticky top-0 z-50 border-b border-white/10 bg-ink/80 backdrop-blur-xl">
         <div className="page-container flex min-h-16 items-center justify-between">
