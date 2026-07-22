@@ -14,6 +14,8 @@
 html { scroll-behavior: smooth; }
 body { margin: 0; min-width: 320px; min-height: 100vh; overflow-x: hidden; }
 button, input, select, textarea { font: inherit; }
+input[type='date'], input[type='time'] { -webkit-appearance: none; appearance: none; min-width: 0; }
+input::-webkit-date-and-time-value { text-align: left; }
 button, a { -webkit-tap-highlight-color: transparent; }
 
 body::before {
@@ -50,7 +52,7 @@ body::after {
   .display-title { @apply font-serif text-3xl font-bold leading-tight text-cream sm:text-5xl; }
   .section-title { @apply font-serif text-2xl font-semibold text-cream sm:text-3xl; }
   .muted { @apply leading-7 text-mist; }
-  .input-field { @apply min-h-12 w-full rounded-xl border border-white/15 bg-ink/70 px-4 py-3 text-cream outline-none transition placeholder:text-mist/50 focus:border-gold/70 focus:ring-2 focus:ring-gold/15; }
+  .input-field { @apply min-h-12 w-full min-w-0 max-w-full rounded-xl border border-white/15 bg-ink/70 px-4 py-3 text-cream outline-none transition placeholder:text-mist/50 focus:border-gold/70 focus:ring-2 focus:ring-gold/15; }
   .label { @apply mb-2 block text-sm font-medium text-cream; }
   .btn-primary { @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-gold px-5 py-3 font-semibold text-ink transition hover:bg-[#e7ca8d] focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-ink active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50; }
   .btn-secondary { @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-5 py-3 font-semibold text-cream transition hover:border-gold/50 hover:bg-white/[0.1] focus:outline-none focus:ring-2 focus:ring-gold active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50; }
