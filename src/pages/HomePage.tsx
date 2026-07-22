@@ -38,7 +38,7 @@ export default function HomePage() {
           <div className="absolute inset-[6%] rounded-full border border-gold/[0.22]" />
           <div className="spin-slow absolute inset-[18%] rounded-full border border-dashed border-mist/[0.28]" />
           <div className="pulse-glow absolute inset-[32%] grid place-items-center rounded-full border border-gold/40 bg-gold/[0.07] shadow-glow">
-            <Compass className="size-14 text-gold" strokeWidth={1.3} />
+            <span className="brand-orbit grid place-items-center text-gold"><Orbit className="size-14" strokeWidth={1.2} /></span>
           </div>
           {orbitChips.map(({ label, className }) => (
             <span className={`absolute grid size-[52px] place-items-center rounded-full border border-white/[0.12] bg-indigo text-sm font-bold text-cream ${className}`} key={label}>{label}</span>
