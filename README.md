@@ -1,0 +1,187 @@
+# 萬象命書 FateVerse
+
+> 一次看懂東西方命理
+
+萬象命書是一個完全以前端執行為主的文化探索、娛樂與自我反思工具。它把八字、生肖、太陽星座、生命靈數、姓名基礎資料與籤詩辨識放在同一個介面中，讓使用者觀察不同文化模型如何描述同一個人。
+
+生日、姓名與圖片都在瀏覽器中處理。網站不需要登入、後端或 API Key；本地 AI 是使用者主動選擇的增強功能，沒有 WebGPU 時仍可產生完整規則式報告。
+
+## 功能
+
+- 探索命盤：公曆／農曆、四柱、天干地支、生肖、納音、日主與基礎十神。
+- 五行分析：八個天干地支主五行的數量、比例與相對強弱。
+- 西方基礎分析：程式計算太陽星座、元素、模式、優勢與盲點。
+- 生命靈數：保留 11、22、33 大師數，顯示完整加總過程。
+- 姓名基礎分析：少量示範字義與現代筆畫，可手動修正，五格標示為 Beta。
+- 綜合報告：規則式 fallback 永遠可用；可選擇由瀏覽器本地 WebLLM 重新整理。
+- 拍籤解籤：圖片縮放、Canvas 預處理、繁體中文 OCR、Fuse.js 模糊比對及主題解讀。
+- 今日指引：30 張本地靜態卡；日期固定抽卡，也可重新抽取。
+- 本地資料管理：預設不永久保存出生資料，可選擇保存最近一次分析並隨時清除。
+- PWA：應用程式 shell、基礎命理資料、示範籤詩與今日指引可離線使用。
+- 品牌化 Open Graph／X 社群分享預覽圖。
+
+## 技術架構
+
+- React 19、TypeScript strict mode、Vite
+- Tailwind CSS、React Router（HashRouter）、Zustand
+- `lunar-javascript`：農曆與四柱計算
+- `tesseract.js`：使用者主動啟動的繁體中文 OCR
+- `fuse.js`：籤詩模糊比對
+- `idb-keyval`：使用者同意後的裝置端資料保存
+- `@mlc-ai/web-llm`：使用者主動啟用的瀏覽器本地模型
+- Zod：WebLLM JSON 輸出驗證
+- Vitest、React Testing Library、ESLint、Prettier
+
+命理計算與文字解讀嚴格分離：
+
+```text
+使用者輸入 → JavaScript／命理套件計算 → FateReportInput JSON
+           → 規則式模板（預設）或 WebLLM（可選）→ 報告
+```
+
+AI 不重新計算四柱、生肖、星座、生命靈數，也不能補猜未提供資料。
+
+## 本地開發
+
+需求：Node.js 22（GitHub Actions 也使用 Node.js 22）。
+
+```bash
+npm install
+npm run dev
+```
+
+品質與建置指令：
+
+```bash
+npm run typecheck
+npm run lint
+npm run test
+npm run build
+npm run preview
+```
+
+Vite 開發環境使用 `/`；正式建置的 base path 是 `/FateVerse/`，對應 `donald5043/FateVerse`。
+
+## GitHub Pages 部署
+
+`.github/workflows/deploy.yml` 會在 `main` 更新時依序執行：
+
+1. checkout 與 Node.js 22 設定。
+2. `npm ci`。
+3. `npm run lint`、`npm run test`、`npm run build`。
+4. 上傳 `dist` Pages artifact。
+5. 透過 GitHub Pages 官方 Action 部署。
+
+在 repository 的 **Settings → Pages → Build and deployment → Source** 選擇 **GitHub Actions**。合併至 `main` 後，正式網址預期為：
+
+```text
+https://donald5043.github.io/FateVerse/
+```
+
+網站採 HashRouter，所以功能頁網址為 `https://donald5043.github.io/FateVerse/#/profile`，重新整理不會 404。
+
+## WebLLM 注意事項
+
+- 網站初始化不會下載模型；只有設定頁按下「同意並啟用本地 AI」才開始。
+- 預設模型是 WebLLM 預建清單中的 `Qwen3-0.6B-q4f16_1-MLC`。
+- UI 標示下載量約 650 MB；實際值會隨 WebLLM／模型版本與瀏覽器快取不同。
+- 建議至少 4 GB 系統記憶體與約 1.5 GB 可用 GPU 記憶體。
+- 模型不放在 Git repository；由 WebLLM 指定來源下載至瀏覽器快取。
+- 支援進度、取消與清除模型快取。部分瀏覽器可能要等下一個載入回呼才完成取消。
+- 模型回傳必須通過 Zod JSON schema；解析、載入或生成失敗時會自動回到規則模板。
+- 手機 WebGPU、記憶體與散熱差異很大。輕量模式是完整產品路徑，不是錯誤狀態。
+
+## OCR 注意事項
+
+- 支援 JPG、PNG、WebP，單檔上限 15 MB；最長邊先縮至 1800 px。
+- Canvas 模式包含原圖、灰階、高對比、黑白二值化、旋轉 90 度與中央裁切。
+- `tesseract.js` 只在按下 OCR 後延遲載入，預設語言為 `chi_tra`。
+- 首次 OCR 通常需要網路下載語言資料。PWA 不預先快取 OCR 語言模型。
+- OCR 結果一定要由使用者校對，不會直接當成正確籤文。
+- 第一版主要支援繁體印刷體；手寫、反光、傾斜或複雜背景會降低辨識率。
+
+## 籤詩資料格式
+
+資料位於 `public/data/fortune-sticks/`，每筆遵循 `src/types/fate.ts` 的 `FortuneStick`：
+
+```json
+{
+  "id": "unique-id",
+  "system": "sixty-jiazi",
+  "sourceName": "資料集名稱",
+  "number": 1,
+  "title": "籤名",
+  "level": "中吉",
+  "poem": ["第一句", "第二句"],
+  "story": "經查證的典故或明確的無典故說明",
+  "summary": "自行撰寫的現代摘要",
+  "interpretations": { "overall": "整體解讀", "career": "工作解讀" },
+  "actions": ["可選擇的行動"],
+  "risks": ["需要留意的風險"],
+  "keywords": ["比對關鍵字"],
+  "dataSource": { "sourceName": "來源", "license": "授權", "notes": "備註" }
+}
+```
+
+### 新增籤詩資料
+
+1. 確認原文為公版或已取得明確授權；不要複製授權不明網站的現代解釋。
+2. 加入穩定且唯一的 `id`，並正確標示 `system`、來源、授權與備註。
+3. 原文、典故與現代摘要分開；無法驗證典故時留空或明確標示未知。
+4. 把資料加入對應 JSON，並更新 `public/sw.js`（若新增新檔）。
+5. 為完整文、OCR 錯字、籤號與查無結果加入 matcher 測試。
+
+目前兩份籤詩 JSON 各只有 3 筆 FateVerse 自編示範，並非特定廟宇正式籤本。
+
+## 擴充基礎資料
+
+### 生命靈數
+
+計算規則與內容位於 `src/engines/numerology-engine.ts`；新增內容時保留 `public/data/numerology.json` 的支援數字契約同步，並加入一般數字、大師數與計算過程測試。
+
+### 今日指引卡
+
+在 `public/data/daily-guidance.json` 加入符合 `DailyGuidanceCard` 的項目：`id`、`title`、`keyword`、`message`、`reflectionQuestion`、`suggestedAction`。維持至少 30 張並避免預言、醫療或投資斷言。
+
+### 姓名字典
+
+目前只有 8 個示範字，程式位於 `src/engines/name-engine.ts`。新增筆畫資料時必須標示來源類型；沒有完整康熙字典資料時不可標成正式康熙筆畫。
+
+## 隱私
+
+- 沒有後端、帳號、分析資料庫或付費 API。
+- 出生資料預設只在分頁記憶體中，重新整理後消失。
+- 只有使用者在設定頁開啟「分析完成後保留在此裝置」，最近一次結構化結果才寫入 IndexedDB。
+- OCR 圖片不寫入 IndexedDB；WebLLM prompt 只交給裝置端模型。
+- OCR 語言資料和 WebLLM 模型的下載會連線到套件／模型指定的公開內容來源，但不包含姓名、生日、圖片或報告資料。
+- 設定頁可清除偏好、最近分析、網站快取與模型快取。
+
+## 免責聲明
+
+萬象命書 FateVerse 提供的內容，僅供文化探索、娛樂與自我反思。所有命理、籤詩、星座、姓名與數字分析，均不代表確定的未來，也不應作為醫療、法律、投資、財務或重大人生決策的唯一依據。重要決定請依照實際情況，並諮詢具專業資格的人員。
+
+本網站不提供醫療診斷或治療建議。如有健康疑慮，請尋求合格醫療專業人員協助。
+
+## 已知限制
+
+- 八字沒有套用真太陽時；經緯度只保留給後續精密排盤。
+- 五行只統計四柱天干與地支主五行，未納入藏干權重、旺衰、合沖刑害等完整判讀。
+- 西洋占星只有太陽星座，尚無月亮、上升、十二宮、行星與相位。
+- 姓名字典與籤詩皆為少量示範資料；姓名五格不計算，只保留 Beta 介面。
+- OCR 重新裁切第一版採每次裁去四周 5%，尚無拖曳式裁切框。
+- WebLLM 無法在沒有 WebGPU 或記憶體不足的裝置使用，且小模型文字品質可能波動。
+- PWA 不預先快取大型模型或 OCR 語言資料。
+
+## Roadmap
+
+- 引入經授權、可追溯版本的完整籤詩資料集。
+- 拖曳式圖片裁切、透視校正與多語 OCR。
+- 正式康熙字典資料與可驗證的筆畫來源。
+- 以 `astronomy-engine` 加入月亮、上升、行星、宮位與相位。
+- 可選的真太陽時流程，清楚顯示地理、時區與校正差異。
+- Web Worker 化更重的影像處理與本地模型推論介面。
+- 無障礙與多裝置實機測試矩陣。
+
+## 授權
+
+程式碼採 [MIT License](LICENSE)。FateVerse 自編示範籤詩、現代摘要與基礎內容標示為 CC BY 4.0。第三方套件、OCR 語言資料與模型各自適用其原授權，詳見 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

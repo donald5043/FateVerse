@@ -1,0 +1,12 @@
+{
+  "name": "萬象命書 FateVerse",
+  "short_name": "FateVerse",
+  "description": "一次看懂東西方命理的文化探索與自我反思工具。",
+  "start_url": "./#/",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1020",
+  "theme_color": "#0b1020",
+  "lang": "zh-Hant",
+  "icons": [{ "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
