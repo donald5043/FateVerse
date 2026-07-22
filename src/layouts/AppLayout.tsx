@@ -2,6 +2,7 @@ import { Menu, Settings, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import BrandMark from '../components/common/BrandMark';
+import { useRouteScrollReset } from '../hooks/useRouteScrollReset';
 
 const links = [
   ['/', '首頁'],
@@ -14,10 +15,12 @@ const links = [
 export default function AppLayout() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  useRouteScrollReset(location.pathname);
+  const focusMainContent = () => document.getElementById('main-content')?.focus();
   return (
     <div className="min-h-screen">
-      <a href="#main-content" className="sr-only z-[70] rounded-lg bg-gold px-4 py-2 font-semibold text-ink focus:not-sr-only focus:fixed focus:left-3 focus:top-3">跳到主要內容</a>
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-ink/80 backdrop-blur-xl">
+      <button type="button" onClick={focusMainContent} className="sr-only z-[70] rounded-lg bg-gold px-4 py-2 font-semibold text-ink focus:not-sr-only focus:fixed focus:left-3 focus:top-3">跳到主要內容</button>
+      <header data-app-header className="sticky top-0 z-50 border-b border-white/10 bg-ink/80 backdrop-blur-xl">
         <div className="page-container flex min-h-16 items-center justify-between">
           <Link to="/" aria-label="回到首頁" className="brand-motion"><BrandMark compact /></Link>
           <nav className="hidden items-center gap-1 md:flex" aria-label="主要導覽">

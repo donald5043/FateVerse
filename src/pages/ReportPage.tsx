@@ -2,7 +2,7 @@ import {
   BrainCircuit, ChevronRight, CircleUserRound, Compass, Hash, ListTree,
   Orbit, RefreshCw, ShieldCheck, Sparkles, Square, Waypoints,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { generateFallbackReport } from '../ai/fallback-report';
 import FiveElementChart from '../components/charts/FiveElementChart';
@@ -17,6 +17,7 @@ import ReportActions from '../components/report/ReportActions';
 import ZiweiChart from '../components/report/ZiweiChart';
 import { useFateStore } from '../store/useFateStore';
 import { ELEMENT_LABELS } from '../utils/constants';
+import { calculateStickyScrollTop, preferredScrollBehavior } from '../utils/scroll';
 import type { ZiweiCalculationSettings } from '../types/fate';
 
 function toDateInputValue(value?: string): string {
@@ -44,6 +45,7 @@ export default function ReportPage() {
   });
   const [ziweiBusy, setZiweiBusy] = useState(false);
   const [ziweiError, setZiweiError] = useState('');
+  const reportNavigationRef = useRef<HTMLElement>(null);
 
   if (!report || !input) return (
     <section className="page-container page-section text-center">
@@ -137,6 +139,18 @@ export default function ReportPage() {
     ...(input.ziwei ? [['ziwei', '紫微十二宮']] : []),
     ['systems', '多系統觀點'], ['patterns', '共同與差異'], ['focus', '行動建議'], ['raw', '原始資料'],
   ];
+  const scrollToSection = (sectionId: string) => {
+    const section = document.getElementById(sectionId);
+    if (!section) return;
+    const appHeader = document.querySelector<HTMLElement>('[data-app-header]');
+    const top = calculateStickyScrollTop(
+      section.getBoundingClientRect().top,
+      window.scrollY,
+      appHeader?.offsetHeight ?? 64,
+      reportNavigationRef.current?.offsetHeight ?? 56,
+    );
+    window.scrollTo({ top, left: 0, behavior: preferredScrollBehavior() });
+  };
 
   return (
     <section className="page-container page-section report-print">
@@ -145,8 +159,8 @@ export default function ReportPage() {
         <ReportActions summary={report.summary} />
       </header>
 
-      <nav className="sticky top-16 z-30 -mx-4 mt-7 overflow-x-auto border-y border-white/10 bg-ink/90 px-4 backdrop-blur-xl print:hidden sm:mx-0 sm:rounded-2xl sm:border" aria-label="報告章節">
-        <div className="flex min-w-max gap-1 py-2">{sectionLinks.map(([id, label]) => <a className="rounded-xl px-3.5 py-2 text-sm text-mist transition hover:bg-white/10 hover:text-cream" href={`#${id}`} key={id}>{label}</a>)}</div>
+      <nav ref={reportNavigationRef} className="sticky top-16 z-30 -mx-4 mt-7 overflow-x-auto border-y border-white/10 bg-ink/90 px-4 backdrop-blur-xl print:hidden sm:mx-0 sm:rounded-2xl sm:border" aria-label="報告章節">
+        <div className="flex min-w-max gap-1 py-2">{sectionLinks.map(([id, label]) => <button className="rounded-xl px-3.5 py-2 text-sm text-mist transition hover:bg-white/10 hover:text-cream focus:outline-none focus:ring-2 focus:ring-gold/60" type="button" aria-controls={id} onClick={() => scrollToSection(id)} key={id}>{label}</button>)}</div>
       </nav>
 
       <article id="summary" className="relative mt-8 scroll-mt-36 overflow-hidden rounded-[2rem] border border-gold/25 bg-gradient-to-br from-[#182143] via-[#11182f] to-[#0b1020] p-6 shadow-glow sm:p-9">
