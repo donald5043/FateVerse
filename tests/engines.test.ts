@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calculateAstrology, calculateSunSign } from '../src/engines/astrology-engine';
+import { calculateAstrology, calculateAstrologyDistribution, calculateHouseEmphasis, calculateSunSign } from '../src/engines/astrology-engine';
 import { calculateBazi, parseBirthDateTime } from '../src/engines/bazi-engine';
 import { calculateBaziRelations } from '../src/engines/bazi-relations-engine';
 import { calculateHiddenStemWeights, calculateSeasonStrength } from '../src/engines/bazi-strength-engine';
@@ -89,6 +89,10 @@ describe('完整西洋天文位置', () => {
     expect(result.moonSign).toBe('雙魚座');
     expect(result.planets).toHaveLength(10);
     expect(result.aspects?.length).toBeGreaterThan(0);
+    expect(result.aspects?.every((aspect) => ['fusion', 'flow', 'tension', 'polarity'].includes(aspect.quality))).toBe(true);
+    expect(result.aspects?.every((aspect) => ['tight', 'moderate', 'wide'].includes(aspect.closeness))).toBe(true);
+    expect(Object.values(result.distribution?.elements ?? {}).reduce((sum, count) => sum + count, 0)).toBe(10);
+    expect(Object.values(result.distribution?.modalities ?? {}).reduce((sum, count) => sum + count, 0)).toBe(10);
     expect(result.calculationLevel).toBe('planetary');
   });
   it('提供經緯度時加入上升與等宮制十二宮', () => {
@@ -100,6 +104,20 @@ describe('完整西洋天文位置', () => {
     expect(result.houseComparisons?.map((item) => item.system)).toEqual(['equal', 'whole-sign']);
     expect(result.houseComparisons?.every((item) => item.houses.length === 12)).toBe(true);
     expect(Object.keys(result.houseComparisons?.[1].planetHouses ?? {})).toHaveLength(10);
+    expect(result.houseComparisons?.every((item) => Object.values(item.emphasis.angularity).reduce((sum, count) => sum + count, 0) === 10)).toBe(true);
+  });
+  it('可獨立彙整元素、模式與宮位集中', () => {
+    const planets = [
+      { name: '太陽', longitude: 0, sign: '牡羊座', degreeInSign: 0, latitude: 0, retrograde: false },
+      { name: '月亮', longitude: 120, sign: '獅子座', degreeInSign: 0, latitude: 0, retrograde: false },
+      { name: '水星', longitude: 45, sign: '金牛座', degreeInSign: 15, latitude: 0, retrograde: false },
+    ];
+    const distribution = calculateAstrologyDistribution(planets);
+    expect(distribution.elements).toEqual({ 火: 2, 土: 1, 風: 0, 水: 0 });
+    expect(distribution.dominantElements).toEqual(['火']);
+    const emphasis = calculateHouseEmphasis({ 太陽: 1, 月亮: 1, 水星: 2 });
+    expect(emphasis.occupiedHouses[0]).toEqual({ house: 1, planets: ['太陽', '月亮'] });
+    expect(emphasis.angularity).toEqual({ angular: 2, succedent: 1, cadent: 0 });
   });
 });
 

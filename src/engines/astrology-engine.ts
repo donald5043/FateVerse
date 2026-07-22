@@ -1,4 +1,6 @@
-import type { AspectResult, AstrologyResult, HouseSystemComparison, PlanetPosition, ProfileInput } from '../types/fate';
+import type {
+  AspectResult, AstrologyDistribution, AstrologyHouseEmphasis, AstrologyResult, HouseSystemComparison, PlanetPosition, ProfileInput,
+} from '../types/fate';
 import { localDateTimeToUtc } from '../utils/timezone';
 import { calculateAscendant, calculatePlanetPositions, zodiacPosition } from './astronomy-adapter';
 
@@ -43,11 +45,11 @@ export function calculateSunSign(birthDate: string): AstrologyResult {
 }
 
 const aspectDefinitions = [
-  { type: '合相', angle: 0, orb: 7 },
-  { type: '六合', angle: 60, orb: 4 },
-  { type: '四分相', angle: 90, orb: 6 },
-  { type: '三分相', angle: 120, orb: 6 },
-  { type: '對分相', angle: 180, orb: 7 },
+  { type: '合相', angle: 0, orb: 7, quality: 'fusion' as const },
+  { type: '六合', angle: 60, orb: 4, quality: 'flow' as const },
+  { type: '四分相', angle: 90, orb: 6, quality: 'tension' as const },
+  { type: '三分相', angle: 120, orb: 6, quality: 'flow' as const },
+  { type: '對分相', angle: 180, orb: 7, quality: 'polarity' as const },
 ] as const;
 
 export function calculateMajorAspects(planets: PlanetPosition[]): AspectResult[] {
@@ -68,6 +70,8 @@ export function calculateMajorAspects(planets: PlanetPosition[]): AspectResult[]
           type: match.type,
           orb: Number(match.actualOrb.toFixed(2)),
           angle: Number(separation.toFixed(2)),
+          quality: match.quality,
+          closeness: match.actualOrb <= 2 ? 'tight' : match.actualOrb <= 4 ? 'moderate' : 'wide',
         });
       }
     }
@@ -75,17 +79,57 @@ export function calculateMajorAspects(planets: PlanetPosition[]): AspectResult[]
   return aspects.sort((left, right) => left.orb - right.orb);
 }
 
+export function calculateAstrologyDistribution(planets: PlanetPosition[]): AstrologyDistribution {
+  const elements: AstrologyDistribution['elements'] = { 火: 0, 土: 0, 風: 0, 水: 0 };
+  const modalities: AstrologyDistribution['modalities'] = { 開創: 0, 固定: 0, 變動: 0 };
+  planets.forEach((planet) => {
+    const sign = SIGNS.find((item) => item.sunSign === planet.sign);
+    if (!sign) return;
+    const element = sign.element as keyof typeof elements;
+    const modality = sign.modality as keyof typeof modalities;
+    elements[element] += 1;
+    modalities[modality] += 1;
+  });
+  const elementPeak = Math.max(...Object.values(elements));
+  const modalityPeak = Math.max(...Object.values(modalities));
+  return {
+    elements,
+    modalities,
+    dominantElements: Object.entries(elements).filter(([, count]) => count === elementPeak).map(([name]) => name),
+    dominantModalities: Object.entries(modalities).filter(([, count]) => count === modalityPeak).map(([name]) => name),
+  };
+}
+
+export function calculateHouseEmphasis(planetHouses: Record<string, number>): AstrologyHouseEmphasis {
+  const grouped = new Map<number, string[]>();
+  Object.entries(planetHouses).forEach(([planet, house]) => grouped.set(house, [...(grouped.get(house) ?? []), planet]));
+  const occupiedHouses = [...grouped.entries()]
+    .map(([house, planets]) => ({ house, planets }))
+    .sort((left, right) => right.planets.length - left.planets.length || left.house - right.house);
+  const angularity = { angular: 0, succedent: 0, cadent: 0 };
+  occupiedHouses.forEach(({ house, planets }) => {
+    if ([1, 4, 7, 10].includes(house)) angularity.angular += planets.length;
+    else if ([2, 5, 8, 11].includes(house)) angularity.succedent += planets.length;
+    else angularity.cadent += planets.length;
+  });
+  return { occupiedHouses, angularity };
+}
+
 function buildHouseSystemComparisons(ascendant: number, planets: PlanetPosition[]): HouseSystemComparison[] {
   const wholeSignStart = Math.floor(ascendant / 30) * 30;
   return [
     { system: 'equal' as const, label: '等宮制', start: ascendant },
     { system: 'whole-sign' as const, label: '整宮制', start: wholeSignStart },
-  ].map(({ system, label, start }) => ({
-    system,
-    label,
-    houses: Array.from({ length: 12 }, (_, index) => ({ house: index + 1, cusp: (start + index * 30) % 360 })),
-    planetHouses: Object.fromEntries(planets.map((planet) => [planet.name, Math.floor(((planet.longitude - start + 360) % 360) / 30) + 1])),
-  }));
+  ].map(({ system, label, start }) => {
+    const planetHouses = Object.fromEntries(planets.map((planet) => [planet.name, Math.floor(((planet.longitude - start + 360) % 360) / 30) + 1]));
+    return {
+      system,
+      label,
+      houses: Array.from({ length: 12 }, (_, index) => ({ house: index + 1, cusp: (start + index * 30) % 360 })),
+      planetHouses,
+      emphasis: calculateHouseEmphasis(planetHouses),
+    };
+  });
 }
 
 export function calculateAstrology(input: Pick<ProfileInput, 'birthDate' | 'birthTime' | 'timezone'> & Partial<Pick<ProfileInput, 'latitude' | 'longitude'>>): AstrologyResult {
@@ -120,6 +164,7 @@ export function calculateAstrology(input: Pick<ProfileInput, 'birthDate' | 'birt
     planets: planetsWithHouses,
     houses,
     houseComparisons,
+    distribution: calculateAstrologyDistribution(planetsWithHouses),
     houseSystem: houses ? 'equal' : undefined,
     aspects: calculateMajorAspects(planetsWithHouses),
     calculatedAtUtc: utcDate.toISOString(),

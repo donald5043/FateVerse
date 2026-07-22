@@ -174,6 +174,23 @@ export interface HouseSystemComparison {
   label: string;
   houses: HousePosition[];
   planetHouses: Record<string, number>;
+  emphasis: AstrologyHouseEmphasis;
+}
+
+export interface AstrologyHouseEmphasis {
+  occupiedHouses: Array<{ house: number; planets: string[] }>;
+  angularity: {
+    angular: number;
+    succedent: number;
+    cadent: number;
+  };
+}
+
+export interface AstrologyDistribution {
+  elements: Record<'火' | '土' | '風' | '水', number>;
+  modalities: Record<'開創' | '固定' | '變動', number>;
+  dominantElements: string[];
+  dominantModalities: string[];
 }
 
 export interface AspectResult {
@@ -182,6 +199,8 @@ export interface AspectResult {
   type: string;
   orb: number;
   angle: number;
+  quality: 'fusion' | 'flow' | 'tension' | 'polarity';
+  closeness: 'tight' | 'moderate' | 'wide';
 }
 
 export interface AstrologyResult {
@@ -196,6 +215,7 @@ export interface AstrologyResult {
   planets?: PlanetPosition[];
   houses?: HousePosition[];
   houseComparisons?: HouseSystemComparison[];
+  distribution?: AstrologyDistribution;
   aspects?: AspectResult[];
   calculatedAtUtc?: string;
   calculationLevel?: 'sun-only' | 'planetary';

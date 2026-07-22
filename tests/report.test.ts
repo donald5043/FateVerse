@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { generateFallbackReport } from '../src/ai/fallback-report';
 import { parseAiReport, parseAiReportEnhancement } from '../src/ai/schemas';
-import { calculateSunSign } from '../src/engines/astrology-engine';
+import { calculateAstrology, calculateSunSign } from '../src/engines/astrology-engine';
 import { calculateBazi } from '../src/engines/bazi-engine';
 import { calculateFiveElements } from '../src/engines/five-elements-engine';
 import { calculateNumerology } from '../src/engines/numerology-engine';
@@ -31,6 +31,13 @@ describe('報告', () => {
     expect(report.sections.astrology).toContain('太陽');
     expect(report.sections.bazi).toContain('月支');
     expect(report.sections.bazi).toContain('日主強弱');
+  });
+  it('完整星盤時將元素模式與宮位集中寫入 fallback', () => {
+    const astrology = calculateAstrology({ birthDate: '1990-01-02', birthTime: '10:30', timezone: 'Asia/Taipei', longitude: 121.5654, latitude: 25.033 });
+    const report = generateFallbackReport({ ...input, astrology });
+    expect(report.sections.astrology).toContain('十星分布');
+    expect(report.sections.astrology).toContain('等宮制中第');
+    expect(report.sections.astrology).toContain('整宮制');
   });
   it('選擇全部時展開多個可執行主題，而不是只回傳一張通用卡', () => {
     const report = generateFallbackReport({ ...input, userFocus: ['all'] });

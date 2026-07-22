@@ -23,6 +23,29 @@ export const SIGN_STYLE_LIBRARY: Record<string, string> = {
   射手座: '探索與擴展', 摩羯座: '建立結構', 水瓶座: '獨立與革新', 雙魚座: '感受與想像',
 };
 
+export const ASTROLOGY_HOUSE_LIBRARY: Record<number, { title: string; theme: string; reflection: string }> = {
+  1: { title: '自我與呈現', theme: '外在風格、主動性與開始事情的方式', reflection: '觀察自己進入新環境時最先展現什麼。' },
+  2: { title: '資源與價值', theme: '金錢、能力、所有物與安全感', reflection: '區分真正重視的價值與習慣性累積。' },
+  3: { title: '學習與溝通', theme: '資訊交換、近距移動、手足與日常學習', reflection: '檢查資訊如何被理解、整理與傳遞。' },
+  4: { title: '根基與家庭', theme: '居所、私人生活、原生經驗與內在根基', reflection: '辨認哪些環境條件能帶來安定感。' },
+  5: { title: '創造與表達', theme: '作品、遊戲、浪漫、興趣與自我展現', reflection: '替不以績效為目的的創造保留空間。' },
+  6: { title: '日常與服務', theme: '工作流程、習慣、技能維護與身心節奏', reflection: '從可重複的小流程改善生活品質。' },
+  7: { title: '關係與合作', theme: '一對一關係、契約、協商與他人回饋', reflection: '把期待、界線與交換條件說清楚。' },
+  8: { title: '共享與轉化', theme: '共同資源、信任、失去與深層調整', reflection: '確認共享責任與風險是否透明。' },
+  9: { title: '視野與信念', theme: '遠行、高等學習、世界觀與意義系統', reflection: '用新的經驗檢驗既有觀點，而非只收集答案。' },
+  10: { title: '角色與方向', theme: '公共角色、職涯、責任與長期成就', reflection: '區分外界期待與自己願意承擔的方向。' },
+  11: { title: '社群與未來', theme: '朋友、團體、共同願景與長期計畫', reflection: '檢查所屬群體是否支持真正重視的未來。' },
+  12: { title: '退隱與整合', theme: '休息、潛意識、結束週期與幕後空間', reflection: '為消化經驗與恢復注意力保留空白。' },
+};
+
+export const ASTROLOGY_ASPECT_LIBRARY: Record<string, { mode: string; description: string; reflection: string }> = {
+  合相: { mode: '融合', description: '兩種行星功能集中在同一方向，彼此放大也較難分開。', reflection: '何時兩種需求會同時出現？' },
+  六合: { mode: '協作', description: '兩種功能有合作機會，但通常需要主動運用才會明顯。', reflection: '哪個小行動能把兩項能力接起來？' },
+  四分相: { mode: '摩擦', description: '兩種功能在節奏或目標上形成張力，促使人尋找新的做法。', reflection: '目前的衝突要求調整哪個流程？' },
+  三分相: { mode: '流動', description: '兩種功能較容易互相支援，也可能因太自然而未被刻意發展。', reflection: '哪項既有優勢值得更有意識地使用？' },
+  對分相: { mode: '拉鋸', description: '兩端需求彼此映照，常透過關係或情境看見需要平衡的兩極。', reflection: '如何讓兩端都有被安排的位置？' },
+};
+
 export const ZIWEI_STAR_LIBRARY: Record<string, string> = {
   紫微: '組織、承擔與整合資源', 天機: '思考、規劃與因應變化', 太陽: '公開表達、付出與能見度',
   武曲: '執行、資源管理與成果', 天同: '調和、感受與生活品質', 廉貞: '原則、界線與複雜動機',
