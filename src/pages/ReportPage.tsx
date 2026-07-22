@@ -17,7 +17,7 @@ import NatalChart from '../components/report/NatalChart';
 import HouseSystemComparison from '../components/report/HouseSystemComparison';
 import ReportActions from '../components/report/ReportActions';
 import ZiweiChart from '../components/report/ZiweiChart';
-import { generateFusionReading } from '../engines/fusion-engine';
+import { generateFusionReading, generateSystemConclusions, generateTimelineReading } from '../engines/fusion-engine';
 import { useFateStore } from '../store/useFateStore';
 import { ELEMENT_LABELS } from '../utils/constants';
 import type { ZiweiCalculationSettings } from '../types/fate';
@@ -121,6 +121,8 @@ export default function ReportPage() {
   };
 
   const fusion = generateFusionReading(input);
+  const conclusions = generateSystemConclusions(input);
+  const timeline = generateTimelineReading(input);
 
   const systems = [
     {
@@ -166,7 +168,7 @@ export default function ReportPage() {
   return (
     <section className="page-container page-section report-print">
       <header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-        <div><p className="eyebrow">萬象報告</p><h1 className="display-title mt-3">{profile?.name ? `${profile.name}的萬象命書` : '你的萬象命書'}</h1><p className="mt-3 text-sm text-mist">建立於目前瀏覽器 · {report.mode === 'ai' ? '本地 AI 整理' : '可預測規則模板'}{profile ? ` · ${profile.birthDate} ${profile.birthTime} 出生 · ${profile.region}` : ''}</p></div>
+        <div><p className="eyebrow">萬象報告</p><h1 className="display-title mt-3">{profile?.name ? `${profile.name}的萬象命書` : '你的萬象命書'}</h1><p className="mt-3 text-sm text-mist">在你的裝置上產生 · {report.mode === 'ai' ? '本地 AI 整理' : '規則式報告'}{profile ? ` · ${profile.birthDate} ${profile.birthTime} 出生 · ${profile.region}` : ''}</p></div>
         <ReportActions summary={report.summary} />
       </header>
 
@@ -205,7 +207,45 @@ export default function ReportPage() {
           </div>
         </article>
 
-        {report.aiEnhancement && <section id="ai-insight" data-testid="ai-enhancement" className="mt-6 overflow-hidden rounded-3xl border border-emerald-200/25 bg-gradient-to-br from-emerald-300/[0.09] to-cyan-300/[0.04] p-5 sm:p-7" aria-labelledby="ai-insight-title"><div className="flex flex-wrap items-start justify-between gap-3"><div className="flex items-center gap-3"><span className="grid size-11 place-items-center rounded-2xl bg-emerald-200/10 text-emerald-100"><BrainCircuit size={22} /></span><div><p className="eyebrow text-emerald-100">Generated locally</p><h2 id="ai-insight-title" className="mt-1 font-serif text-2xl font-semibold text-cream">本地 AI 生成內容</h2></div></div><span className="rounded-full border border-emerald-200/20 px-3 py-1 text-[11px] text-emerald-100">AI 原文 · 已通過 JSON 驗證</span></div><div className="mt-6 rounded-2xl border border-white/10 bg-ink/35 p-4 sm:p-5"><h3 className="text-xs font-semibold tracking-wider text-emerald-100">AI 摘要</h3><p className="mt-3 font-serif text-lg leading-8 text-cream">{report.aiEnhancement.summary}</p></div><div className="mt-4 grid gap-3 sm:grid-cols-2">{report.aiEnhancement.suggestions.map((suggestion, index) => <article data-testid="ai-suggestion" className="rounded-2xl border border-white/10 bg-white/[0.035] p-4" key={`${suggestion}-${index}`}><span className="text-[10px] font-semibold tracking-wider text-emerald-100">AI 建議 {index + 1}</span><p className="mt-2 leading-7 text-mist">{suggestion}</p></article>)}</div><p className="mt-4 text-xs leading-5 text-mist">只有此卡文字由 {report.aiEnhancement.modelId} 在目前裝置生成；八字、星盤、紫微、靈數與其他規則報告沒有交給模型重算。生成時間：{new Date(report.aiEnhancement.generatedAt).toLocaleString('zh-TW')}。</p></section>}
+        <section className="mt-10">
+          <p className="eyebrow">At a glance</p><h2 className="section-title mt-2">六大系統直接說結論</h2>
+          <p className="mt-2 text-sm leading-6 text-mist">每套系統先給你一句最重要的話；想看完整脈絡，再點上面的分頁深入。</p>
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {conclusions.map(({ id, system, headline, conclusion }) => {
+              const tone = ({ bazi: 'text-gold', zodiac: 'text-emerald-300', ziwei: 'text-violet-400', western: 'text-teal-300', numerology: 'text-rose-400', name: 'text-fuchsia-300' } as Record<string, string>)[id] ?? 'text-gold';
+              return (
+                <article className="flex flex-col rounded-[20px] border border-white/10 bg-white/[0.045] p-5" key={id}>
+                  <span className={`text-[11px] font-bold tracking-[0.12em] ${tone}`}>{system}</span>
+                  <h3 className="mt-1.5 font-serif text-lg font-semibold text-cream">{headline}</h3>
+                  <p className="mt-3 text-sm leading-7 text-mist">{conclusion}</p>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="mt-12">
+          <p className="eyebrow">Past · Present · Future</p><h2 className="section-title mt-2">過去、現在、未來</h2>
+          <p className="mt-2 text-sm leading-6 text-mist">用八字大運搭配紫微運限，把你的人生分成三段，各給一段解讀和一個建議。這是文化模型的敘事，不是預言。</p>
+          <div className="mt-6 grid gap-4 lg:grid-cols-3">
+            {timeline.map(({ id, title, rangeLabel, reading, advice }, index) => (
+              <article className={`flex flex-col rounded-[20px] border p-5 ${id === 'present' ? 'border-gold/40 bg-gold/[0.06]' : 'border-white/10 bg-white/[0.045]'}`} key={id}>
+                <div className="flex items-center justify-between">
+                  <h3 className={`font-serif text-xl font-semibold ${id === 'present' ? 'text-gold' : 'text-cream'}`}>{title}</h3>
+                  <span className="grid size-7 place-items-center rounded-full bg-white/[0.07] text-xs font-semibold text-mist">{String(index + 1).padStart(2, '0')}</span>
+                </div>
+                <p className="mt-1 text-xs text-mist">{rangeLabel}</p>
+                <p className="mt-4 flex-1 text-sm leading-7 text-mist">{reading}</p>
+                <div className="mt-4 rounded-xl border border-white/10 bg-ink/40 p-3.5">
+                  <span className="text-[11px] font-bold tracking-wider text-gold">給你的建議</span>
+                  <p className="mt-1.5 text-sm leading-6 text-cream">{advice}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {report.aiEnhancement && <section id="ai-insight" data-testid="ai-enhancement" className="mt-6 overflow-hidden rounded-3xl border border-emerald-200/25 bg-gradient-to-br from-emerald-300/[0.09] to-cyan-300/[0.04] p-5 sm:p-7" aria-labelledby="ai-insight-title"><div className="flex flex-wrap items-start justify-between gap-3"><div className="flex items-center gap-3"><span className="grid size-11 place-items-center rounded-2xl bg-emerald-200/10 text-emerald-100"><BrainCircuit size={22} /></span><div><p className="eyebrow text-emerald-100">Generated locally</p><h2 id="ai-insight-title" className="mt-1 font-serif text-2xl font-semibold text-cream">本地 AI 生成內容</h2></div></div><span className="rounded-full border border-emerald-200/20 px-3 py-1 text-[11px] text-emerald-100">AI 原文</span></div><div className="mt-6 rounded-2xl border border-white/10 bg-ink/35 p-4 sm:p-5"><h3 className="text-xs font-semibold tracking-wider text-emerald-100">AI 摘要</h3><p className="mt-3 font-serif text-lg leading-8 text-cream">{report.aiEnhancement.summary}</p></div><div className="mt-4 grid gap-3 sm:grid-cols-2">{report.aiEnhancement.suggestions.map((suggestion, index) => <article data-testid="ai-suggestion" className="rounded-2xl border border-white/10 bg-white/[0.035] p-4" key={`${suggestion}-${index}`}><span className="text-[10px] font-semibold tracking-wider text-emerald-100">AI 建議 {index + 1}</span><p className="mt-2 leading-7 text-mist">{suggestion}</p></article>)}</div><p className="mt-4 text-xs leading-5 text-mist">這張卡的文字由你裝置上的本地 AI 生成；八字、星盤、紫微與靈數的數值都不會交給 AI 重算。生成時間：{new Date(report.aiEnhancement.generatedAt).toLocaleString('zh-TW')}。</p></section>}
 
         <div className="mt-6 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
           <article className="rounded-[20px] border border-white/10 bg-white/[0.045] p-6">
@@ -241,7 +281,7 @@ export default function ReportPage() {
       </div>}
 
       {tab === 'bazi' && <div key="bazi" className="reveal mt-7">
-        <div className="mb-6"><p className="eyebrow">Eastern foundation</p><h2 className="section-title mt-2">八字與五行結構</h2><p className="mt-2 text-sm leading-6 text-mist">排盤資料由 lunar-javascript 計算；五行圖僅統計四柱八個主元素，不等同完整旺衰論命。</p></div>
+        <div className="mb-6"><p className="eyebrow">Eastern foundation</p><h2 className="section-title mt-2">八字與五行結構</h2><p className="mt-2 text-sm leading-6 text-mist">依你的出生時間換算農曆與節氣排出四柱；五行圖只統計八個主要元素，看趨勢就好，不用當成吉凶判決。</p></div>
         <article className="glass-card p-5 sm:p-7"><BaziPillars result={input.bazi} /><BaziTenGodInsights result={input.bazi} /></article>
         {input.bazi.luckCycles && input.bazi.luckCycles.length > 0 && (
           <article className="mt-5 rounded-[20px] border border-white/10 bg-white/[0.045] p-6">
@@ -262,14 +302,14 @@ export default function ReportPage() {
       </div>}
 
       {tab === 'ziwei' && input.ziwei && <div key="ziwei" className="reveal mt-7">
-        <div className="mb-6"><p className="eyebrow">Twelve palaces</p><h2 className="section-title mt-2">紫微斗數十二宮</h2><p className="mt-2 text-sm leading-6 text-mist">以 iztro 2.5.8 產生盤面，呈現命身主、五行局、十二宮、主輔星、亮度、四化與大限範圍；可切換安星版本與時間分界比較差異。</p></div>
+        <div className="mb-6"><p className="eyebrow">Twelve palaces</p><h2 className="section-title mt-2">紫微斗數十二宮</h2><p className="mt-2 text-sm leading-6 text-mist">呈現你的命身主、五行局、十二宮、主輔星、亮度、四化與大限範圍；也可以切換不同流派的排法，比較差異。</p></div>
         <div className="mb-4 rounded-2xl border border-violet-400/20 bg-violet-400/[0.055] p-4"><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><label><span className="label">安星版本</span><select className="input-field" value={ziweiSettings.algorithm} onChange={(event) => setZiweiSettings((current) => ({ ...current, algorithm: event.target.value as ZiweiCalculationSettings['algorithm'] }))}><option value="default">通行版本</option><option value="zhongzhou">中州派版本</option></select></label><label><span className="label">本命年分界</span><select className="input-field" value={ziweiSettings.yearDivide} onChange={(event) => setZiweiSettings((current) => ({ ...current, yearDivide: event.target.value as ZiweiCalculationSettings['yearDivide'] }))}><option value="normal">農曆正月初一</option><option value="exact">立春</option></select></label><label><span className="label">晚子時歸日</span><select className="input-field" value={ziweiSettings.dayDivide} onChange={(event) => setZiweiSettings((current) => ({ ...current, dayDivide: event.target.value as ZiweiCalculationSettings['dayDivide'] }))}><option value="current">歸當日</option><option value="forward">歸次日</option></select></label><label><span className="label">運限目標日期</span><input className="input-field" type="date" min="1900-01-01" max="2100-12-31" value={ziweiTargetDate} onChange={(event) => setZiweiTargetDate(event.target.value)} /></label></div><div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs leading-5 text-mist">修改設定後需重新排盤；流派設定是演算法比較入口，不代表某一版本較準。</p><button className="btn-secondary shrink-0" type="button" disabled={ziweiBusy || !ziweiTargetDate} onClick={() => void updateZiweiTarget()}>{ziweiBusy ? '正在重算…' : '套用設定並更新運限'}</button></div></div>
         {ziweiError && <div className="mb-4 rounded-xl border border-rose-200/20 bg-rose-200/[0.08] p-3 text-sm text-rose-100" role="alert">{ziweiError}</div>}
         <article className="glass-card overflow-hidden p-3 sm:p-6"><ZiweiChart result={input.ziwei} /><ZiweiKeyPalaceInsights result={input.ziwei} /></article>
       </div>}
 
       {tab === 'western' && <div key="western" className="reveal mt-7">
-        <div className="mb-6"><p className="eyebrow">Astronomical positions</p><h2 className="section-title mt-2">西洋出生星盤</h2><p className="mt-2 text-sm leading-6 text-mist">Astronomy Engine 依出生地標準時間換算 UTC，計算地心黃道位置、月亮星座、逆行與主要相位。{input.astrology.risingSign ? `已依經緯度計算上升 ${input.astrology.risingSign}，並比較等宮制與整宮制。` : '未提供完整經緯度，因此上升與十二宮不補猜。'}</p></div>
+        <div className="mb-6"><p className="eyebrow">Astronomical positions</p><h2 className="section-title mt-2">西洋出生星盤</h2><p className="mt-2 text-sm leading-6 text-mist">依你的出生時間與地點，計算行星的實際天文位置、月亮星座、逆行與主要相位。{input.astrology.risingSign ? `已依出生地座標算出上升 ${input.astrology.risingSign}，並比較兩種宮位制的差異。` : '沒有提供出生地座標，所以上升與十二宮不用猜的補上。'}</p></div>
         <article className="glass-card p-4 sm:p-7"><NatalChart result={input.astrology} /><AstrologyStructurePanel result={input.astrology} /><HouseSystemComparison result={input.astrology} /><AstrologyPositionInsights result={input.astrology} /></article>
         {input.astrology.planets && input.astrology.planets.length > 0 && (
           <article className="mt-5 overflow-x-auto rounded-[20px] border border-white/10 bg-white/[0.045] p-6">
@@ -327,7 +367,7 @@ export default function ReportPage() {
 
       <section className="mt-10 rounded-3xl border border-white/10 bg-white/[0.035] p-5"><h2 className="text-sm font-semibold text-cream">閱讀時請保留的界線</h2><ul className="mt-3 space-y-2 text-sm leading-6 text-mist">{report.cautions.map((item) => <li className="flex gap-2" key={item}><ShieldCheck className="mt-1 shrink-0 text-gold" size={15} />{item}</li>)}</ul></section>
       <div className="mt-7"><Disclaimer health /></div>
-      {aiBusy && <div className="mt-5 rounded-2xl border border-gold/25 bg-gold/[0.07] p-4 print:hidden" role="status" aria-live="polite"><div className="flex items-start gap-3"><BrainCircuit className="mt-0.5 shrink-0 text-gold" size={19} /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-2"><p className="font-semibold text-cream">{aiStatus}</p><span className="text-xs tabular-nums text-mist">已執行 {aiElapsed} 秒</span></div><div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full w-2/5 animate-pulse rounded-full bg-gold" /></div><p className="mt-2 text-xs leading-5 text-mist">手機只生成短篇摘要並合併完整規則報告；iPhone 最長 60 秒，其他裝置最長 90 秒，逾時會顯示診斷碼並強制重設 Worker。</p></div></div></div>}
+      {aiBusy && <div className="mt-5 rounded-2xl border border-gold/25 bg-gold/[0.07] p-4 print:hidden" role="status" aria-live="polite"><div className="flex items-start gap-3"><BrainCircuit className="mt-0.5 shrink-0 text-gold" size={19} /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-2"><p className="font-semibold text-cream">{aiStatus}</p><span className="text-xs tabular-nums text-mist">已執行 {aiElapsed} 秒</span></div><div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full w-2/5 animate-pulse rounded-full bg-gold" /></div><p className="mt-2 text-xs leading-5 text-mist">手機上只生成短篇摘要，再和完整報告合併；最長等待約 60–90 秒，逾時會自動停止並提示你重試。</p></div></div></div>}
       {aiNotice && <div className="mt-5 rounded-xl border border-emerald-200/20 bg-emerald-200/[0.08] p-3 text-sm text-emerald-100" role="status">{aiNotice}</div>}
       {aiError && <div className="mt-5 rounded-xl border border-amber-200/20 bg-amber-200/[0.08] p-3 text-sm text-amber-100" role="alert">{aiError}</div>}
       <div className="mt-7 flex flex-wrap gap-3 print:hidden"><Link className="btn-secondary" to="/profile"><RefreshCw size={17} />重新建立</Link>{model.status === 'ready' ? <><button className="btn-primary" type="button" disabled={aiBusy} onClick={() => void generateWithAi()}><BrainCircuit size={17} />{aiBusy ? '本地 AI 整理中…' : report.mode === 'ai' ? '重新產生 AI 摘要' : '用本地 AI 重新整理'}</button>{aiBusy && <button className="btn-secondary" type="button" onClick={() => void cancelAi()}><Square size={15} />停止生成</button>}</> : <Link className="btn-primary" to="/settings">啟用本地 AI 增強</Link>}</div>

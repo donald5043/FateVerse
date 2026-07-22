@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { generateFusionReading, numerologyElement, parseZiweiClassElement } from '../src/engines/fusion-engine';
+import { generateFusionReading, generateSystemConclusions, generateTimelineReading, numerologyElement, parseZiweiClassElement } from '../src/engines/fusion-engine';
 import { calculateAstrology, calculateSunSign } from '../src/engines/astrology-engine';
 import { calculateBazi } from '../src/engines/bazi-engine';
 import { calculateFiveElements } from '../src/engines/five-elements-engine';
@@ -102,6 +102,64 @@ describe('融合解讀', () => {
   it('不同生日產生不同標題', () => {
     const other = generateFusionReading(buildInput('1985-07-15'));
     expect(other.headline).not.toBe(reading.headline);
+  });
+});
+
+describe('系統一句話結論', () => {
+  const input = buildInput('1990-01-02');
+
+  it('沒有紫微與姓名時給出四套系統的結論', () => {
+    const conclusions = generateSystemConclusions(input);
+    expect(conclusions.map((item) => item.id)).toEqual(['bazi', 'zodiac', 'western', 'numerology']);
+    conclusions.forEach((item) => {
+      expect(item.headline.length).toBeGreaterThan(0);
+      expect(item.conclusion.length).toBeGreaterThan(15);
+    });
+  });
+
+  it('八字結論引用日主與五行強弱', () => {
+    const [bazi] = generateSystemConclusions(input);
+    expect(bazi.headline).toContain(input.bazi.dayMaster);
+    expect(bazi.conclusion).toContain('最多');
+  });
+
+  it('有紫微資料時加入紫微結論', () => {
+    const ziwei = calculateZiwei(profile, '2026-07-22');
+    const conclusions = generateSystemConclusions({ ...input, ziwei });
+    expect(conclusions.map((item) => item.id)).toContain('ziwei');
+  });
+});
+
+describe('過去現在未來時間軸', () => {
+  const input = buildInput('1990-01-02');
+
+  it('固定回傳過去、現在、未來三段，各含解讀與建議', () => {
+    const phases = generateTimelineReading(input, 2026);
+    expect(phases.map((phase) => phase.id)).toEqual(['past', 'present', 'future']);
+    phases.forEach((phase) => {
+      expect(phase.reading.length).toBeGreaterThan(20);
+      expect(phase.advice.length).toBeGreaterThan(10);
+      expect(phase.rangeLabel.length).toBeGreaterThan(0);
+    });
+  });
+
+  it('有大運資料時，現在段落引用目前所在的大運干支', () => {
+    const current = input.bazi.luckCycles?.find((cycle) => 2026 >= cycle.startYear && 2026 <= cycle.endYear);
+    const phases = generateTimelineReading(input, 2026);
+    if (current) {
+      expect(phases[1].reading).toContain(current.ganZhi);
+      expect(phases[1].rangeLabel).toContain(String(current.startYear));
+    }
+  });
+
+  it('沒有大運資料時仍給出可讀的三段內容', () => {
+    const phases = generateTimelineReading({ ...input, bazi: { ...input.bazi, luckCycles: undefined } }, 2026);
+    expect(phases).toHaveLength(3);
+    expect(phases[2].reading).toContain('大運');
+  });
+
+  it('相同輸入與年份產生相同結果', () => {
+    expect(generateTimelineReading(input, 2026)).toEqual(generateTimelineReading(input, 2026));
   });
 });
 

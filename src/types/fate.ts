@@ -395,6 +395,21 @@ export interface FusionReading {
   cautions: string[];
 }
 
+export interface SystemConclusion {
+  id: string;
+  system: string;
+  headline: string;
+  conclusion: string;
+}
+
+export interface TimelinePhase {
+  id: 'past' | 'present' | 'future';
+  title: string;
+  rangeLabel: string;
+  reading: string;
+  advice: string;
+}
+
 export interface ProfileInput {
   name: string;
   birthDate: string;

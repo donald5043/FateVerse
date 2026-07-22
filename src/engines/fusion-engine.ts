@@ -9,8 +9,10 @@ import type {
   FusionHighlight,
   FusionReading,
   FusionTiming,
+  SystemConclusion,
+  TimelinePhase,
 } from '../types/fate';
-import { branchToElement } from './five-elements-engine';
+import { branchToElement, stemToElement } from './five-elements-engine';
 import { ELEMENT_LABELS } from '../utils/constants';
 
 const ELEMENT_ORDER: ElementName[] = ['wood', 'fire', 'earth', 'metal', 'water'];
@@ -387,6 +389,167 @@ function buildTiming(input: FateReportInput): FusionTiming | undefined {
     plainReading: `講白話：兩套系統都有「十年一個大階段」的概念。${baziPart}紫微那邊，同一段時間的大限命宮落在${horoscope.decadal.palaceName}，流年命宮在${horoscope.yearly.palaceName}。把它們並排看，意思是：傳統命理認為這幾年你的人生重心會偏向「${horoscope.decadal.palaceName.replace('宮', '')}」相關的題目。這是文化模型的敘事框架，適合當年度回顧的提問清單，不是預言。`,
     evidence,
   };
+}
+
+export function generateSystemConclusions(input: FateReportInput): SystemConclusion[] {
+  const dayLabel = ELEMENT_LABELS[input.bazi.dayMasterElement];
+  const strongestLabel = ELEMENT_LABELS[input.fiveElements.strongest[0]];
+  const weakestLabel = ELEMENT_LABELS[input.fiveElements.weakest[0]];
+  const soulPalace = input.ziwei?.palaces.find((palace) => palace.name === '命宮');
+  const soulStars = soulPalace?.majorStars.map((star) => star.name).join('、');
+  const conclusions: SystemConclusion[] = [
+    {
+      id: 'bazi',
+      system: '八字',
+      headline: `日主 ${input.bazi.dayMaster} · ${dayLabel}`,
+      conclusion: `你的核心是${dayLabel}——${ELEMENT_PLAIN[input.bazi.dayMasterElement].vibe}。四柱裡${strongestLabel}最多、${weakestLabel}最少，用${strongestLabel}的方式做事對你來說最順手。`,
+    },
+    {
+      id: 'zodiac',
+      system: '生肖',
+      headline: `屬${input.zodiac.animal} · ${input.zodiac.symbol}`,
+      conclusion: `「${input.zodiac.positiveTraits[0]}」和「${input.zodiac.positiveTraits[1]}」是你的招牌；要留意的是${input.zodiac.blindSpots[0]}。`,
+    },
+    ...(input.ziwei
+      ? [{
+          id: 'ziwei',
+          system: '紫微斗數',
+          headline: `${input.ziwei.fiveElementsClass} · 命主${input.ziwei.soul}`,
+          conclusion: `命宮${soulStars ? `坐${soulStars}` : '沒有主星，要借對面的宮位一起看'}。內在主軸偏「${input.ziwei.soul}」象徵的特質，穩穩發揮比衝快更適合你。`,
+        }]
+      : []),
+    {
+      id: 'western',
+      system: '西洋星盤',
+      headline: `太陽${input.astrology.sunSign} · ${input.astrology.element}元素`,
+      conclusion: `${input.astrology.strengths.join('、')}是你給人的第一印象${input.astrology.moonSign ? `；月亮在${input.astrology.moonSign}，那是你私底下的情緒面` : ''}。${input.astrology.blindSpots[0]}是要練習的地方。`,
+    },
+    {
+      id: 'numerology',
+      system: '生命靈數',
+      headline: `${input.numerology.lifePathNumber} · ${input.numerology.title}`,
+      conclusion: `${input.numerology.description} 你的功課是${input.numerology.challenges[0]}。`,
+    },
+    ...(input.nameAnalysis
+      ? [{
+          id: 'name',
+          system: '姓名',
+          headline: `${input.nameAnalysis.fullName} · ${input.nameAnalysis.characterCount} 字`,
+          conclusion: `${input.nameAnalysis.overallImpression}${input.nameAnalysis.elementComparison}`,
+        }]
+      : []),
+  ];
+  return conclusions;
+}
+
+const CYCLE_RELATION: Record<string, (cycleLabel: string) => string> = {
+  same: (label) => `和你的本質同屬${label}，同類相挺，適合放大你原本就擅長的事`,
+  resource: (label) => `${label}正好滋養你的日主，像有人在背後補給，底氣比較足`,
+  output: (label) => `你的日主在生${label}，屬於往外輸出、表現的時期，做得多也要記得補回來`,
+  wealth: (label) => `你的日主剋${label}，傳統上叫「財」，代表你有機會主導資源，但要親力親為`,
+  pressure: (label) => `${label}剋你的日主，傳統上叫「官殺」，像有規範和壓力在推著你，扛得住就是升級`,
+};
+
+const GENERATES: Record<ElementName, ElementName> = { wood: 'fire', fire: 'earth', earth: 'metal', metal: 'water', water: 'wood' };
+const CONTROLS: Record<ElementName, ElementName> = { wood: 'earth', earth: 'water', water: 'fire', fire: 'metal', metal: 'wood' };
+
+function cycleRelationText(dayElement: ElementName, cycleElement: ElementName): string {
+  const label = ELEMENT_LABELS[cycleElement];
+  if (dayElement === cycleElement) return CYCLE_RELATION.same(label);
+  if (GENERATES[cycleElement] === dayElement) return CYCLE_RELATION.resource(label);
+  if (GENERATES[dayElement] === cycleElement) return CYCLE_RELATION.output(label);
+  if (CONTROLS[dayElement] === cycleElement) return CYCLE_RELATION.wealth(label);
+  return CYCLE_RELATION.pressure(label);
+}
+
+const PHASE_ADVICE: Record<ElementName, { present: string; future: string }> = {
+  wood: {
+    present: '把重心放在「養大一件事」：挑一個值得長期投入的方向，定期回頭看它有沒有長高。',
+    future: '可以先播種：現在多學、多建立關係，到時候剛好收成。',
+  },
+  fire: {
+    present: '這段時間適合被看見：主動爭取上台、發表、帶頭的機會，但幫自己排好休息時間。',
+    future: '先把作品和實力準備好，等能見度變高的時候，你拿得出手的東西越多越好。',
+  },
+  earth: {
+    present: '適合打地基：把生活作息、財務和手上的專案整理穩，慢就是快。',
+    future: '接下來會更需要穩定感，現在開始建立固定的習慣和儲備，會很有幫助。',
+  },
+  metal: {
+    present: '適合做減法：把不重要的承諾收掉，讓規則和品質說話，成果會更俐落。',
+    future: '之後是講究精準的階段，現在可以開始磨專業深度，讓自己有明確的代表作。',
+  },
+  water: {
+    present: '適合流動與連結：多交流、多打聽、多學習，答案常常在別人的一句話裡。',
+    future: '接下來變化會比較多，現在把心態調得彈性一點，到時候就不會慌。',
+  },
+};
+
+export function generateTimelineReading(input: FateReportInput, targetYear?: number): TimelinePhase[] {
+  const year = targetYear ?? new Date().getFullYear();
+  const dayElement = input.bazi.dayMasterElement;
+  const cycles = input.bazi.luckCycles ?? [];
+  const current = cycles.find((cycle) => year >= cycle.startYear && year <= cycle.endYear);
+  const past = [...cycles].reverse().find((cycle) => cycle.endYear < year);
+  const future = cycles.find((cycle) => cycle.startYear > year);
+  const zodiacTrait = input.zodiac.positiveTraits[0];
+  const numberChallenge = input.numerology.challenges[0];
+  const decadalPalace = input.ziwei?.currentHoroscope?.decadal.palaceName;
+  const yearlyPalace = input.ziwei?.currentHoroscope?.yearly.palaceName;
+
+  const pastPhase: TimelinePhase = past
+    ? {
+        id: 'past',
+        title: '過去',
+        rangeLabel: `${past.startYear}–${past.endYear} 年（${past.startAge}–${past.endAge} 歲）`,
+        reading: `你上一段走的是${past.ganZhi}大運：${cycleRelationText(dayElement, stemToElement(past.ganZhi[0]))}。加上生肖給你的「${zodiacTrait}」，那段時間累積下來的做事方式，就是你現在最自然的預設值。`,
+        advice: '回頭挑出那段時間真正有效的一兩個習慣，帶著走；證明沒用的模式，也趁換階段放下。',
+      }
+    : {
+        id: 'past',
+        title: '過去',
+        rangeLabel: '成長階段',
+        reading: `你還在第一段大運之前或剛起步的階段。八字上，出生在${input.bazi.seasonStrength.season}令讓${ELEMENT_LABELS[input.fiveElements.strongest[0]]}的特質從小就明顯，生肖的「${zodiacTrait}」也是早早就看得出來的底色。`,
+        advice: '這個階段重點不是定型，而是多試：把各種有興趣的事都碰一碰，記下哪些讓你特別有電。',
+      };
+
+  const presentPhase: TimelinePhase = current
+    ? {
+        id: 'present',
+        title: '現在',
+        rangeLabel: `${current.startYear}–${current.endYear} 年（${current.startAge}–${current.endAge} 歲）`,
+        reading: `你目前走${current.ganZhi}大運：${cycleRelationText(dayElement, stemToElement(current.ganZhi[0]))}。${decadalPalace ? `紫微這邊，同一段時間的大限落在${decadalPalace}${yearlyPalace ? `、今年流年在${yearlyPalace}` : ''}，兩套系統都在說：這幾年的人生重心和「${decadalPalace.replace('宮', '')}」有關。` : ''}`,
+        advice: PHASE_ADVICE[stemToElement(current.ganZhi[0])].present,
+      }
+    : {
+        id: 'present',
+        title: '現在',
+        rangeLabel: '目前階段',
+        reading: `${decadalPalace ? `紫微的大限目前落在${decadalPalace}${yearlyPalace ? `、流年在${yearlyPalace}` : ''}，這幾年的重心偏向「${decadalPalace.replace('宮', '')}」相關的題目。` : `以你${dayLabelText(dayElement)}的本質來看，現在最重要的是照自己的節奏走，不用跟別人比進度。`}生命靈數也提醒你，這陣子的功課是${numberChallenge}。`,
+        advice: PHASE_ADVICE[dayElement].present,
+      };
+
+  const futurePhase: TimelinePhase = future
+    ? {
+        id: 'future',
+        title: '未來',
+        rangeLabel: `${future.startYear}–${future.endYear} 年（${future.startAge}–${future.endAge} 歲）`,
+        reading: `下一段是${future.ganZhi}大運：${cycleRelationText(dayElement, stemToElement(future.ganZhi[0]))}。傳統的講法是氣氛會換季——不是變好或變壞，而是換一種規則玩。`,
+        advice: PHASE_ADVICE[stemToElement(future.ganZhi[0])].future,
+      }
+    : {
+        id: 'future',
+        title: '未來',
+        rangeLabel: '接下來',
+        reading: `這次的資料沒有排到更後面的大運。可以確定的是：四柱裡${ELEMENT_LABELS[input.fiveElements.weakest[0]]}偏少，未來刻意補上這類經驗（或找這類隊友），你的選擇會變多。`,
+        advice: `把「${numberChallenge}」當成長期練習題，每季回頭檢查一次就好，不用天天想。`,
+      };
+
+  return [pastPhase, presentPhase, futurePhase];
+}
+
+function dayLabelText(element: ElementName): string {
+  return ELEMENT_LABELS[element];
 }
 
 export function generateFusionReading(input: FateReportInput): FusionReading {

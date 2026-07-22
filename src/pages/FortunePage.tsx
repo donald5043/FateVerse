@@ -176,7 +176,7 @@ export default function FortunePage() {
 
   return (
     <section className="page-container page-section">
-      <div className="max-w-3xl"><p className="eyebrow text-rose-400">Fortune Sticks</p><h1 className="display-title mt-3">拍籤解籤</h1><p className="mt-5 muted">針對常見直排籤詩使用專用繁體中文 OCR，辨識後自動與已收錄資料逐句容錯比對；文字仍可由你校正。</p></div>
+      <div className="max-w-3xl"><p className="eyebrow text-rose-400">Fortune Sticks</p><h1 className="display-title mt-3">拍籤解籤</h1><p className="mt-5 muted">拍下或上傳籤詩照片，我們會辨識上面的文字，幫你比對出最接近的籤與解讀；辨識結果都可以自己修改，最後也請再核對一次。</p></div>
       <ol className="mt-7 grid grid-cols-4 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035]" aria-label="籤詩辨識流程">
         {['來源與照片', 'OCR 校對', '候選確認', '主題解籤'].map((step, index) => {
           const current = selected ? 3 : matches.length ? 2 : ocrText.trim() ? 1 : 0;

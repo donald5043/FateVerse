@@ -40,11 +40,11 @@ export function generateFallbackReport(input: FateReportInput): AiFateReport {
     ? `；${input.ziwei.currentHoroscope.targetDate} 的大限命宮落在${input.ziwei.currentHoroscope.decadal.palaceName}、流年命宮落在${input.ziwei.currentHoroscope.yearly.palaceName}`
     : '';
   const baziSeasonDescription = input.bazi.seasonStrength
-    ? `月支${input.bazi.seasonStrength.monthBranch}屬${input.bazi.seasonStrength.season}令，日主五行在固定季節表中為「${({ prosperous: '旺', supportive: '相', resting: '休', imprisoned: '囚', declining: '死' } as const)[input.bazi.seasonStrength.states[input.bazi.dayMasterElement]]}」`
+    ? `月支${input.bazi.seasonStrength.monthBranch}屬${input.bazi.seasonStrength.season}令，以季節來看你的日主五行屬「${({ prosperous: '旺', supportive: '相', resting: '休', imprisoned: '囚', declining: '死' } as const)[input.bazi.seasonStrength.states[input.bazi.dayMasterElement]]}」`
     : '本次沒有月令旺相資料';
   const baziRelationDescription = input.bazi.relations?.length
-    ? `主干支另偵測到 ${input.bazi.relations.length} 組合沖刑害等固定關係`
-    : '主干支未偵測到目前收錄的合沖刑害組合';
+    ? `另外找到 ${input.bazi.relations.length} 組合、沖、刑、害等干支關係`
+    : '這次沒有找到明顯的合、沖、刑、害組合';
   const astrologyDistributionDescription = input.astrology.distribution
     ? `十星分布以${input.astrology.distribution.dominantElements.join('、')}元素及${input.astrology.distribution.dominantModalities.join('、')}模式較多`
     : '本次沒有完整十星分布資料';
@@ -70,9 +70,9 @@ export function generateFallbackReport(input: FateReportInput): AiFateReport {
     sharedPatterns,
     differences,
     sections: {
-      bazi: `你的日主為${input.bazi.dayMaster}（${ELEMENT_LABELS[input.bazi.dayMasterElement]}），四柱為${input.bazi.pillars.map((pillar) => pillar.value).join('、')}；${baziSeasonDescription}，${baziRelationDescription}。胎元${input.bazi.taiYuan}、命宮${input.bazi.mingGong}、身宮${input.bazi.shenGong}；節氣參考為${input.bazi.seasonalNode}。藏干比例、十神與大運已列入盤面，但這些固定資料仍不足以單獨確定日主強弱或喜用神。`,
+      bazi: `你的日主為${input.bazi.dayMaster}（${ELEMENT_LABELS[input.bazi.dayMasterElement]}），四柱為${input.bazi.pillars.map((pillar) => pillar.value).join('、')}；${baziSeasonDescription}，${baziRelationDescription}。胎元${input.bazi.taiYuan}、命宮${input.bazi.mingGong}、身宮${input.bazi.shenGong}；節氣參考為${input.bazi.seasonalNode}。藏干、十神與大運都幫你排好了；不過光靠這些還不能斷定日主強弱或喜用神，所以報告不硬下結論。`,
       zodiac: `${input.zodiac.animal}對應${input.zodiac.branch}支，傳統象徵為「${input.zodiac.symbol}」。正向面可參考${input.zodiac.positiveTraits.join('、')}，同時留意${input.zodiac.blindSpots.join('、')}。`,
-      astrology: `太陽位於${input.astrology.sunSign}${input.astrology.moonSign ? `，月亮位於${input.astrology.moonSign}` : ''}${input.astrology.risingSign ? `，上升位於${input.astrology.risingSign}` : ''}，太陽星座屬${input.astrology.element}元素、${input.astrology.modality}模式。${input.astrology.planets?.length ? `本次已用天文函式庫計算 ${input.astrology.planets.length} 個星體與 ${input.astrology.aspects?.length ?? 0} 組主要相位；${astrologyDistributionDescription}，${astrologyHouseDescription}。` : ''}${input.astrology.houseComparisons?.length ? '報告保留等宮制與整宮制的落宮差異，不把任一宮制視為唯一答案。' : ''}`,
+      astrology: `太陽位於${input.astrology.sunSign}${input.astrology.moonSign ? `，月亮位於${input.astrology.moonSign}` : ''}${input.astrology.risingSign ? `，上升位於${input.astrology.risingSign}` : ''}，太陽星座屬${input.astrology.element}元素、${input.astrology.modality}模式。${input.astrology.planets?.length ? `已計算 ${input.astrology.planets.length} 個星體與 ${input.astrology.aspects?.length ?? 0} 組主要相位；${astrologyDistributionDescription}，${astrologyHouseDescription}。` : ''}${input.astrology.houseComparisons?.length ? '報告同時保留等宮制與整宮制的落宮差異，不把任何一種當成唯一答案。' : ''}`,
       ...(input.ziwei ? { ziwei: `紫微排盤為${input.ziwei.fiveElementsClass}，命主${input.ziwei.soul}、身主${input.ziwei.body}，命宮在${input.ziwei.soulPalaceBranch}、身宮在${input.ziwei.bodyPalaceBranch}。命宮主星欄為「${soulPalaceStars}」${ziweiHoroscopeDescription}。星曜與運限需連同三方四正及流派設定閱讀，本版只呈現文化結構，不由單星預言事件。` } : {}),
       numerology: `${input.numerology.description} 本次計算結果為 ${input.numerology.lifePathNumber}${input.numerology.isMasterNumber ? '（大師數）' : ''}，可發揮${input.numerology.strengths.join('、')}，並練習${input.numerology.challenges.join('、')}。`,
       ...(input.nameAnalysis ? { name: `${input.nameAnalysis.overallImpression}${input.nameAnalysis.elementComparison}${input.nameAnalysis.characters.some((item) => item.strokeSource === 'insufficient') ? '部分文字尚無正式字典資料，因此不延伸筆畫吉凶。' : ''}` } : {}),

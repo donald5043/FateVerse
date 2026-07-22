@@ -114,7 +114,7 @@ export default function ProfilePage() {
         <aside className="glass-card p-5 sm:p-7 lg:sticky lg:top-24">
           <div className="flex items-center gap-3"><Sparkles className="text-gold" /><h2 className="font-serif text-xl font-semibold">想了解的主題</h2></div>
           <div className="mt-5 flex flex-wrap gap-2">{focusOptions.map((value) => <button key={value} type="button" onClick={() => toggleFocus(value)} className={`chip ${form.focus.includes(value) ? 'chip-active' : ''}`} aria-pressed={form.focus.includes(value)}>{labels[value]}</button>)}</div>
-          <div className="mt-6 rounded-xl bg-white/[0.04] p-4 text-sm leading-6 text-mist"><p className="font-semibold text-cream">計算範圍</p><p className="mt-2">八字採 lunar-javascript；紫微採 iztro 通行排法；西洋星盤採 Astronomy Engine 計算十個星體與主要相位。目前尚未計算上升與十二宮。</p></div>
+          <div className="mt-6 rounded-xl bg-white/[0.04] p-4 text-sm leading-6 text-mist"><p className="font-semibold text-cream">計算範圍</p><p className="mt-2">八字採農曆與節氣換算；紫微採通行排法；西洋星盤計算十大行星與主要相位。填了經緯度才會計算上升與十二宮。</p></div>
           {error && <div className="mt-5 flex items-start gap-2 rounded-xl border border-rose-300/20 bg-rose-300/10 p-3 text-sm text-rose-100" role="alert"><AlertCircle className="mt-0.5 shrink-0" size={17} />{error}</div>}
           <button className="btn-primary mt-6 w-full" type="submit" disabled={busy}>{busy ? '正在計算…' : '完成計算並查看報告'}<ArrowRight size={18} /></button>
         </aside>
