@@ -332,6 +332,69 @@ export interface NameAnalysisResult {
   fiveGridBeta: true;
 }
 
+export interface FusionEvidence {
+  system: string;
+  point: string;
+}
+
+export interface FusionElementVote {
+  element: ElementName;
+  votes: number;
+  systems: string[];
+}
+
+export type FusionAgreementLevel = 'high' | 'medium' | 'low';
+
+export interface FusionConsensus {
+  votes: FusionElementVote[];
+  leading: ElementName[];
+  agreementLevel: FusionAgreementLevel;
+  plainSummary: string;
+  mappingNotes: string[];
+}
+
+export interface FusionAxis {
+  id: string;
+  label: string;
+  leftLabel: string;
+  rightLabel: string;
+  score: number;
+  verdict: string;
+  evidence: FusionEvidence[];
+}
+
+export interface FusionDomain {
+  id: string;
+  title: string;
+  plainReading: string;
+  evidence: FusionEvidence[];
+  reminder: string;
+}
+
+export interface FusionHighlight {
+  kind: 'agreement' | 'tension';
+  title: string;
+  plainExplanation: string;
+  systems: string[];
+}
+
+export interface FusionTiming {
+  plainReading: string;
+  evidence: FusionEvidence[];
+}
+
+export interface FusionReading {
+  headline: string;
+  plainIntro: string;
+  systemsUsed: string[];
+  consensus: FusionConsensus;
+  axes: FusionAxis[];
+  domains: FusionDomain[];
+  highlights: FusionHighlight[];
+  timing?: FusionTiming;
+  cautions: string[];
+}
+
 export interface ProfileInput {
   name: string;
   birthDate: string;

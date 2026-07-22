@@ -13,9 +13,11 @@ import BaziStrengthPanel from '../components/report/BaziStrengthPanel';
 import AstrologyStructurePanel from '../components/report/AstrologyStructurePanel';
 import { AstrologyPositionInsights, BaziTenGodInsights, ZiweiKeyPalaceInsights } from '../components/report/CulturalInsights';
 import NatalChart from '../components/report/NatalChart';
+import FusionInsights from '../components/report/FusionInsights';
 import HouseSystemComparison from '../components/report/HouseSystemComparison';
 import ReportActions from '../components/report/ReportActions';
 import ZiweiChart from '../components/report/ZiweiChart';
+import { generateFusionReading } from '../engines/fusion-engine';
 import { useFateStore } from '../store/useFateStore';
 import { ELEMENT_LABELS } from '../utils/constants';
 import { calculateStickyScrollTop, preferredScrollBehavior } from '../utils/scroll';
@@ -103,6 +105,8 @@ export default function ReportPage() {
     }
   };
 
+  const fusion = generateFusionReading(input);
+
   const systems = [
     {
       id: 'system-bazi', icon: Orbit, title: '八字觀點', caption: `日主 ${input.bazi.dayMaster} · ${ELEMENT_LABELS[input.bazi.dayMasterElement]}`,
@@ -138,7 +142,7 @@ export default function ReportPage() {
   const sectionLinks = [
     ['summary', '總覽'], ...(report.aiEnhancement ? [['ai-insight', '本地 AI 原文']] : []), ['bazi', '八字五行'], ['astrology', '西洋星盤'],
     ...(input.ziwei ? [['ziwei', '紫微十二宮']] : []),
-    ['systems', '多系統觀點'], ['patterns', '共同與差異'], ['focus', '行動建議'], ['raw', '原始資料'],
+    ['systems', '多系統觀點'], ['fusion', '融合解讀'], ['patterns', '共同與差異'], ['focus', '行動建議'], ['raw', '原始資料'],
   ];
   const scrollToSection = (sectionId: string) => {
     const section = document.getElementById(sectionId);
@@ -205,6 +209,11 @@ export default function ReportPage() {
       <section id="systems" className="mt-14 scroll-mt-36">
         <p className="eyebrow">Multiple lenses</p><h2 className="section-title mt-2">各系統如何看你</h2>
         <div className="mt-6 grid gap-5 lg:grid-cols-2">{systems.map(({ id, icon: Icon, title, caption, text, strengths, blindSpots }) => <article className="glass-card p-5 sm:p-6" key={id}><div className="flex items-start gap-4"><span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-gold/10 text-gold"><Icon size={21} /></span><div><h3 className="font-serif text-xl font-semibold text-cream">{title}</h3><p className="mt-1 text-xs text-gold">{caption}</p></div></div><p className="mt-5 leading-7 text-mist">{text}</p><div className="mt-5 grid gap-4 border-t border-white/10 pt-4 sm:grid-cols-2"><div><span className="text-[11px] font-semibold tracking-wider text-emerald-200">可運用的特質</span><div className="mt-2 flex flex-wrap gap-1.5">{strengths.map((item) => <span className="rounded-full bg-emerald-300/[0.08] px-2.5 py-1 text-xs text-emerald-100" key={item}>{item}</span>)}</div></div><div><span className="text-[11px] font-semibold tracking-wider text-amber-100">可留意的面向</span><div className="mt-2 flex flex-wrap gap-1.5">{blindSpots.map((item) => <span className="rounded-full bg-amber-200/[0.08] px-2.5 py-1 text-xs text-amber-100" key={item}>{item}</span>)}</div></div></div></article>)}</div>
+      </section>
+
+      <section id="fusion" className="mt-14 scroll-mt-36">
+        <div className="mb-6"><p className="eyebrow">Fusion reading</p><h2 className="section-title mt-2">融合解讀：所有系統一起說</h2><p className="mt-2 text-sm leading-6 text-mist">把每套系統的結果翻譯成同一種語言後交叉比對，全程用白話說明哪裡有共識、哪裡各說各話。</p></div>
+        <FusionInsights reading={fusion} />
       </section>
 
       <section id="patterns" className="mt-14 scroll-mt-36">
