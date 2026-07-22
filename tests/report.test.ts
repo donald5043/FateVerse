@@ -29,6 +29,8 @@ describe('報告', () => {
     expect(report.mode).toBe('template');
     expect(report.sections.name).toBeUndefined();
     expect(report.sections.astrology).toContain('太陽');
+    expect(report.sections.bazi).toContain('月支');
+    expect(report.sections.bazi).toContain('日主強弱');
   });
   it('選擇全部時展開多個可執行主題，而不是只回傳一張通用卡', () => {
     const report = generateFallbackReport({ ...input, userFocus: ['all'] });

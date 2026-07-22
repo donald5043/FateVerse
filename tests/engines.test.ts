@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { calculateAstrology, calculateSunSign } from '../src/engines/astrology-engine';
 import { calculateBazi, parseBirthDateTime } from '../src/engines/bazi-engine';
 import { calculateBaziRelations } from '../src/engines/bazi-relations-engine';
+import { calculateHiddenStemWeights, calculateSeasonStrength } from '../src/engines/bazi-strength-engine';
 import { branchToElement, calculateFiveElements, stemToElement } from '../src/engines/five-elements-engine';
 import { calculateNumerology } from '../src/engines/numerology-engine';
 import { getZodiacResult } from '../src/engines/zodiac-engine';
@@ -27,7 +28,7 @@ describe('八字與日期', () => {
     expect(result.luckStart?.startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
   it('從四柱辨識天干五合、地支六沖與三合', () => {
-    const base = { stemElement: 'wood' as const, branchElement: 'wood' as const, naYin: '', tenGod: '', hiddenStems: [], hiddenTenGods: [], lifeStage: '', xunKong: '' };
+    const base = { stemElement: 'wood' as const, branchElement: 'wood' as const, naYin: '', tenGod: '', hiddenStems: [], hiddenTenGods: [], hiddenStemWeights: [], lifeStage: '', xunKong: '' };
     const relations = calculateBaziRelations([
       { ...base, label: '年柱', value: '甲申', stem: '甲', branch: '申' },
       { ...base, label: '月柱', value: '己子', stem: '己', branch: '子' },
@@ -37,6 +38,20 @@ describe('八字與日期', () => {
     expect(relations.some((item) => item.kind === 'stem-combination' && item.members.join('') === '甲己')).toBe(true);
     expect(relations.some((item) => item.kind === 'branch-clash' && item.members.join('') === '子午')).toBe(true);
     expect(relations.some((item) => item.kind === 'branch-three-harmony' && item.members.join('') === '申子辰')).toBe(true);
+  });
+  it('產生四柱藏干比例與月令季節狀態', () => {
+    const result = calculateBazi({ birthDate: '1990-01-02', birthTime: '10:30', timezone: 'Asia/Taipei' });
+    result.pillars.forEach((pillar) => expect(pillar.hiddenStemWeights.reduce((sum, item) => sum + item.weight, 0)).toBe(100));
+    expect(result.seasonStrength.monthBranch).toBe(result.pillars[1].branch);
+    expect(Object.values(result.seasonStrength.states)).toEqual(expect.arrayContaining(['prosperous', 'supportive', 'resting', 'imprisoned', 'declining']));
+  });
+  it('藏干權重表區分本氣、中氣、餘氣', () => {
+    expect(calculateHiddenStemWeights('丑', ['己', '癸', '辛'], ['比肩', '偏財', '食神'])).toEqual([
+      expect.objectContaining({ stem: '己', weight: 60, role: 'main' }),
+      expect.objectContaining({ stem: '癸', weight: 30, role: 'middle' }),
+      expect.objectContaining({ stem: '辛', weight: 10, role: 'residual' }),
+    ]);
+    expect(calculateSeasonStrength('子').states.water).toBe('prosperous');
   });
   it.each([
     [1984, '鼠'], [1985, '牛'], [1986, '虎'], [1987, '兔'],

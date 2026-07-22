@@ -57,8 +57,26 @@ export interface BaziPillar {
   tenGod: string;
   hiddenStems: string[];
   hiddenTenGods: string[];
+  hiddenStemWeights: BaziHiddenStemWeight[];
   lifeStage: string;
   xunKong: string;
+}
+
+export interface BaziHiddenStemWeight {
+  stem: string;
+  element: ElementName;
+  tenGod: string;
+  weight: number;
+  role: 'main' | 'middle' | 'residual';
+}
+
+export type SeasonalStrengthState = 'prosperous' | 'supportive' | 'resting' | 'imprisoned' | 'declining';
+
+export interface BaziSeasonStrength {
+  monthBranch: string;
+  season: string;
+  states: Record<ElementName, SeasonalStrengthState>;
+  note: string;
 }
 
 export interface BaziLuckCycle {
@@ -102,6 +120,7 @@ export interface BaziResult {
   shenGong: string;
   luckCycles?: BaziLuckCycle[];
   relations: BaziRelation[];
+  seasonStrength: BaziSeasonStrength;
   luckStart?: {
     direction: 'forward' | 'backward';
     years: number;

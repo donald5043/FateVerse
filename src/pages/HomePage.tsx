@@ -33,9 +33,9 @@ export default function HomePage() {
       </section>
 
       <section className="page-container page-section">
-        <div className="grid gap-5 lg:grid-cols-3">
+        <div className="stagger-grid grid gap-5 lg:grid-cols-3">
           {entries.map(({ to, icon: Icon, title, text, accent }, index) => (
-            <Link key={to} to={to} className="glass-card group flex min-h-64 flex-col p-6 transition duration-300 hover:-translate-y-1 hover:border-gold/30" style={{ animationDelay: `${index * 80}ms` }}>
+            <Link key={to} to={to} className="glass-card group flex min-h-64 flex-col p-6" style={{ animationDelay: `${index * 80}ms` }}>
               <span className="mb-8 grid size-12 place-items-center rounded-2xl bg-gold/10 text-gold"><Icon /></span>
               <span className="text-xs font-semibold tracking-widest text-gold">{accent}</span>
               <h2 className="mt-2 font-serif text-2xl font-semibold">{title}</h2>

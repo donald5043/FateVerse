@@ -13,7 +13,7 @@ export default function NatalChart({ result }: { result: AstrologyResult }) {
   const aspectMap = new Map(planets.map((planet) => [planet.name, point(planet.longitude, 105)]));
   return (
     <div>
-      <svg className="mx-auto h-auto w-full max-w-[480px]" viewBox="0 0 420 420" role="img" aria-label="西洋星盤行星黃道位置圖">
+      <svg className="chart-enter mx-auto h-auto w-full max-w-[480px]" viewBox="0 0 420 420" role="img" aria-label="西洋星盤行星黃道位置圖">
         <circle cx="210" cy="210" r="188" fill="#0d1428" stroke="rgba(216,184,117,.45)" />
         <circle cx="210" cy="210" r="150" fill="none" stroke="rgba(255,255,255,.15)" />
         <circle cx="210" cy="210" r="92" fill="none" stroke="rgba(255,255,255,.1)" />

@@ -3,7 +3,7 @@ import { Orbit } from 'lucide-react';
 export default function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="grid size-10 place-items-center rounded-full border border-gold/50 bg-gold/10 text-gold">
+      <span className="brand-orbit grid size-10 place-items-center rounded-full border border-gold/50 bg-gold/10 text-gold">
         <Orbit size={22} aria-hidden="true" />
       </span>
       <span className={compact ? 'hidden sm:block' : ''}>

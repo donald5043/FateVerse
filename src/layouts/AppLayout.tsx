@@ -1,6 +1,6 @@
 import { Menu, Settings, X } from 'lucide-react';
 import { useState } from 'react';
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import BrandMark from '../components/common/BrandMark';
 
 const links = [
@@ -13,12 +13,13 @@ const links = [
 
 export default function AppLayout() {
   const [open, setOpen] = useState(false);
+  const location = useLocation();
   return (
     <div className="min-h-screen">
       <a href="#main-content" className="sr-only z-[70] rounded-lg bg-gold px-4 py-2 font-semibold text-ink focus:not-sr-only focus:fixed focus:left-3 focus:top-3">跳到主要內容</a>
       <header className="sticky top-0 z-50 border-b border-white/10 bg-ink/80 backdrop-blur-xl">
         <div className="page-container flex min-h-16 items-center justify-between">
-          <Link to="/" aria-label="回到首頁"><BrandMark compact /></Link>
+          <Link to="/" aria-label="回到首頁" className="brand-motion"><BrandMark compact /></Link>
           <nav className="hidden items-center gap-1 md:flex" aria-label="主要導覽">
             {links.map(([to, label]) => (
               <NavLink key={to} to={to} className={({ isActive }) => `rounded-lg px-4 py-2 text-sm transition ${isActive ? 'bg-white/10 text-cream' : 'text-mist hover:text-cream'}`}>{label}</NavLink>
@@ -30,14 +31,14 @@ export default function AppLayout() {
           </button>
         </div>
         {open && (
-          <nav className="page-container grid gap-1 border-t border-white/10 py-3 md:hidden" aria-label="手機導覽">
+          <nav className="mobile-menu-enter page-container grid gap-1 border-t border-white/10 py-3 md:hidden" aria-label="手機導覽">
             {[...links, ['/settings', '設定'] as const].map(([to, label]) => (
               <NavLink key={to} to={to} onClick={() => setOpen(false)} className={({ isActive }) => `rounded-lg px-4 py-3 ${isActive ? 'bg-white/10 text-cream' : 'text-mist'}`}>{label}</NavLink>
             ))}
           </nav>
         )}
       </header>
-      <main id="main-content" tabIndex={-1}><Outlet /></main>
+      <main id="main-content" tabIndex={-1}><div className="route-enter" key={location.pathname}><Outlet /></div></main>
       <footer className="border-t border-white/10 py-8">
         <div className="page-container flex flex-col gap-4 text-sm text-mist sm:flex-row sm:items-center sm:justify-between">
           <p>© 2026 萬象命書 FateVerse</p>

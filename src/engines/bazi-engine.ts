@@ -2,6 +2,7 @@ import { Solar } from 'lunar-javascript';
 import type { BaziPillar, BaziResult, ProfileInput } from '../types/fate';
 import { branchToElement, stemToElement } from './five-elements-engine';
 import { calculateBaziRelations } from './bazi-relations-engine';
+import { calculateHiddenStemWeights, calculateSeasonStrength } from './bazi-strength-engine';
 import { normalizeZodiacAnimal } from './zodiac-engine';
 
 interface ParsedBirth {
@@ -63,6 +64,7 @@ export function calculateBazi(input: Pick<ProfileInput, 'birthDate' | 'birthTime
       tenGod: tenGods[index],
       hiddenStems: hiddenStems[index],
       hiddenTenGods: hiddenTenGods[index],
+      hiddenStemWeights: calculateHiddenStemWeights(branches[index], hiddenStems[index], hiddenTenGods[index]),
       lifeStage: lifeStages[index],
       xunKong: xunKong[index],
     }));
@@ -89,6 +91,7 @@ export function calculateBazi(input: Pick<ProfileInput, 'birthDate' | 'birthTime
       shenGong: eightChar.getShenGong(),
       luckCycles,
       relations: calculateBaziRelations(pillars),
+      seasonStrength: calculateSeasonStrength(branches[1]),
       luckStart: yun ? {
         direction: yun.isForward() ? 'forward' : 'backward',
         years: yun.getStartYear(),

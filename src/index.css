@@ -44,23 +44,53 @@ body::after {
 @layer components {
   .page-container { @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8; }
   .page-section { @apply py-10 sm:py-14; }
-  .glass-card { @apply rounded-3xl border border-white/10 bg-white/[0.055] shadow-glow backdrop-blur-md; }
+  .glass-card { @apply rounded-3xl border border-white/10 bg-white/[0.055] shadow-glow backdrop-blur-md; transition: transform 240ms ease, border-color 240ms ease, background-color 240ms ease; }
   .eyebrow { @apply text-xs font-semibold uppercase tracking-[0.24em] text-gold; }
   .display-title { @apply font-serif text-3xl font-bold leading-tight text-cream sm:text-5xl; }
   .section-title { @apply font-serif text-2xl font-semibold text-cream sm:text-3xl; }
   .muted { @apply leading-7 text-mist; }
   .input-field { @apply min-h-12 w-full rounded-xl border border-white/15 bg-ink/70 px-4 py-3 text-cream outline-none transition placeholder:text-mist/50 focus:border-gold/70 focus:ring-2 focus:ring-gold/15; }
   .label { @apply mb-2 block text-sm font-medium text-cream; }
-  .btn-primary { @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-gold px-5 py-3 font-semibold text-ink transition hover:bg-[#e7ca8d] focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-ink disabled:cursor-not-allowed disabled:opacity-50; }
-  .btn-secondary { @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-5 py-3 font-semibold text-cream transition hover:border-gold/50 hover:bg-white/[0.1] focus:outline-none focus:ring-2 focus:ring-gold disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-gold px-5 py-3 font-semibold text-ink transition hover:bg-[#e7ca8d] focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-ink active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-secondary { @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-5 py-3 font-semibold text-cream transition hover:border-gold/50 hover:bg-white/[0.1] focus:outline-none focus:ring-2 focus:ring-gold active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50; }
   .chip { @apply inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-4 py-2 text-sm text-mist transition hover:border-gold/50; }
   .chip-active { @apply border-gold/70 bg-gold/10 text-cream; }
   .notice { @apply rounded-2xl border border-gold/20 bg-gold/[0.07] p-4 text-sm leading-6 text-[#e8ddc5]; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .reveal { animation: reveal 0.5s ease-out both; }
-  @keyframes reveal { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .reveal { animation: reveal 0.55s cubic-bezier(.22, .72, .24, 1) both; }
+  .route-enter { animation: route-enter 0.42s cubic-bezier(.22, .72, .24, 1) both; }
+  .mobile-menu-enter { transform-origin: top; animation: menu-enter 0.2s ease-out both; }
+  .chart-enter { transform-origin: center; animation: chart-enter 0.72s cubic-bezier(.22, .72, .24, 1) both; }
+  .card-reveal { animation: card-reveal 0.55s cubic-bezier(.22, .72, .24, 1) both; }
+  .brand-orbit svg { animation: orbit-pulse 5s ease-in-out infinite; }
+  .brand-motion:hover .brand-orbit { transform: rotate(12deg) scale(1.04); }
+  .brand-orbit { transition: transform 260ms ease, box-shadow 260ms ease; }
+  .guidance-spark { animation: guidance-glow 3.6s ease-in-out infinite; }
+  .meter-fill { width: var(--meter-width); transform-origin: left; animation: meter-grow 0.75s cubic-bezier(.22, .72, .24, 1) both; }
+  .stagger-grid > * { animation: reveal 0.5s cubic-bezier(.22, .72, .24, 1) both; }
+  .stagger-grid > :nth-child(2) { animation-delay: 55ms; }
+  .stagger-grid > :nth-child(3) { animation-delay: 110ms; }
+  .stagger-grid > :nth-child(4) { animation-delay: 165ms; }
+  .stagger-grid > :nth-child(5) { animation-delay: 220ms; }
+  @media (hover: hover) {
+    .glass-card:hover { transform: translateY(-3px); border-color: rgba(216, 184, 117, 0.28); background-color: rgba(255, 255, 255, 0.07); }
+  }
+  @keyframes reveal { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes route-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes menu-enter { from { opacity: 0; transform: scaleY(.96) translateY(-6px); } to { opacity: 1; transform: scaleY(1) translateY(0); } }
+  @keyframes chart-enter { from { opacity: 0; transform: scale(.975) rotate(-.45deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+  @keyframes card-reveal { 0% { opacity: 0; transform: perspective(900px) rotateY(-3deg) translateY(14px); } 100% { opacity: 1; transform: perspective(900px) rotateY(0) translateY(0); } }
+  @keyframes orbit-pulse { 0%, 100% { transform: rotate(0); opacity: .9; } 50% { transform: rotate(18deg); opacity: 1; } }
+  @keyframes guidance-glow { 0%, 100% { box-shadow: 0 0 0 rgba(216, 184, 117, 0); } 50% { box-shadow: 0 0 28px rgba(216, 184, 117, .18); } }
+  @keyframes meter-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  .meter-fill { width: var(--meter-width); }
 }
 
 @media print {

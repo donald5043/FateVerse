@@ -9,6 +9,7 @@ import FiveElementChart from '../components/charts/FiveElementChart';
 import Disclaimer from '../components/common/Disclaimer';
 import BaziPillars from '../components/report/BaziPillars';
 import BaziRelations from '../components/report/BaziRelations';
+import BaziStrengthPanel from '../components/report/BaziStrengthPanel';
 import { AstrologyPositionInsights, BaziTenGodInsights, ZiweiKeyPalaceInsights } from '../components/report/CulturalInsights';
 import NatalChart from '../components/report/NatalChart';
 import HouseSystemComparison from '../components/report/HouseSystemComparison';
@@ -171,6 +172,7 @@ export default function ReportPage() {
           <article className="glass-card p-5 sm:p-7"><div className="flex items-center justify-between"><h3 className="font-serif text-xl font-semibold">五行分布</h3><span className="text-xs text-mist">共 {input.fiveElements.total} 個位置</span></div><div className="mt-6"><FiveElementChart result={input.fiveElements} /></div><div className="mt-6 grid grid-cols-2 gap-3"><div className="rounded-xl border border-white/10 bg-white/[0.04] p-3"><span className="text-xs text-mist">相對最強</span><p className="mt-1 font-semibold text-cream">{input.fiveElements.strongest.map((key) => ELEMENT_LABELS[key]).join('、')}</p></div><div className="rounded-xl border border-white/10 bg-white/[0.04] p-3"><span className="text-xs text-mist">相對最弱</span><p className="mt-1 font-semibold text-cream">{input.fiveElements.weakest.map((key) => ELEMENT_LABELS[key]).join('、')}</p></div></div><p className="mt-4 text-xs leading-5 text-mist">元素較少不代表必須直接補足；本區只統計主干支，季節旺衰與藏干權重仍未納入，不作簡化吉凶斷言。</p></article>
         </div>
         <BaziRelations result={input.bazi} />
+        <BaziStrengthPanel result={input.bazi} />
       </section>
 
       <section id="astrology" className="mt-14 scroll-mt-36">
