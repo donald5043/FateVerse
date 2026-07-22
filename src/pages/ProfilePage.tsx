@@ -2,6 +2,7 @@ import { AlertCircle, ArrowRight, LockKeyhole, Sparkles } from 'lucide-react';
 import { FormEvent, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generateFallbackReport } from '../ai/fallback-report';
+import BirthChartPreview from '../components/profile/BirthChartPreview';
 import { calculateSunSign } from '../engines/astrology-engine';
 import { calculateBazi } from '../engines/bazi-engine';
 import { calculateFiveElements } from '../engines/five-elements-engine';
@@ -31,7 +32,7 @@ export default function ProfilePage() {
     if (!form.birthTime) return { dateLabel, message: '日期已收到；再填出生時間即可試算四柱。' };
     try {
       const bazi = calculateBazi({ birthDate: form.birthDate, birthTime: form.birthTime, timezone: form.timezone });
-      return { dateLabel, message: `已套用 ${form.timezone}，四柱試算：${bazi.pillars.map((pillar) => `${pillar.label}${pillar.value}`).join('・')}` };
+      return { dateLabel, message: `已套用 ${form.timezone}，下方為目前輸入的即時試算。`, bazi, fiveElements: calculateFiveElements(bazi.pillars) };
     } catch (reason) {
       return { dateLabel, message: reason instanceof Error ? reason.message : '目前無法試算這組出生資料。' };
     }
@@ -55,6 +56,7 @@ export default function ProfilePage() {
     try {
       if (!form.birthDate) throw new Error('請先選擇出生日期。');
       if (!form.birthTime) throw new Error('請填寫出生時間；若不確定，可先用最接近的時間試算。');
+      if (!form.name.trim()) throw new Error('請填寫姓名；未收錄的文字會標示資料不足，不會偽造筆畫。');
       if (!form.gender || !form.region.trim() || !form.timezone.trim()) throw new Error('請完成性別、出生地區與時區欄位。');
       if (!form.focus.length) throw new Error('請至少選擇一個想了解的主題。');
       const bazi = calculateBazi(form);
@@ -88,10 +90,13 @@ export default function ProfilePage() {
     <section className="page-container page-section pb-28 lg:pb-14">
       <div className="max-w-3xl"><p className="eyebrow">Cross-cultural profile</p><h1 className="display-title mt-3">探索命盤</h1><p className="mt-5 muted">精確計算四柱、五行、生肖、太陽星座與生命靈數，再以不同文化視角交叉整理。</p></div>
       <div className="mt-9 notice flex items-start gap-3"><LockKeyhole className="mt-0.5 shrink-0 text-gold" size={19} /><p>所有資料只在目前瀏覽器中運算，不會上傳至伺服器。出生資料預設不會永久保存。</p></div>
+      <ol className="mt-6 grid grid-cols-3 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035]" aria-label="建立報告流程">
+        {['出生資料', '關注主題', '萬象報告'].map((step, index) => <li className="flex items-center gap-2 border-r border-white/10 px-3 py-3 text-xs text-mist last:border-r-0 sm:px-5 sm:text-sm" key={step}><span className={`grid size-6 shrink-0 place-items-center rounded-full text-xs font-semibold ${index === 0 ? 'bg-gold text-ink' : 'bg-white/10 text-cream'}`}>{index + 1}</span><span>{step}</span></li>)}
+      </ol>
       <form onSubmit={submit} className="mt-7 grid items-start gap-7 lg:grid-cols-[1fr_0.72fr]" noValidate>
         <div className="glass-card space-y-6 p-5 sm:p-7">
           <div className="grid gap-5 sm:grid-cols-2">
-            <label className="sm:col-span-2"><span className="label">姓名（選填）</span><input className="input-field" value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="例：林安晨；留空仍可建立出生資料報告" autoComplete="name" /></label>
+            <label className="sm:col-span-2"><span className="label">姓名 *</span><input className="input-field" value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="例：林安晨；未收錄的字會標示資料不足" autoComplete="name" required /></label>
             <label><span className="label">出生日期 *</span><input className="input-field" type="date" min="1900-01-01" max="2100-12-31" value={form.birthDate} onChange={(e) => update('birthDate', e.target.value)} required /></label>
             <label><span className="label">出生時間 *</span><input className="input-field" type="time" value={form.birthTime} onChange={(e) => update('birthTime', e.target.value)} required /><span className="mt-1.5 block text-xs text-mist">採用所在地標準時間；第一版不猜測真太陽時。</span></label>
             <label><span className="label">命理排盤性別 *</span><select className="input-field" value={form.gender} onChange={(e) => update('gender', e.target.value as ProfileInput['gender'])}><option value="other">不指定／其他</option><option value="female">女性</option><option value="male">男性</option></select></label>
@@ -101,7 +106,7 @@ export default function ProfilePage() {
             <label><span className="label">經度（選填）</span><input className="input-field" type="number" min="-180" max="180" step="0.0001" value={form.longitude ?? ''} onChange={(e) => update('longitude', e.target.value ? Number(e.target.value) : undefined)} /></label>
             <label><span className="label">緯度（選填）</span><input className="input-field" type="number" min="-90" max="90" step="0.0001" value={form.latitude ?? ''} onChange={(e) => update('latitude', e.target.value ? Number(e.target.value) : undefined)} /></label>
           </div>
-          {birthPreview && <div className="rounded-xl border border-gold/25 bg-gold/[0.07] p-4" role="status" aria-live="polite"><p className="text-sm font-semibold text-gold">出生資料已生效：{birthPreview.dateLabel}</p><p className="mt-1.5 text-sm leading-6 text-mist">{birthPreview.message}</p></div>}
+          {birthPreview && <div role="status" aria-live="polite">{birthPreview.bazi && birthPreview.fiveElements ? <BirthChartPreview bazi={birthPreview.bazi} fiveElements={birthPreview.fiveElements} /> : <div className="rounded-xl border border-gold/25 bg-gold/[0.07] p-4"><p className="text-sm font-semibold text-gold">出生資料已生效：{birthPreview.dateLabel}</p><p className="mt-1.5 text-sm leading-6 text-mist">{birthPreview.message}</p></div>}</div>}
           {nameCharacters.length > 0 && <div><h2 className="label">姓名筆畫資料（選填修正）</h2><p className="mb-3 text-xs leading-5 text-mist">未輸入時使用少量示範現代筆畫；沒有資料的字不會偽造。手動值會在報告標示來源。</p><div className="flex flex-wrap gap-3">{nameCharacters.map((character, index) => <label key={`${character}-${index}`} className="flex items-center gap-2 rounded-xl border border-white/10 p-2"><span className="grid size-9 place-items-center rounded-lg bg-white/5 font-serif">{character}</span><input aria-label={`${character}的手動筆畫`} className="w-20 rounded-lg border border-white/10 bg-ink px-2 py-2" type="number" min="1" max="64" placeholder="筆畫" value={manualStrokes[character] ?? ''} onChange={(e) => setManualStrokes((current) => ({ ...current, [character]: Number(e.target.value) || 0 }))} /></label>)}</div></div>}
         </div>
         <aside className="glass-card p-5 sm:p-7 lg:sticky lg:top-24">

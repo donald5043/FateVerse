@@ -1,13 +1,16 @@
-import { AlertCircle, CheckCircle2, Cpu, Database, Download, LoaderCircle, Trash2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Cpu, Database, Download, HardDrive, LoaderCircle, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { LOCAL_MODELS } from '../ai/model-options';
 import { useFateStore } from '../store/useFateStore';
 import { clearLocalData, defaultPreferences, loadPreferences, savePreferences, type LocalPreferences } from '../utils/storage';
 
+const formatBytes = (value: number): string => value >= 1024 ** 3 ? `${(value / 1024 ** 3).toFixed(1)} GB` : `${Math.max(0.1, value / 1024 ** 2).toFixed(1)} MB`;
+
 export default function SettingsPage() {
   const [preferences, setPreferences] = useState<LocalPreferences>(defaultPreferences);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
+  const [storageSummary, setStorageSummary] = useState('正在估算瀏覽器儲存空間…');
   const [modelOption] = useState(LOCAL_MODELS[0]);
   const model = useFateStore((state) => state.model);
   const setModel = useFateStore((state) => state.setModel);
@@ -20,6 +23,7 @@ export default function SettingsPage() {
       const support = await detectWebGPU();
       setModel({ supported: support.supported, message: support.reason });
     }).catch(() => setModel({ supported: false, status: 'error', message: 'WebLLM 模組載入失敗。' }));
+    if (navigator.storage?.estimate) void navigator.storage.estimate().then(({ usage = 0, quota = 0 }) => setStorageSummary(quota ? `已使用約 ${formatBytes(usage)}／可用上限約 ${formatBytes(quota)}` : `已使用約 ${formatBytes(usage)}`)).catch(() => setStorageSummary('瀏覽器未提供儲存空間估算。'));
   }, [setModel, setUiTheme]);
 
   const persist = async (next: LocalPreferences) => {
@@ -49,7 +53,13 @@ export default function SettingsPage() {
     catch { setError('無法清除模型快取。請關閉其他 FateVerse 分頁後再試。'); }
   };
   const clearEverything = async () => {
-    try { await clearLocalData(); clearSession(); setPreferences(defaultPreferences); setNotice('所有 FateVerse 本地資料與網站快取已清除。'); }
+    if (!window.confirm('確定清除 FateVerse 的偏好、最近分析、模型與網站快取嗎？此動作無法復原。')) return;
+    try {
+      const { clearModelCache } = await import('../ai/webllm');
+      const clearing = await Promise.allSettled([clearModelCache(modelOption.id), clearLocalData()]);
+      if (clearing.some((result) => result.status === 'rejected')) throw new Error('PARTIAL_CLEAR');
+      clearSession(); setPreferences(defaultPreferences); setStorageSummary('本地資料已清除；瀏覽器稍後會重新計算用量。'); setNotice('所有 FateVerse 本地資料、模型與網站快取已清除。');
+    }
     catch { setError('無法完整清除本地資料。請使用瀏覽器的網站資料設定再試。'); }
   };
 
@@ -76,6 +86,7 @@ export default function SettingsPage() {
           </label>
           <label className="mt-4 block"><span className="label">OCR 語言</span><select className="input-field" value={preferences.ocrLanguage} onChange={(event) => void persist({ ...preferences, ocrLanguage: event.target.value })}><option value="chi_tra">繁體中文 chi_tra</option></select></label>
           <label className="mt-4 block"><span className="label">主題模式</span><select className="input-field" value={preferences.theme} onChange={(event) => void persist({ ...preferences, theme: event.target.value as LocalPreferences['theme'] })}><option value="dark">深色靛藍</option><option value="system">跟隨系統（目前沿用深色視覺）</option></select></label>
+          <div className="mt-4 flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.035] p-4 text-sm text-mist"><HardDrive className="mt-0.5 shrink-0 text-gold" size={18} /><div><strong className="text-cream">本站儲存空間</strong><p className="mt-1 leading-6">{storageSummary}</p><p className="mt-1 text-xs">模型快取通常佔最大比例；實際上限由瀏覽器與裝置決定。</p></div></div>
           <button className="btn-secondary mt-6 w-full" type="button" onClick={() => void clearEverything()}><Trash2 size={17} />清除我的所有本地資料</button>
         </article>
         <article className="glass-card p-6">

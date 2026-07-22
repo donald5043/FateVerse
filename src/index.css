@@ -62,3 +62,14 @@ body::after {
   .reveal { animation: reveal 0.5s ease-out both; }
   @keyframes reveal { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 }
+
+@media print {
+  :root { color: #111827; background: #fff; }
+  body { background: #fff !important; color: #111827; }
+  body::before, body::after, header, footer { display: none !important; }
+  .report-print { max-width: none !important; padding: 0 !important; }
+  .report-print article, .report-print section, .report-print details { break-inside: avoid; box-shadow: none !important; }
+  .glass-card { border-color: #d1d5db !important; background: #fff !important; color: #111827 !important; }
+  .text-cream { color: #111827 !important; }
+  .text-mist { color: #4b5563 !important; }
+}

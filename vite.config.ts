@@ -2,8 +2,10 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig(({ command }) => ({
-  base: command === 'build' ? '/FateVerse/' : '/',
+export default defineConfig(({ mode }) => ({
+  // `vite preview` uses the serve command too, so command-based detection
+  // makes production assets resolve from `/` and leaves a blank page.
+  base: mode === 'production' ? '/FateVerse/' : '/',
   plugins: [
     react(),
     VitePWA({

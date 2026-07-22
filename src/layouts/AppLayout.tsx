@@ -15,6 +15,7 @@ export default function AppLayout() {
   const [open, setOpen] = useState(false);
   return (
     <div className="min-h-screen">
+      <a href="#main-content" className="sr-only z-[70] rounded-lg bg-gold px-4 py-2 font-semibold text-ink focus:not-sr-only focus:fixed focus:left-3 focus:top-3">跳到主要內容</a>
       <header className="sticky top-0 z-50 border-b border-white/10 bg-ink/80 backdrop-blur-xl">
         <div className="page-container flex min-h-16 items-center justify-between">
           <Link to="/" aria-label="回到首頁"><BrandMark compact /></Link>
@@ -36,7 +37,7 @@ export default function AppLayout() {
           </nav>
         )}
       </header>
-      <main><Outlet /></main>
+      <main id="main-content" tabIndex={-1}><Outlet /></main>
       <footer className="border-t border-white/10 py-8">
         <div className="page-container flex flex-col gap-4 text-sm text-mist sm:flex-row sm:items-center sm:justify-between">
           <p>© 2026 萬象命書 FateVerse</p>

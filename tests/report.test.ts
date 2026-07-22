@@ -22,4 +22,9 @@ describe('報告', () => {
     expect(report.sections.name).toBeUndefined();
     expect(report.sections.astrology).toContain('太陽');
   });
+  it('選擇全部時展開多個可執行主題，而不是只回傳一張通用卡', () => {
+    const report = generateFallbackReport({ ...input, userFocus: ['all'] });
+    expect(report.focusAnalysis.map((item) => item.topic)).toEqual(['個性', '工作', '感情', '人生方向']);
+    report.focusAnalysis.forEach((item) => expect(item.suggestions.length).toBeGreaterThanOrEqual(2));
+  });
 });

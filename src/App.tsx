@@ -4,6 +4,8 @@ import AppLayout from './layouts/AppLayout';
 import LoadingScreen from './components/common/LoadingScreen';
 import StorageHydrator from './components/common/StorageHydrator';
 import PwaUpdatePrompt from './components/common/PwaUpdatePrompt';
+import AppErrorBoundary from './components/common/AppErrorBoundary';
+import NetworkStatus from './components/common/NetworkStatus';
 
 const HomePage = lazy(() => import('./pages/HomePage'));
 const FortunePage = lazy(() => import('./pages/FortunePage'));
@@ -16,7 +18,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 
 export default function App() {
   return (
-    <><StorageHydrator /><PwaUpdatePrompt /><Suspense fallback={<LoadingScreen />}>
+    <><StorageHydrator /><PwaUpdatePrompt /><NetworkStatus /><AppErrorBoundary><Suspense fallback={<LoadingScreen />}>
       <Routes>
         <Route element={<AppLayout />}>
           <Route index element={<HomePage />} />
@@ -30,6 +32,6 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
-    </Suspense></>
+    </Suspense></AppErrorBoundary></>
   );
 }

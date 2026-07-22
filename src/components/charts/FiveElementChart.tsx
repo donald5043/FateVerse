@@ -7,12 +7,12 @@ export default function FiveElementChart({ result }: { result: FiveElementResult
   return (
     <div className="space-y-4" aria-label="五行分布圖">
       {(Object.keys(ELEMENT_LABELS) as (keyof typeof ELEMENT_LABELS)[]).map((key) => (
-        <div key={key} className="grid grid-cols-[2rem_1fr_3.5rem] items-center gap-3">
+        <div key={key} className="grid grid-cols-[2rem_1fr_4.5rem] items-center gap-3">
           <span className="font-serif font-semibold text-cream">{ELEMENT_LABELS[key]}</span>
           <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
             <div className="h-full rounded-full transition-all duration-700" style={{ width: `${result.percentages[key]}%`, backgroundColor: colors[key] }} />
           </div>
-          <span className="text-right text-sm tabular-nums text-mist">{result.percentages[key]}%</span>
+          <span className="text-right text-sm tabular-nums text-mist"><strong className="font-semibold text-cream">{result[key]}</strong> · {result.percentages[key]}%</span>
         </div>
       ))}
     </div>

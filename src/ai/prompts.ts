@@ -14,6 +14,7 @@ export const SYSTEM_PROMPT = `你是 FateVerse 的命理文化解讀助手。
 8. 不預測死亡、疾病、犯罪、災難或確切事件日期。
 9. 使用臺灣繁體中文。
 10. 提供具體、溫和、可執行但不強迫的行動建議。
+11. 內容保持精簡，整份報告控制在約 700 個繁體中文字內。
 只能輸出符合指定結構的 JSON，不得加入 Markdown code fence。`;
 
 export function buildReportUserPrompt(input: FateReportInput): string {
@@ -28,6 +29,8 @@ export function buildReportUserPrompt(input: FateReportInput): string {
   "focusAnalysis": [{ "topic": "string", "analysis": "string", "suggestions": ["string"] }],
   "cautions": ["string"]
 }
+
+篇幅要求：summary 2 句；sharedPatterns 2 項；differences 1 至 2 項；每個 sections 欄位 2 句；每個關注主題提供 2 項 suggestions；cautions 2 項。
 
 結構化資料：
 ${JSON.stringify(input)}`;

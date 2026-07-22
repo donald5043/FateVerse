@@ -1,4 +1,4 @@
-import { AlertCircle, Check, Crop, FileImage, RefreshCw, RotateCw, ScanLine, Trash2, X } from 'lucide-react';
+import { AlertCircle, Check, Crop, FileImage, RefreshCw, RotateCw, ScanLine, Sparkles, Trash2, X } from 'lucide-react';
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import type { LoggerMessage, Worker } from 'tesseract.js';
 import Disclaimer from '../components/common/Disclaimer';
@@ -28,11 +28,13 @@ export default function FortunePage() {
   const [mode, setMode] = useState<ImageMode>('original');
   const [ocrLayout, setOcrLayout] = useState<OcrLayout>('vertical');
   const [ocrState, setOcrState] = useState<OcrState>('idle');
+  const [ocrConfidence, setOcrConfidence] = useState<number>();
   const [progress, setProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState('尚未開始辨識');
   const [error, setError] = useState('');
   const [matches, setMatches] = useState<FortuneMatch[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
+  const [interpretationReady, setInterpretationReady] = useState(false);
   const originalCanvas = useRef<HTMLCanvasElement | undefined>(undefined);
   const previewUrlRef = useRef<string | undefined>(undefined);
   const workerRef = useRef<Worker | null>(null);
@@ -58,7 +60,7 @@ export default function FortunePage() {
   const chooseImage = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    setError(''); setMatches([]); selectFortune(undefined);
+    setError(''); setMatches([]); setOcrConfidence(undefined); setInterpretationReady(false); selectFortune(undefined);
     try {
       const prepared = await prepareImage(file);
       originalCanvas.current = prepared.canvas;
@@ -90,13 +92,13 @@ export default function FortunePage() {
   };
 
   const clearImage = async () => {
-    release(previewUrlRef.current); previewUrlRef.current = undefined; setPreview(undefined); originalCanvas.current = undefined; setMode('original'); setProgress(0); setOcrState('idle'); setStatusMessage('尚未開始辨識');
+    release(previewUrlRef.current); previewUrlRef.current = undefined; setPreview(undefined); originalCanvas.current = undefined; setMode('original'); setProgress(0); setOcrConfidence(undefined); setOcrState('idle'); setStatusMessage('尚未開始辨識');
     if (workerRef.current) { await workerRef.current.terminate(); workerRef.current = null; workerLanguageRef.current = null; }
   };
 
   const findMatches = async (text: string) => {
     if (!text.trim() || loadingMatches) return [];
-    setLoadingMatches(true); setError(''); selectFortune(undefined);
+    setLoadingMatches(true); setError(''); setInterpretationReady(false); selectFortune(undefined);
     try {
       const sticks = await loadFortuneSticks(system);
       const next = matchFortuneSticks(text, sticks);
@@ -114,7 +116,7 @@ export default function FortunePage() {
   const runOcr = async () => {
     if (!preview || ['initializing', 'loading', 'recognizing'].includes(ocrState)) return;
     cancelRequestedRef.current = false;
-    setError(''); setProgress(0); setOcrState('initializing'); setStatusMessage('正在初始化 OCR…');
+    setError(''); setProgress(0); setOcrConfidence(undefined); setOcrState('initializing'); setStatusMessage('正在初始化 OCR…');
     try {
       const tesseract = await import('tesseract.js');
       const isVertical = ocrLayout === 'vertical';
@@ -143,6 +145,7 @@ export default function FortunePage() {
         .replace(/([\p{Script=Han}])\s+(?=[\p{Script=Han}])/gu, '$1')
         .replace(/[ \t]+/g, ' ')
         .trim();
+      setOcrConfidence(Math.round(result.data.confidence));
       setOcrText(recognizedText);
       const next = await findMatches(recognizedText);
       setOcrState('done'); setProgress(100);
@@ -155,7 +158,7 @@ export default function FortunePage() {
   };
 
   const cancelOcr = async () => {
-    cancelRequestedRef.current = true; await workerRef.current?.terminate(); workerRef.current = null; workerLanguageRef.current = null; setOcrState('cancelled'); setStatusMessage('已取消 OCR。你可以重新開始或手動輸入。'); setProgress(0);
+    cancelRequestedRef.current = true; await workerRef.current?.terminate(); workerRef.current = null; workerLanguageRef.current = null; setOcrState('cancelled'); setStatusMessage('已取消 OCR。你可以重新開始或手動輸入。'); setProgress(0); setOcrConfidence(undefined);
   };
 
   const search = async () => {
@@ -165,9 +168,21 @@ export default function FortunePage() {
 
   const topicInterpretation = (stick: FortuneStick) => topic === 'custom' ? `${stick.interpretations.overall} 針對「${customQuestion || '你的問題'}」，建議先把問題拆成可觀察的事實與下一個小步驟。` : stick.interpretations[topic] ?? stick.interpretations.overall;
 
+  const revealInterpretation = () => {
+    if (topic === 'custom' && !customQuestion.trim()) { setError('請先填寫自訂問題，再產生解籤結果。'); return; }
+    setError(''); setInterpretationReady(true);
+    window.setTimeout(() => document.querySelector('#fortune-result')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
+  };
+
   return (
     <section className="page-container page-section">
       <div className="max-w-3xl"><p className="eyebrow">Fortune Lens</p><h1 className="display-title mt-3">拍籤解籤</h1><p className="mt-5 muted">針對常見直排籤詩使用專用繁體中文 OCR，辨識後自動與已收錄資料逐句容錯比對；文字仍可由你校正。</p></div>
+      <ol className="mt-7 grid grid-cols-4 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035]" aria-label="籤詩辨識流程">
+        {['來源與照片', 'OCR 校對', '候選確認', '主題解籤'].map((step, index) => {
+          const current = selected ? 3 : matches.length ? 2 : ocrText.trim() ? 1 : 0;
+          return <li className={`border-r border-white/10 px-2 py-3 text-center text-[11px] last:border-r-0 sm:px-4 sm:text-sm ${index <= current ? 'bg-gold/[0.07] text-cream' : 'text-mist/70'}`} key={step}><span className={`mx-auto mb-1 grid size-6 place-items-center rounded-full text-xs font-semibold ${index <= current ? 'bg-gold text-ink' : 'bg-white/10 text-mist'}`}>{index + 1}</span>{step}</li>;
+        })}
+      </ol>
       <div className="mt-8 grid gap-7 lg:grid-cols-[0.82fr_1.18fr]">
         <div className="space-y-6">
           <article className="glass-card p-5 sm:p-6"><span className="eyebrow">01 籤詩來源</span><div className="mt-4 space-y-2">{systems.map((item) => <label key={item.value} className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition ${system === item.value ? 'border-gold/60 bg-gold/10' : 'border-white/10 bg-white/[0.03]'}`}><input type="radio" name="system" value={item.value} checked={system === item.value} onChange={() => { setSystem(item.value); setMatches([]); selectFortune(undefined); }} /><span><strong className="block text-cream">{item.label}</strong><span className="text-xs text-mist">{item.note}</span></span></label>)}</div></article>
@@ -177,16 +192,65 @@ export default function FortunePage() {
         </div>
 
         <div className="space-y-6">
-          <article className="glass-card p-5 sm:p-6"><div className="flex items-center justify-between gap-3"><span className="eyebrow">03 OCR 與文字校對</span>{['initializing','loading','recognizing'].includes(ocrState) && <button className="text-sm text-mist hover:text-cream" type="button" onClick={() => void cancelOcr()}><X className="inline" size={16} /> 取消</button>}</div><div className="mt-4"><span className="label">籤詩排版</span><div className="mt-2 grid grid-cols-2 gap-2"><button type="button" className={`chip justify-center ${ocrLayout === 'vertical' ? 'chip-active' : ''}`} onClick={() => setOcrLayout('vertical')}>直排（常見）</button><button type="button" className={`chip justify-center ${ocrLayout === 'horizontal' ? 'chip-active' : ''}`} onClick={() => setOcrLayout('horizontal')}>橫排</button></div><p className="mt-2 text-xs leading-5 text-mist">像你提供的照片請選直排；選錯排版會大幅降低中文辨識率。</p></div><div className="mt-4 rounded-xl bg-white/5 p-3 text-sm text-mist" role="status" aria-live="polite"><div className="flex justify-between gap-3"><span>{statusMessage}</span><span>{progress}%</span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full bg-gold transition-all" style={{ width: `${progress}%` }} /></div></div><button className="btn-primary mt-4 w-full" type="button" onClick={() => void runOcr()} disabled={!preview || ['initializing','loading','recognizing'].includes(ocrState)}><ScanLine size={18} />{ocrState === 'done' ? '重新 OCR 並比對' : '開始 OCR 並自動比對'}</button><label className="mt-5 block"><span className="label">辨識文字（可手動修正）</span><textarea className="input-field min-h-40 resize-y" value={ocrText} onChange={(e) => setOcrText(e.target.value)} placeholder="也可以直接輸入籤號、標題，或至少前兩句籤文。" /></label><button className="btn-secondary mt-3 w-full" type="button" disabled={loadingMatches} onClick={() => void search()}>{loadingMatches ? '正在比對…' : '用校正文字重新比對'}</button></article>
+          <article className="glass-card p-5 sm:p-6">
+            <div className="flex items-center justify-between gap-3">
+              <span className="eyebrow">03 OCR 與文字校對</span>
+              {['initializing', 'loading', 'recognizing'].includes(ocrState) && <button className="text-sm text-mist hover:text-cream" type="button" onClick={() => void cancelOcr()}><X className="inline" size={16} /> 取消</button>}
+            </div>
+            <div className="mt-4">
+              <span className="label">籤詩排版</span>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <button type="button" className={`chip justify-center ${ocrLayout === 'vertical' ? 'chip-active' : ''}`} onClick={() => setOcrLayout('vertical')}>直排（常見）</button>
+                <button type="button" className={`chip justify-center ${ocrLayout === 'horizontal' ? 'chip-active' : ''}`} onClick={() => setOcrLayout('horizontal')}>橫排</button>
+              </div>
+              <p className="mt-2 text-xs leading-5 text-mist">像你提供的照片請選直排；選錯排版會大幅降低中文辨識率。</p>
+            </div>
+            <div className="mt-4 rounded-xl bg-white/5 p-3 text-sm text-mist" role="status" aria-live="polite">
+              <div className="flex justify-between gap-3"><span>{statusMessage}</span><span>{progress}%</span></div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full bg-gold transition-all" style={{ width: `${progress}%` }} /></div>
+              {ocrConfidence !== undefined && <div className={`mt-3 rounded-lg px-3 py-2 text-xs leading-5 ${ocrConfidence >= 75 ? 'bg-emerald-300/10 text-emerald-100' : 'bg-amber-200/10 text-amber-100'}`}><strong>OCR 信心 {ocrConfidence}%：</strong>{ocrConfidence >= 75 ? '仍請核對籤號與每句文字，再選擇候選。' : '辨識信心偏低，請以候選籤詩原文為準並手動校正；系統不會只靠 OCR 籤號判定。'}</div>}
+            </div>
+            <button className="btn-primary mt-4 w-full" type="button" onClick={() => void runOcr()} disabled={!preview || ['initializing', 'loading', 'recognizing'].includes(ocrState)}><ScanLine size={18} />{ocrState === 'done' ? '重新 OCR 並比對' : '開始 OCR 並自動比對'}</button>
+            <label className="mt-5 block"><span className="label">辨識文字（可手動修正）</span><textarea className="input-field min-h-40 resize-y" value={ocrText} onChange={(e) => setOcrText(e.target.value)} placeholder="也可以直接輸入籤號、標題，或至少前兩句籤文。" /></label>
+            <button className="btn-secondary mt-3 w-full" type="button" disabled={loadingMatches} onClick={() => void search()}>{loadingMatches ? '正在比對…' : '用校正文字重新比對'}</button>
+          </article>
           {error && <div className="flex items-start gap-3 rounded-2xl border border-rose-300/20 bg-rose-300/10 p-4 text-sm text-rose-100" role="alert"><AlertCircle className="mt-0.5 shrink-0" size={18} />{error}</div>}
-          {matches.length > 0 && <article className="glass-card p-5 sm:p-6"><span className="eyebrow">04 候選籤詩</span><div className="mt-4 space-y-3">{matches.map(({ item, confidence }) => <div key={item.id} className={`rounded-2xl border p-4 ${selected?.id === item.id ? 'border-gold/60 bg-gold/[0.08]' : 'border-white/10 bg-white/[0.025]'}`}><div className="flex items-start justify-between gap-3"><div><span className="text-xs text-gold">第 {item.number} 籤 · {item.level}</span><h3 className="mt-1 font-serif text-lg font-semibold">{item.title}</h3></div><span className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-mist">符合度 {Math.round(confidence * 100)}%</span></div><p className="mt-3 text-sm leading-6 text-mist">{item.poem.join('　')}</p><button className="btn-secondary mt-3 w-full" type="button" onClick={() => selectFortune(item)}>{selected?.id === item.id ? <><Check size={17} />已選擇</> : '選擇這支籤'}</button></div>)}</div></article>}
+          {matches.length > 0 && <article className="glass-card p-5 sm:p-6"><span className="eyebrow">04 候選籤詩</span><div className="mt-4 space-y-3">{matches.map(({ item, confidence }) => <div key={item.id} className={`rounded-2xl border p-4 ${selected?.id === item.id ? 'border-gold/60 bg-gold/[0.08]' : 'border-white/10 bg-white/[0.025]'}`}><div className="flex items-start justify-between gap-3"><div><span className="text-xs text-gold">第 {item.number} 籤 · {item.level}</span><h3 className="mt-1 font-serif text-lg font-semibold">{item.title}</h3></div><span className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-mist">符合度 {Math.round(confidence * 100)}%</span></div><p className="mt-3 text-sm leading-6 text-mist">{item.poem.join('　')}</p><button className="btn-secondary mt-3 w-full" type="button" onClick={() => { selectFortune(item); setInterpretationReady(false); }}>{selected?.id === item.id ? <><Check size={17} />已選擇</> : '選擇這支籤'}</button></div>)}</div></article>}
         </div>
       </div>
 
-      {selected && <article className="glass-card mt-8 overflow-hidden"><div className="border-b border-white/10 p-6 sm:p-8"><span className="eyebrow">05 確認主題與解籤</span><div className="mt-5 flex flex-wrap gap-2">{topics.map((item) => <button className={`chip ${topic === item ? 'chip-active' : ''}`} type="button" onClick={() => setTopic(item)} key={item}>{TOPIC_LABELS[item]}</button>)}</div>{topic === 'custom' && <label className="mt-4 block max-w-2xl"><span className="label">想問的問題</span><textarea className="input-field min-h-24" value={customQuestion} onChange={(e) => setCustomQuestion(e.target.value)} placeholder="請避免輸入可識別他人的敏感資料。" /></label>}</div>
-        <div className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[0.72fr_1fr]"><div><span className="text-sm text-gold">{selected.sourceName}</span><h2 className="mt-2 font-serif text-3xl font-semibold">第 {selected.number} 籤 · {selected.title}</h2><span className="mt-3 inline-block rounded-full border border-gold/30 px-3 py-1 text-sm text-gold">{selected.level}</span><blockquote className="mt-6 space-y-2 border-l border-gold/40 pl-5 font-serif text-lg leading-8 text-cream">{selected.poem.map((line) => <p key={line}>{line}</p>)}</blockquote></div><div className="space-y-5"><section><h3 className="font-semibold text-gold">籤文與資料說明</h3><p className="mt-2 leading-7 text-mist">{selected.story ?? '未提供籤文背景。'}</p></section><section><h3 className="font-semibold text-gold">現代化整理</h3><p className="mt-2 leading-7 text-mist">白話解釋：{selected.summary}</p><p className="mt-2 leading-7 text-mist">你詢問的主題：{TOPIC_LABELS[topic]}。{topicInterpretation(selected)}</p></section><section><h3 className="font-semibold text-gold">可採取的行動</h3><ul className="mt-2 space-y-2 text-mist">{selected.actions.map((item) => <li key={item}>• {item}</li>)}</ul></section><section><h3 className="font-semibold text-gold">需要留意的風險</h3><ul className="mt-2 space-y-2 text-mist">{selected.risks.map((item) => <li key={item}>• {item}</li>)}</ul></section><section className="rounded-xl bg-white/5 p-4 text-xs leading-5 text-mist"><strong className="text-cream">原始資料來源：</strong>{selected.dataSource.sourceName} · {selected.dataSource.license ?? '未標示授權'}<br />{selected.dataSource.notes}<br /><strong className="text-cream">解讀模式：</strong>規則模板解讀</section></div></div>
-        {topic === 'health' && <div className="px-6 pb-6 sm:px-8"><Disclaimer health /></div>}
-      </article>}
+      {selected && (
+        <article className="glass-card mt-8 overflow-hidden">
+          <div className={`${interpretationReady ? 'border-b border-white/10' : ''} p-6 sm:p-8`}>
+            <span className="eyebrow">05 確認主題與解籤</span>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {topics.map((item) => <button className={`chip ${topic === item ? 'chip-active' : ''}`} type="button" onClick={() => { setTopic(item); setInterpretationReady(false); }} key={item}>{TOPIC_LABELS[item]}</button>)}
+            </div>
+            {topic === 'custom' && <label className="mt-4 block max-w-2xl"><span className="label">想問的問題</span><textarea className="input-field min-h-24" value={customQuestion} onChange={(e) => { setCustomQuestion(e.target.value); setInterpretationReady(false); }} placeholder="請避免輸入可識別他人的敏感資料。" /></label>}
+            <button className="btn-primary mt-5" type="button" onClick={revealInterpretation}><Sparkles size={17} />產生「{TOPIC_LABELS[topic]}」解籤結果</button>
+          </div>
+          {interpretationReady && (
+            <div id="fortune-result" className="scroll-mt-28">
+              <div className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[0.72fr_1fr]">
+                <div>
+                  <span className="text-sm text-gold">{selected.sourceName}</span>
+                  <h2 className="mt-2 font-serif text-3xl font-semibold">第 {selected.number} 籤 · {selected.title}</h2>
+                  <span className="mt-3 inline-block rounded-full border border-gold/30 px-3 py-1 text-sm text-gold">{selected.level}</span>
+                  <blockquote className="mt-6 space-y-2 border-l border-gold/40 pl-5 font-serif text-lg leading-8 text-cream">{selected.poem.map((line) => <p key={line}>{line}</p>)}</blockquote>
+                </div>
+                <div className="space-y-5">
+                  <section><h3 className="font-semibold text-gold">傳統籤文與資料說明</h3><p className="mt-2 leading-7 text-mist">{selected.story ?? '未提供或未能查證籤文典故，本版不補猜。'}</p></section>
+                  <section><h3 className="font-semibold text-gold">現代化整理</h3><p className="mt-2 leading-7 text-mist">白話解釋：{selected.summary}</p><p className="mt-2 leading-7 text-mist">你詢問的主題：{TOPIC_LABELS[topic]}。{topicInterpretation(selected)}</p></section>
+                  <section><h3 className="font-semibold text-gold">可採取的行動</h3><ul className="mt-2 space-y-2 text-mist">{selected.actions.map((item) => <li className="flex gap-2" key={item}><Check className="mt-1 shrink-0 text-emerald-200" size={15} />{item}</li>)}</ul></section>
+                  <section><h3 className="font-semibold text-gold">需要留意的風險</h3><ul className="mt-2 space-y-2 text-mist">{selected.risks.map((item) => <li className="flex gap-2" key={item}><AlertCircle className="mt-1 shrink-0 text-amber-100" size={15} />{item}</li>)}</ul></section>
+                  <section className="rounded-xl bg-white/5 p-4 text-xs leading-5 text-mist"><strong className="text-cream">原始資料來源：</strong>{selected.dataSource.sourceName} · {selected.dataSource.license ?? '未標示授權'}<br />{selected.dataSource.notes}<br /><strong className="text-cream">解讀模式：</strong>規則模板解讀</section>
+                </div>
+              </div>
+              {topic === 'health' && <div className="px-6 pb-6 sm:px-8"><Disclaimer health /></div>}
+            </div>
+          )}
+        </article>
+      )}
       <div className="mt-8"><Disclaimer /></div>
       {ocrState === 'error' && <button className="btn-secondary mt-4" type="button" onClick={() => { setOcrState('idle'); setError(''); }}><RefreshCw size={17} />重試辨識</button>}
     </section>

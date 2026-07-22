@@ -128,7 +128,7 @@ https://donald5043.github.io/FateVerse/
 1. 確認原文為公版或已取得明確授權；不要複製授權不明網站的現代解釋。
 2. 加入穩定且唯一的 `id`，並正確標示 `system`、來源、授權與備註。
 3. 原文、典故與現代摘要分開；無法驗證典故時留空或明確標示未知。
-4. 把資料加入對應 JSON，並更新 `public/sw.js`（若新增新檔）。
+4. 把資料加入對應 JSON；`vite-plugin-pwa` 會在 production build 自動把符合規則的 JSON 納入 precache，不需手動維護 service worker 清單。
 5. 為完整文、OCR 錯字、籤號與查無結果加入 matcher 測試。
 
 目前兩份籤詩 JSON 各只有 3 筆 FateVerse 自編示範，另有使用者照片逐字轉錄的可追溯樣本；仍不是完整的廟宇正式籤本。
