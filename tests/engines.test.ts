@@ -75,11 +75,15 @@ describe('完整西洋天文位置', () => {
 describe('紫微斗數排盤', () => {
   it.each([['00:30', 0], ['01:00', 1], ['22:59', 11], ['23:00', 12]])('%s 對應時辰索引 %i', (time, index) => expect(birthHourToZiweiIndex(time)).toBe(index));
   it('產生十二宮、命身主與五行局', () => {
-    const result = calculateZiwei({ birthDate: '1990-01-02', birthTime: '10:30', gender: 'male' });
+    const result = calculateZiwei({ birthDate: '1990-01-02', birthTime: '10:30', gender: 'male' }, '2026-07-22');
     expect(result?.palaces).toHaveLength(12);
     expect(result?.soul).toBe('廉貞');
     expect(result?.body).toBe('天機');
     expect(result?.fiveElementsClass).toBe('金四局');
+    expect(result?.soulPalaceSurround.map((palace) => palace.role)).toEqual(['本宮', '對宮', '財帛位', '官祿位']);
+    expect(result?.currentHoroscope.targetDate).toBe('2026-7-22');
+    expect(result?.currentHoroscope.decadal.palaceName).toBe('命宮');
+    expect(result?.currentHoroscope.yearly.mutagens.map((item) => item.type)).toEqual(['祿', '權', '科', '忌']);
   });
   it('未指定排盤性別時明確略過', () => {
     expect(calculateZiwei({ birthDate: '1990-01-02', birthTime: '10:30', gender: 'other' })).toBeUndefined();

@@ -25,7 +25,7 @@ export default function SettingsPage() {
       setModel({ supported: support.supported, message: support.reason });
       const profile = getGenerationProfile();
       setRuntimeMode(profile.id === 'mobile-fast'
-        ? `iPhone／iPad 快速模式：最多 ${profile.maxTokens} token，${profile.totalTimeoutMs / 1000} 秒強制停止`
+        ? `iPhone／iPad 穩定模式：最多 ${profile.maxTokens} token，${profile.totalTimeoutMs / 1000} 秒強制停止`
         : `標準模式：最多 ${profile.maxTokens} token，${profile.totalTimeoutMs / 1000} 秒強制停止`);
     }).catch(() => setModel({ supported: false, status: 'error', message: 'WebLLM 模組載入失敗。' }));
     if (navigator.storage?.estimate) void navigator.storage.estimate().then(({ usage = 0, quota = 0 }) => setStorageSummary(quota ? `已使用約 ${formatBytes(usage)}／可用上限約 ${formatBytes(quota)}` : `已使用約 ${formatBytes(usage)}`)).catch(() => setStorageSummary('瀏覽器未提供儲存空間估算。'));
@@ -43,7 +43,7 @@ export default function SettingsPage() {
     try {
       const { loadLocalModel } = await import('../ai/webllm');
       await loadLocalModel(modelOption.id, (progress, message) => setModel({ progress, message }));
-      setModel({ status: 'ready', progress: 100, message: '本地模型已就緒。回到報告頁即可產生智慧報告。' });
+      setModel({ status: 'ready', progress: 100, message: '模型已通過短回應測試。回到報告頁即可產生智慧報告。' });
       await persist({ ...preferences, modelNoticeSeen: true, modelId: modelOption.id });
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : '本地模型載入失敗，已切回輕量模式。';
@@ -105,7 +105,7 @@ export default function SettingsPage() {
           {model.status === 'loading' && (
             <div className="mt-4"><div className="flex justify-between text-xs text-mist"><span>模型載入進度</span><span>{model.progress}%</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full bg-gold" style={{ width: `${model.progress}%` }} /></div></div>
           )}
-          <p className="mt-4 text-xs leading-5 text-mist">模型只在你按下啟用後下載至瀏覽器快取，不會加入網站 repository。手機模式只生成短摘要，再與完整規則報告合併；若 Worker 無回應，時間到會直接重設，不再無限等待。</p>
+          <p className="mt-4 text-xs leading-5 text-mist">模型只在你按下啟用後下載至瀏覽器快取，不會加入網站 repository。下載後必須先通過極短回應測試才會顯示「已就緒」；手機只生成短摘要並合併完整規則報告，60 秒內未完成就強制回退。</p>
           <div className="mt-5 flex flex-wrap gap-3">
             {model.status === 'loading' ? (
               <button className="btn-secondary" type="button" onClick={() => void cancel()}><LoaderCircle className="animate-spin" size={17} />取消載入</button>

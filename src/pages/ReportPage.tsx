@@ -24,6 +24,7 @@ export default function ReportPage() {
   const setModel = useFateStore((state) => state.setModel);
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState('');
+  const [aiNotice, setAiNotice] = useState('');
   const [aiStatus, setAiStatus] = useState('');
   const [aiElapsed, setAiElapsed] = useState(0);
 
@@ -38,12 +39,14 @@ export default function ReportPage() {
 
   const generateWithAi = async () => {
     if (aiBusy || model.status !== 'ready') return;
-    setAiBusy(true); setAiError(''); setAiStatus('正在準備本地 AI…'); setAiElapsed(0);
+    setAiBusy(true); setAiError(''); setAiNotice(''); setAiStatus('正在準備本地 AI…'); setAiElapsed(0);
     const startedAt = Date.now();
     const elapsedTimer = window.setInterval(() => setAiElapsed(Math.floor((Date.now() - startedAt) / 1000)), 1000);
     try {
       const { generateAiReport } = await import('../ai/webllm');
-      setReport(await generateAiReport(input, (progress) => setAiStatus(progress.message)));
+      const nextReport = await generateAiReport(input, (progress) => setAiStatus(progress.message));
+      setReport(nextReport);
+      setAiNotice('本地 AI 已成功產生新摘要與行動建議，完整計算資料仍維持原值。');
     } catch (reason) {
       setReport(generateFallbackReport(input));
       const { isModelReady } = await import('../ai/webllm');
@@ -161,9 +164,10 @@ export default function ReportPage() {
 
       <section className="mt-8 rounded-3xl border border-white/10 bg-white/[0.035] p-5"><h2 className="text-sm font-semibold text-cream">閱讀時請保留的界線</h2><ul className="mt-3 space-y-2 text-sm leading-6 text-mist">{report.cautions.map((item) => <li className="flex gap-2" key={item}><ShieldCheck className="mt-1 shrink-0 text-gold" size={15} />{item}</li>)}</ul></section>
       <div className="mt-7"><Disclaimer health /></div>
-      {aiBusy && <div className="mt-5 rounded-2xl border border-gold/25 bg-gold/[0.07] p-4 print:hidden" role="status" aria-live="polite"><div className="flex items-start gap-3"><BrainCircuit className="mt-0.5 shrink-0 text-gold" size={19} /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-2"><p className="font-semibold text-cream">{aiStatus}</p><span className="text-xs tabular-nums text-mist">已執行 {aiElapsed} 秒</span></div><div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full w-2/5 animate-pulse rounded-full bg-gold" /></div><p className="mt-2 text-xs leading-5 text-mist">手機只生成短篇摘要並合併完整規則報告；iPhone 最長 90 秒，其他裝置最長 150 秒，逾時會強制重設 Worker。</p></div></div></div>}
+      {aiBusy && <div className="mt-5 rounded-2xl border border-gold/25 bg-gold/[0.07] p-4 print:hidden" role="status" aria-live="polite"><div className="flex items-start gap-3"><BrainCircuit className="mt-0.5 shrink-0 text-gold" size={19} /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-2"><p className="font-semibold text-cream">{aiStatus}</p><span className="text-xs tabular-nums text-mist">已執行 {aiElapsed} 秒</span></div><div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full w-2/5 animate-pulse rounded-full bg-gold" /></div><p className="mt-2 text-xs leading-5 text-mist">手機只生成短篇摘要並合併完整規則報告；iPhone 最長 60 秒，其他裝置最長 90 秒，逾時會顯示診斷碼並強制重設 Worker。</p></div></div></div>}
+      {aiNotice && <div className="mt-5 rounded-xl border border-emerald-200/20 bg-emerald-200/[0.08] p-3 text-sm text-emerald-100" role="status">{aiNotice}</div>}
       {aiError && <div className="mt-5 rounded-xl border border-amber-200/20 bg-amber-200/[0.08] p-3 text-sm text-amber-100" role="alert">{aiError}</div>}
-      <div className="mt-7 flex flex-wrap gap-3 print:hidden"><Link className="btn-secondary" to="/profile"><RefreshCw size={17} />重新建立</Link>{model.status === 'ready' ? <><button className="btn-primary" type="button" disabled={aiBusy} onClick={() => void generateWithAi()}><BrainCircuit size={17} />{aiBusy ? '本地 AI 整理中…' : '用本地 AI 重新整理'}</button>{aiBusy && <button className="btn-secondary" type="button" onClick={() => void cancelAi()}><Square size={15} />停止生成</button>}</> : <Link className="btn-primary" to="/settings">啟用本地 AI 增強</Link>}</div>
+      <div className="mt-7 flex flex-wrap gap-3 print:hidden"><Link className="btn-secondary" to="/profile"><RefreshCw size={17} />重新建立</Link>{model.status === 'ready' ? <><button className="btn-primary" type="button" disabled={aiBusy} onClick={() => void generateWithAi()}><BrainCircuit size={17} />{aiBusy ? '本地 AI 整理中…' : report.mode === 'ai' ? '重新產生 AI 摘要' : '用本地 AI 重新整理'}</button>{aiBusy && <button className="btn-secondary" type="button" onClick={() => void cancelAi()}><Square size={15} />停止生成</button>}</> : <Link className="btn-primary" to="/settings">啟用本地 AI 增強</Link>}</div>
     </section>
   );
 }

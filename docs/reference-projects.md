@@ -63,11 +63,11 @@
 - 目前 API 使用 `CreateMLCEngine`／`CreateWebWorkerMLCEngine`、`initProgressCallback`、OpenAI-compatible chat completion、`response_format: { type: "json_object" }`、`interruptGenerate()` 與 `unload()`。
 - 模型初始化必須由設定頁明確觸發；失敗、WebGPU 不支援或記憶體不足時保留規則式報告。
 - 模型權重不得進 precache 或 Git；AI 產出仍須通過 Zod schema，且不得修改結構化排盤事實。
-- WebLLM issue #753 記錄 iOS Safari 載入較大模型可能因記憶體限制終止分頁；FateVerse 保留 0.6B 模型，手機只要求短篇增強，並以首 token、停滯與總時間 watchdog 強制結束失去回應的 Worker。
+- WebLLM issue #753 記錄 iOS Safari 載入較大模型可能因記憶體限制終止分頁；FateVerse 因此改用預建 `Qwen2.5-0.5B-Instruct-q4f16_1-MLC`（套件設定約需 945 MB VRAM），下載後先執行短回應健康檢查，再以首 token、停滯與總時間 watchdog 結束失去回應的 Worker。
 
 ### iztro
 
-- NPM `2.5.8` 與 repository LICENSE 均為 MIT；`astro.bySolar(date, timeIndex, gender, fixLeap, "zh-TW")` 可產生十二宮、命身主、五行局、主輔星、亮度、四化與大限資料。
+- NPM `2.5.8` 與 repository LICENSE 均為 MIT；`astro.bySolar(date, timeIndex, gender, fixLeap, "zh-TW")` 可產生十二宮、命身主、五行局、主輔星、亮度、四化與大限資料；`horoscope(date)` 與 `surroundedPalaces("命宮")` 用於本版流年及三方四正結構。
 - 上游同時宣傳需要 API key 的 hosted AI 服務；FateVerse 只依賴本地開源排盤套件，不呼叫其 Chat API，也不複製其解讀文案或圖片。
 - 紫微流派眾多，因此 adapter 固定記錄套件版本與通行排法，UI 明示四化、亮度、晚子時、閏月規則可能存在流派差異。
 

@@ -62,18 +62,18 @@ function compactReportInput(input: FateReportInput) {
       body: input.ziwei.body,
       fiveElementsClass: input.ziwei.fiveElementsClass,
       soulPalace: input.ziwei.palaces.find((palace) => palace.name === '命宮')?.majorStars.map((star) => star.name),
+      decadalPalace: input.ziwei.currentHoroscope.decadal.palaceName,
+      yearlyPalace: input.ziwei.currentHoroscope.yearly.palaceName,
     } : undefined,
   };
 }
 
 export function buildFastReportUserPrompt(input: FateReportInput): string {
-  return `只整理下列已計算資料，不要重算。輸出精簡 JSON：
+  return `根據下列已計算資料，輸出一個很短的繁體中文 JSON。不要重算，不要加入其他欄位：
 {
-  "summary": "2句、最多120字的跨系統摘要",
-  "sharedPattern": "1項共同點",
-  "difference": "1項不同視角",
-  "suggestions": ["2項具體且溫和的行動"]
+  "summary": "最多70字的跨系統摘要",
+  "suggestions": ["最多25字的行動一", "最多25字的行動二"]
 }
-只輸出 JSON，不要 Markdown。資料：
+第一個字必須是 {，最後一個字必須是 }。只輸出 JSON，不要 Markdown、解釋或思考過程。資料：
 ${JSON.stringify(compactReportInput(input))}`;
 }

@@ -30,7 +30,7 @@ TypeScript、ESLint、Prettier、Vitest、Testing Library、PostCSS、Autoprefix
 ## 外部下載內容
 
 - `chi_tra` OCR traineddata：由 Tesseract.js 預設資料來源取得，授權與確切版本依該下載來源為準。
-- `Qwen3-0.6B-q4f16_1-MLC`：WebLLM 預建清單指向的 MLC 量化模型。模型權重與衍生檔案適用其模型頁面所列授權；本 repository 不重分發模型。
+- `Qwen2.5-0.5B-Instruct-q4f16_1-MLC`：WebLLM 預建清單指向的 MLC 量化模型。模型權重與衍生檔案適用其模型頁面所列授權；本 repository 不重分發模型。舊版曾使用的 Qwen3 0.6B 快取可在設定頁一併清除。
 
 啟用或重新分發外部模型與語言資料前，部署者應在上游來源再次確認當時版本、授權與使用條款。
 

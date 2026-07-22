@@ -1,16 +1,19 @@
-import type { ChatCompletionRequestStreaming, MLCEngineInterface } from '@mlc-ai/web-llm';
+import type { ChatCompletionRequestNonStreaming, ChatCompletionRequestStreaming, MLCEngineInterface } from '@mlc-ai/web-llm';
 import type { AiFateReport, FateReportInput } from '../types/fate';
 import { generateFallbackReport } from './fallback-report';
+import { DEFAULT_LOCAL_MODEL_ID } from './model-options';
 import { buildFastReportUserPrompt, SYSTEM_PROMPT } from './prompts';
 import { parseAiReportEnhancement } from './schemas';
 
 let engine: MLCEngineInterface | null = null;
 let engineWorker: Worker | null = null;
+let loadedModelId: string | null = null;
 let cancelRequested = false;
 let generationCancelRequested = false;
 
-export const AI_GENERATION_TIMEOUT_MS = 150_000;
-export const IOS_AI_GENERATION_TIMEOUT_MS = 90_000;
+export const AI_GENERATION_TIMEOUT_MS = 90_000;
+export const IOS_AI_GENERATION_TIMEOUT_MS = 60_000;
+export const MODEL_HEALTH_TIMEOUT_MS = 45_000;
 
 export interface AiGenerationProgress {
   phase: 'preparing' | 'generating' | 'validating';
@@ -34,8 +37,8 @@ function isAppleMobile(): boolean {
 
 export function getGenerationProfile(appleMobile = isAppleMobile()): GenerationProfile {
   return appleMobile
-    ? { id: 'mobile-fast', maxTokens: 220, firstTokenTimeoutMs: 35_000, inactivityTimeoutMs: 20_000, totalTimeoutMs: IOS_AI_GENERATION_TIMEOUT_MS }
-    : { id: 'balanced', maxTokens: 320, firstTokenTimeoutMs: 50_000, inactivityTimeoutMs: 30_000, totalTimeoutMs: AI_GENERATION_TIMEOUT_MS };
+    ? { id: 'mobile-fast', maxTokens: 140, firstTokenTimeoutMs: 25_000, inactivityTimeoutMs: 15_000, totalTimeoutMs: IOS_AI_GENERATION_TIMEOUT_MS }
+    : { id: 'balanced', maxTokens: 180, firstTokenTimeoutMs: 35_000, inactivityTimeoutMs: 20_000, totalTimeoutMs: AI_GENERATION_TIMEOUT_MS };
 }
 
 function wait(ms: number): Promise<void> {
@@ -53,6 +56,7 @@ async function interruptEngine(forceReset: boolean): Promise<void> {
     engineWorker?.terminate();
     engineWorker = null;
     engine = null;
+    loadedModelId = null;
   }
 }
 
@@ -80,6 +84,24 @@ export async function detectWebGPU(): Promise<{ supported: boolean; reason: stri
   }
 }
 
+export function buildModelHealthCheckRequest(): ChatCompletionRequestNonStreaming {
+  return {
+    stream: false,
+    messages: [{ role: 'user', content: '只回答兩個字：就緒' }],
+    temperature: 0,
+    max_tokens: 8,
+  };
+}
+
+async function verifyLoadedModelResponse(activeEngine: MLCEngineInterface): Promise<void> {
+  const response = await nextWithTimeout(
+    activeEngine.chat.completions.create(buildModelHealthCheckRequest()),
+    MODEL_HEALTH_TIMEOUT_MS,
+  );
+  const content = response.choices[0]?.message.content?.trim();
+  if (!content) throw new Error('MODEL_HEALTH_EMPTY');
+}
+
 export async function loadLocalModel(modelId: string, onProgress: (progress: number, message: string) => void): Promise<void> {
   const support = await detectWebGPU();
   if (!support.supported) throw new Error(support.reason);
@@ -97,16 +119,24 @@ export async function loadLocalModel(modelId: string, onProgress: (progress: num
       logLevel: 'WARN',
     });
     if (cancelRequested) { await engine.unload(); engine = null; nextWorker.terminate(); engineWorker = null; throw new Error('MODEL_LOAD_CANCELLED'); }
+    onProgress(99, '模型已下載，正在進行短回應自我測試…');
+    await verifyLoadedModelResponse(engine);
+    loadedModelId = modelId;
+    onProgress(100, '模型已通過回應測試。');
   } catch (reason) {
     nextWorker?.terminate();
     if (engineWorker === nextWorker) engineWorker = null;
     engine = null;
+    loadedModelId = null;
     if (cancelRequested || (reason instanceof Error && reason.message.includes('MODEL_LOAD_CANCELLED'))) throw new Error('已取消模型載入，網站維持輕量模式。');
+    if (reason instanceof Error && (reason.message.includes('AI_STREAM_TIMEOUT') || reason.message.includes('MODEL_HEALTH_EMPTY'))) {
+      throw new Error('AI-L02：模型下載完成但無法通過短回應測試，已停止 Worker。請關閉其他分頁後重試；若仍失敗，請繼續使用完整輕量報告。');
+    }
     throw new Error('本地模型載入失敗，已切回輕量模式。請確認裝置記憶體與網路後再試。');
   }
 }
 
-export function cancelModelLoad(): void { cancelRequested = true; engineWorker?.terminate(); engineWorker = null; }
+export function cancelModelLoad(): void { cancelRequested = true; engineWorker?.terminate(); engineWorker = null; engine = null; loadedModelId = null; }
 export function isModelReady(): boolean { return engine !== null; }
 export async function cancelAiGeneration(): Promise<void> {
   generationCancelRequested = true;
@@ -116,11 +146,31 @@ export async function cancelAiGeneration(): Promise<void> {
 export async function clearModelCache(modelId: string): Promise<void> {
   if (engine) { await engine.unload(); engine = null; }
   engineWorker?.terminate(); engineWorker = null;
+  loadedModelId = null;
   const { deleteModelAllInfoInCache } = await import('@mlc-ai/web-llm');
-  await deleteModelAllInfoInCache(modelId);
+  await Promise.all([
+    deleteModelAllInfoInCache(modelId),
+    // Remove the previous default as well so a failed iOS experiment does not
+    // keep hundreds of megabytes after the user chooses "clear model cache".
+    ...(modelId === 'Qwen3-0.6B-q4f16_1-MLC' ? [] : [deleteModelAllInfoInCache('Qwen3-0.6B-q4f16_1-MLC')]),
+  ]);
 }
 
-export function buildAiCompletionRequest(input: FateReportInput, appleMobile = isAppleMobile()): ChatCompletionRequestStreaming {
+const AI_ENHANCEMENT_JSON_SCHEMA = JSON.stringify({
+  type: 'object',
+  properties: {
+    summary: { type: 'string' },
+    suggestions: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'string' } },
+  },
+  required: ['summary', 'suggestions'],
+  additionalProperties: false,
+});
+
+export function buildAiCompletionRequest(
+  input: FateReportInput,
+  appleMobile = isAppleMobile(),
+  modelId = loadedModelId ?? DEFAULT_LOCAL_MODEL_ID,
+): ChatCompletionRequestStreaming {
   const profile = getGenerationProfile(appleMobile);
   return {
     stream: true,
@@ -128,10 +178,10 @@ export function buildAiCompletionRequest(input: FateReportInput, appleMobile = i
     messages: [{ role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: buildFastReportUserPrompt(input) }],
     temperature: 0.2,
     max_tokens: profile.maxTokens,
-    response_format: { type: 'json_object' },
-    // Qwen3 defaults to a hidden thinking pass. It is unnecessary for this
-    // structured rewrite and can make a small device appear to be frozen.
-    extra_body: { enable_thinking: false },
+    response_format: { type: 'json_object', schema: AI_ENHANCEMENT_JSON_SCHEMA },
+    // Kept for users with an older cached Qwen3 model. Qwen2.5 does not have
+    // a thinking stage and therefore receives no model-specific extra field.
+    ...(modelId.startsWith('Qwen3-') ? { extra_body: { enable_thinking: false } } : {}),
   };
 }
 
@@ -190,8 +240,6 @@ export async function generateAiReport(
     return {
       ...fallback,
       summary: enhancement.summary,
-      sharedPatterns: [enhancement.sharedPattern, ...fallback.sharedPatterns].slice(0, 3),
-      differences: [enhancement.difference, ...fallback.differences].slice(0, 2),
       focusAnalysis,
       mode: 'ai',
     };
@@ -200,12 +248,15 @@ export async function generateAiReport(
     if (message.includes('AI_GENERATION_TIMEOUT') || message.includes('AI_STREAM_TIMEOUT')) {
       await interruptEngine(true);
       const elapsedSeconds = Math.max(1, Math.ceil((Date.now() - startedAt) / 1_000));
-      throw new Error(`本地 AI 連續 ${elapsedSeconds} 秒未能持續回應，已強制停止並保留完整模板報告。若要重試，請回設定重新啟用模型。`);
+      throw new Error(`AI-G01：本地 AI 在 ${elapsedSeconds} 秒內未能持續回應，已強制停止並保留完整模板報告。若要重試，請回設定重新啟用模型。`);
     }
     if (generationCancelRequested || (reason instanceof Error && reason.message.includes('AI_GENERATION_CANCELLED'))) {
       throw new Error('已停止本地 AI 生成，並保留原本的規則模板報告。');
     }
-    if (reason instanceof Error && reason.message.includes('格式無法驗證')) throw reason;
-    throw new Error('本地 AI 產生報告時發生錯誤，已保留原本的規則模板報告。');
+    if (reason instanceof Error && reason.message.includes('格式無法驗證')) {
+      throw new Error('AI-G03：模型有回應，但 JSON 格式不完整；已保留完整模板報告。');
+    }
+    if (message.includes('EMPTY_RESPONSE')) throw new Error('AI-G02：模型完成生成但沒有文字內容；已保留完整模板報告。');
+    throw new Error('AI-G04：本地 AI 產生報告時發生錯誤，已保留完整模板報告。');
   }
 }

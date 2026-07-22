@@ -174,6 +174,35 @@ export interface ZiweiPalace {
   decadalRange: [number, number];
 }
 
+export interface ZiweiMutagen {
+  type: '祿' | '權' | '科' | '忌';
+  star: string;
+}
+
+export interface ZiweiHoroscopeLayer {
+  name: string;
+  heavenlyStem: string;
+  earthlyBranch: string;
+  palaceName: string;
+  mutagens: ZiweiMutagen[];
+}
+
+export interface ZiweiCurrentHoroscope {
+  targetDate: string;
+  lunarDate: string;
+  nominalAge: number;
+  decadal: ZiweiHoroscopeLayer;
+  yearly: ZiweiHoroscopeLayer;
+}
+
+export interface ZiweiSurroundedPalace {
+  role: '本宮' | '對宮' | '財帛位' | '官祿位';
+  palaceName: string;
+  heavenlyStem: string;
+  earthlyBranch: string;
+  majorStars: string[];
+}
+
 export interface ZiweiResult {
   solarDate: string;
   lunarDate: string;
@@ -185,6 +214,8 @@ export interface ZiweiResult {
   soulPalaceBranch: string;
   bodyPalaceBranch: string;
   palaces: ZiweiPalace[];
+  soulPalaceSurround: ZiweiSurroundedPalace[];
+  currentHoroscope: ZiweiCurrentHoroscope;
   calculationNote: string;
   source: DataSource;
 }

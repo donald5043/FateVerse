@@ -13,10 +13,8 @@ export const aiFateReportSchema = z.object({
 });
 
 export const aiReportEnhancementSchema = z.object({
-  summary: z.string().min(1).max(260),
-  sharedPattern: z.string().min(1).max(120),
-  difference: z.string().min(1).max(120),
-  suggestions: z.array(z.string().min(1).max(100)).min(1).max(3),
+  summary: z.string().min(1).max(180),
+  suggestions: z.array(z.string().min(1).max(80)).length(2),
 });
 
 export type AiReportEnhancement = z.infer<typeof aiReportEnhancementSchema>;
