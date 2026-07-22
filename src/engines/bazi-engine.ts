@@ -1,6 +1,7 @@
 import { Solar } from 'lunar-javascript';
 import type { BaziPillar, BaziResult, ProfileInput } from '../types/fate';
 import { branchToElement, stemToElement } from './five-elements-engine';
+import { calculateBaziRelations } from './bazi-relations-engine';
 import { normalizeZodiacAnimal } from './zodiac-engine';
 
 interface ParsedBirth {
@@ -87,6 +88,7 @@ export function calculateBazi(input: Pick<ProfileInput, 'birthDate' | 'birthTime
       mingGong: eightChar.getMingGong(),
       shenGong: eightChar.getShenGong(),
       luckCycles,
+      relations: calculateBaziRelations(pillars),
       luckStart: yun ? {
         direction: yun.isForward() ? 'forward' : 'backward',
         years: yun.getStartYear(),

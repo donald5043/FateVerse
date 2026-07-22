@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { calculateAstrology, calculateSunSign } from '../src/engines/astrology-engine';
 import { calculateBazi, parseBirthDateTime } from '../src/engines/bazi-engine';
+import { calculateBaziRelations } from '../src/engines/bazi-relations-engine';
 import { branchToElement, calculateFiveElements, stemToElement } from '../src/engines/five-elements-engine';
 import { calculateNumerology } from '../src/engines/numerology-engine';
 import { getZodiacResult } from '../src/engines/zodiac-engine';
@@ -24,6 +25,18 @@ describe('八字與日期', () => {
     const result = calculateBazi({ birthDate: '1990-01-02', birthTime: '10:30', timezone: 'Asia/Taipei', gender: 'male' });
     expect(result.luckCycles).toHaveLength(8);
     expect(result.luckStart?.startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+  it('從四柱辨識天干五合、地支六沖與三合', () => {
+    const base = { stemElement: 'wood' as const, branchElement: 'wood' as const, naYin: '', tenGod: '', hiddenStems: [], hiddenTenGods: [], lifeStage: '', xunKong: '' };
+    const relations = calculateBaziRelations([
+      { ...base, label: '年柱', value: '甲申', stem: '甲', branch: '申' },
+      { ...base, label: '月柱', value: '己子', stem: '己', branch: '子' },
+      { ...base, label: '日柱', value: '丙辰', stem: '丙', branch: '辰' },
+      { ...base, label: '時柱', value: '辛午', stem: '辛', branch: '午' },
+    ]);
+    expect(relations.some((item) => item.kind === 'stem-combination' && item.members.join('') === '甲己')).toBe(true);
+    expect(relations.some((item) => item.kind === 'branch-clash' && item.members.join('') === '子午')).toBe(true);
+    expect(relations.some((item) => item.kind === 'branch-three-harmony' && item.members.join('') === '申子辰')).toBe(true);
   });
   it.each([
     [1984, '鼠'], [1985, '牛'], [1986, '虎'], [1987, '兔'],
@@ -69,6 +82,9 @@ describe('完整西洋天文位置', () => {
     expect(result.houses).toHaveLength(12);
     expect(result.houseSystem).toBe('equal');
     expect(result.planets?.every((planet) => typeof planet.house === 'number')).toBe(true);
+    expect(result.houseComparisons?.map((item) => item.system)).toEqual(['equal', 'whole-sign']);
+    expect(result.houseComparisons?.every((item) => item.houses.length === 12)).toBe(true);
+    expect(Object.keys(result.houseComparisons?.[1].planetHouses ?? {})).toHaveLength(10);
   });
 });
 
@@ -88,6 +104,14 @@ describe('紫微斗數排盤', () => {
     expect(result?.currentHoroscope.daily.name).toBe('流日');
     expect(result?.currentHoroscope.monthly.mutagens).toHaveLength(4);
     expect(result?.currentHoroscope.daily.mutagens).toHaveLength(4);
+    expect(result?.settings.algorithm).toBe('default');
+  });
+  it('可切換中州派安星與立春分界設定', () => {
+    const result = calculateZiwei({ birthDate: '1990-01-02', birthTime: '10:30', gender: 'male' }, '2026-07-22', {
+      algorithm: 'zhongzhou', yearDivide: 'exact', horoscopeDivide: 'exact', ageDivide: 'birthday', dayDivide: 'forward',
+    });
+    expect(result?.settings).toEqual({ algorithm: 'zhongzhou', yearDivide: 'exact', horoscopeDivide: 'exact', ageDivide: 'birthday', dayDivide: 'forward' });
+    expect(result?.calculationNote).toContain('中州派');
   });
   it('未指定排盤性別時明確略過', () => {
     expect(calculateZiwei({ birthDate: '1990-01-02', birthTime: '10:30', gender: 'other' })).toBeUndefined();

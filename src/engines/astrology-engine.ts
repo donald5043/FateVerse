@@ -1,4 +1,4 @@
-import type { AspectResult, AstrologyResult, PlanetPosition, ProfileInput } from '../types/fate';
+import type { AspectResult, AstrologyResult, HouseSystemComparison, PlanetPosition, ProfileInput } from '../types/fate';
 import { localDateTimeToUtc } from '../utils/timezone';
 import { calculateAscendant, calculatePlanetPositions, zodiacPosition } from './astronomy-adapter';
 
@@ -75,6 +75,19 @@ export function calculateMajorAspects(planets: PlanetPosition[]): AspectResult[]
   return aspects.sort((left, right) => left.orb - right.orb);
 }
 
+function buildHouseSystemComparisons(ascendant: number, planets: PlanetPosition[]): HouseSystemComparison[] {
+  const wholeSignStart = Math.floor(ascendant / 30) * 30;
+  return [
+    { system: 'equal' as const, label: '等宮制', start: ascendant },
+    { system: 'whole-sign' as const, label: '整宮制', start: wholeSignStart },
+  ].map(({ system, label, start }) => ({
+    system,
+    label,
+    houses: Array.from({ length: 12 }, (_, index) => ({ house: index + 1, cusp: (start + index * 30) % 360 })),
+    planetHouses: Object.fromEntries(planets.map((planet) => [planet.name, Math.floor(((planet.longitude - start + 360) % 360) / 30) + 1])),
+  }));
+}
+
 export function calculateAstrology(input: Pick<ProfileInput, 'birthDate' | 'birthTime' | 'timezone'> & Partial<Pick<ProfileInput, 'latitude' | 'longitude'>>): AstrologyResult {
   const utcDate = localDateTimeToUtc(input.birthDate, input.birthTime, input.timezone);
   const planets = calculatePlanetPositions(utcDate);
@@ -87,10 +100,12 @@ export function calculateAstrology(input: Pick<ProfileInput, 'birthDate' | 'birt
   const hasCoordinates = typeof input.latitude === 'number' && typeof input.longitude === 'number';
   const ascendantLongitude = hasCoordinates ? calculateAscendant(utcDate, input.latitude as number, input.longitude as number) : undefined;
   const risingSign = ascendantLongitude === undefined ? undefined : zodiacPosition(ascendantLongitude).sign;
-  const houses = ascendantLongitude === undefined ? undefined : Array.from({ length: 12 }, (_, index) => ({ house: index + 1, cusp: (ascendantLongitude + index * 30) % 360 }));
+  const houseComparisons = ascendantLongitude === undefined ? undefined : buildHouseSystemComparisons(ascendantLongitude, planets);
+  const houses = houseComparisons?.find((item) => item.system === 'equal')?.houses;
+  const equalPlanetHouses = houseComparisons?.find((item) => item.system === 'equal')?.planetHouses;
   const planetsWithHouses = houses ? planets.map((planet) => ({
     ...planet,
-    house: Math.floor(((planet.longitude - ascendantLongitude! + 360) % 360) / 30) + 1,
+    house: equalPlanetHouses?.[planet.name],
   })) : planets;
 
   return {
@@ -104,6 +119,7 @@ export function calculateAstrology(input: Pick<ProfileInput, 'birthDate' | 'birt
     blindSpots: sign.blindSpots,
     planets: planetsWithHouses,
     houses,
+    houseComparisons,
     houseSystem: houses ? 'equal' : undefined,
     aspects: calculateMajorAspects(planetsWithHouses),
     calculatedAtUtc: utcDate.toISOString(),
@@ -112,7 +128,7 @@ export function calculateAstrology(input: Pick<ProfileInput, 'birthDate' | 'birt
       sourceName: 'Astronomy Engine 2.1.19',
       sourceUrl: 'https://github.com/cosinekitty/astronomy',
       license: 'MIT',
-      notes: '地心、真黃道（日期當下）位置；本版未計算上升與宮位。',
+      notes: '地心、真黃道（日期當下）位置；提供等宮制與整宮制落宮比較，不包含宮主星詮釋。',
     },
   };
 }

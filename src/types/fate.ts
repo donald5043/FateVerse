@@ -69,6 +69,25 @@ export interface BaziLuckCycle {
   endAge: number;
 }
 
+export type BaziRelationKind =
+  | 'stem-combination'
+  | 'branch-six-harmony'
+  | 'branch-clash'
+  | 'branch-harm'
+  | 'branch-punishment'
+  | 'branch-break'
+  | 'branch-three-harmony'
+  | 'branch-three-meeting';
+
+export interface BaziRelation {
+  kind: BaziRelationKind;
+  label: string;
+  members: string[];
+  pillarLabels: string[];
+  element?: ElementName;
+  note: string;
+}
+
 export interface BaziResult {
   solarDate: string;
   lunarDate: string;
@@ -82,6 +101,7 @@ export interface BaziResult {
   mingGong: string;
   shenGong: string;
   luckCycles?: BaziLuckCycle[];
+  relations: BaziRelation[];
   luckStart?: {
     direction: 'forward' | 'backward';
     years: number;
@@ -128,6 +148,15 @@ export interface HousePosition {
   cusp: number;
 }
 
+export type AstrologyHouseSystem = 'equal' | 'whole-sign';
+
+export interface HouseSystemComparison {
+  system: AstrologyHouseSystem;
+  label: string;
+  houses: HousePosition[];
+  planetHouses: Record<string, number>;
+}
+
 export interface AspectResult {
   first: string;
   second: string;
@@ -147,11 +176,12 @@ export interface AstrologyResult {
   risingSign?: string;
   planets?: PlanetPosition[];
   houses?: HousePosition[];
+  houseComparisons?: HouseSystemComparison[];
   aspects?: AspectResult[];
   calculatedAtUtc?: string;
   calculationLevel?: 'sun-only' | 'planetary';
   source?: DataSource;
-  houseSystem?: 'equal';
+  houseSystem?: AstrologyHouseSystem;
 }
 
 export interface ZiweiStar {
@@ -197,6 +227,14 @@ export interface ZiweiCurrentHoroscope {
   daily: ZiweiHoroscopeLayer;
 }
 
+export interface ZiweiCalculationSettings {
+  algorithm: 'default' | 'zhongzhou';
+  yearDivide: 'normal' | 'exact';
+  horoscopeDivide: 'normal' | 'exact';
+  ageDivide: 'normal' | 'birthday';
+  dayDivide: 'current' | 'forward';
+}
+
 export interface ZiweiSurroundedPalace {
   role: '本宮' | '對宮' | '財帛位' | '官祿位';
   palaceName: string;
@@ -218,6 +256,7 @@ export interface ZiweiResult {
   palaces: ZiweiPalace[];
   soulPalaceSurround: ZiweiSurroundedPalace[];
   currentHoroscope: ZiweiCurrentHoroscope;
+  settings: ZiweiCalculationSettings;
   calculationNote: string;
   source: DataSource;
 }

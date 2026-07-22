@@ -33,8 +33,8 @@
 | `@mlc-ai/web-llm` | 0.2.84 / Apache-2.0 | 0.2.84 | 使用目前 API；不得啟動時自動下載模型 |
 | `tesseract.js` | 7.0.0 / Apache-2.0 | 6.0.1 | 暫不在 OCR 修正中順便升 major；現有實作依 6.0.1 型別與 API 驗證 |
 | `fuse.js` | 7.5.0 / Apache-2.0 | 7.5.0 | 使用目前安裝版本 |
-| `astronomy-engine` | 2.1.19 / MIT | 2.1.19 | 計算十個星體的地心真黃道位置、逆行、相位、上升與等宮制宮頭 |
-| `iztro` | 2.5.8 / MIT | 2.5.8 | 通行排法、繁體輸出的紫微十二宮 adapter；付費 AI API 不採用 |
+| `astronomy-engine` | 2.1.19 / MIT | 2.1.19 | 計算十個星體的地心真黃道位置、逆行、相位與上升；FateVerse adapter 再建立等宮／整宮比較 |
+| `iztro` | 2.5.8 / MIT | 2.5.8 | 繁體輸出的紫微十二宮 adapter，支援通行／中州安星與分界設定；付費 AI API 不採用 |
 | `vite-plugin-pwa` | 1.3.0 / MIT | 1.3.0 | 已取代手寫 cache-first service worker，提供更新提示；大型 WebLLM runtime 不進入預快取 |
 
 `package-lock.json` 是部署的傳遞相依版本準據；`package.json` 的第一方直接相依應使用明確版本，避免 caret 在全新安裝時靜默改變排盤或模型 API。

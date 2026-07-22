@@ -8,12 +8,15 @@ import { generateFallbackReport } from '../ai/fallback-report';
 import FiveElementChart from '../components/charts/FiveElementChart';
 import Disclaimer from '../components/common/Disclaimer';
 import BaziPillars from '../components/report/BaziPillars';
+import BaziRelations from '../components/report/BaziRelations';
 import { AstrologyPositionInsights, BaziTenGodInsights, ZiweiKeyPalaceInsights } from '../components/report/CulturalInsights';
 import NatalChart from '../components/report/NatalChart';
+import HouseSystemComparison from '../components/report/HouseSystemComparison';
 import ReportActions from '../components/report/ReportActions';
 import ZiweiChart from '../components/report/ZiweiChart';
 import { useFateStore } from '../store/useFateStore';
 import { ELEMENT_LABELS } from '../utils/constants';
+import type { ZiweiCalculationSettings } from '../types/fate';
 
 function toDateInputValue(value?: string): string {
   if (!value) return new Date().toISOString().slice(0, 10);
@@ -35,6 +38,9 @@ export default function ReportPage() {
   const [aiStatus, setAiStatus] = useState('');
   const [aiElapsed, setAiElapsed] = useState(0);
   const [ziweiTargetDate, setZiweiTargetDate] = useState(() => toDateInputValue(input?.ziwei?.currentHoroscope?.targetDate));
+  const [ziweiSettings, setZiweiSettings] = useState<ZiweiCalculationSettings>(() => input?.ziwei?.settings ?? {
+    algorithm: 'default', yearDivide: 'normal', horoscopeDivide: 'normal', ageDivide: 'normal', dayDivide: 'current',
+  });
   const [ziweiBusy, setZiweiBusy] = useState(false);
   const [ziweiError, setZiweiError] = useState('');
 
@@ -80,7 +86,7 @@ export default function ReportPage() {
     setZiweiBusy(true); setZiweiError('');
     try {
       const { calculateZiwei } = await import('../engines/ziwei-engine');
-      const ziwei = calculateZiwei(profile, ziweiTargetDate);
+      const ziwei = calculateZiwei(profile, ziweiTargetDate, ziweiSettings);
       if (!ziwei) throw new Error('目前排盤資料未包含可用的命理排盤性別。');
       const nextInput = { ...input, ziwei };
       setReportData(nextInput, generateFallbackReport(nextInput));
@@ -162,18 +168,19 @@ export default function ReportPage() {
         <div className="mb-6"><p className="eyebrow">Eastern foundation</p><h2 className="section-title mt-2">八字與五行結構</h2><p className="mt-2 text-sm leading-6 text-mist">排盤資料由 lunar-javascript 計算；五行圖僅統計四柱八個主元素，不等同完整旺衰論命。</p></div>
         <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <article className="glass-card p-5 sm:p-7"><BaziPillars result={input.bazi} /><BaziTenGodInsights result={input.bazi} /></article>
-          <article className="glass-card p-5 sm:p-7"><div className="flex items-center justify-between"><h3 className="font-serif text-xl font-semibold">五行分布</h3><span className="text-xs text-mist">共 {input.fiveElements.total} 個位置</span></div><div className="mt-6"><FiveElementChart result={input.fiveElements} /></div><div className="mt-6 grid grid-cols-2 gap-3"><div className="rounded-xl border border-white/10 bg-white/[0.04] p-3"><span className="text-xs text-mist">相對最強</span><p className="mt-1 font-semibold text-cream">{input.fiveElements.strongest.map((key) => ELEMENT_LABELS[key]).join('、')}</p></div><div className="rounded-xl border border-white/10 bg-white/[0.04] p-3"><span className="text-xs text-mist">相對最弱</span><p className="mt-1 font-semibold text-cream">{input.fiveElements.weakest.map((key) => ELEMENT_LABELS[key]).join('、')}</p></div></div><p className="mt-4 text-xs leading-5 text-mist">元素較少不代表必須直接補足；季節、藏干與合沖等未納入第一版，不作簡化吉凶斷言。</p></article>
+          <article className="glass-card p-5 sm:p-7"><div className="flex items-center justify-between"><h3 className="font-serif text-xl font-semibold">五行分布</h3><span className="text-xs text-mist">共 {input.fiveElements.total} 個位置</span></div><div className="mt-6"><FiveElementChart result={input.fiveElements} /></div><div className="mt-6 grid grid-cols-2 gap-3"><div className="rounded-xl border border-white/10 bg-white/[0.04] p-3"><span className="text-xs text-mist">相對最強</span><p className="mt-1 font-semibold text-cream">{input.fiveElements.strongest.map((key) => ELEMENT_LABELS[key]).join('、')}</p></div><div className="rounded-xl border border-white/10 bg-white/[0.04] p-3"><span className="text-xs text-mist">相對最弱</span><p className="mt-1 font-semibold text-cream">{input.fiveElements.weakest.map((key) => ELEMENT_LABELS[key]).join('、')}</p></div></div><p className="mt-4 text-xs leading-5 text-mist">元素較少不代表必須直接補足；本區只統計主干支，季節旺衰與藏干權重仍未納入，不作簡化吉凶斷言。</p></article>
         </div>
+        <BaziRelations result={input.bazi} />
       </section>
 
       <section id="astrology" className="mt-14 scroll-mt-36">
-        <div className="mb-6"><p className="eyebrow">Astronomical positions</p><h2 className="section-title mt-2">西洋出生星盤</h2><p className="mt-2 text-sm leading-6 text-mist">Astronomy Engine 依出生地標準時間換算 UTC，計算地心黃道位置、月亮星座、逆行與主要相位。{input.astrology.risingSign ? `已依經緯度計算上升 ${input.astrology.risingSign}，十二宮採等宮制。` : '未提供完整經緯度，因此上升與十二宮不補猜。'}</p></div>
-        <article className="glass-card p-4 sm:p-7"><NatalChart result={input.astrology} /><AstrologyPositionInsights result={input.astrology} /></article>
+        <div className="mb-6"><p className="eyebrow">Astronomical positions</p><h2 className="section-title mt-2">西洋出生星盤</h2><p className="mt-2 text-sm leading-6 text-mist">Astronomy Engine 依出生地標準時間換算 UTC，計算地心黃道位置、月亮星座、逆行與主要相位。{input.astrology.risingSign ? `已依經緯度計算上升 ${input.astrology.risingSign}，並比較等宮制與整宮制。` : '未提供完整經緯度，因此上升與十二宮不補猜。'}</p></div>
+        <article className="glass-card p-4 sm:p-7"><NatalChart result={input.astrology} /><HouseSystemComparison result={input.astrology} /><AstrologyPositionInsights result={input.astrology} /></article>
       </section>
 
       {input.ziwei && <section id="ziwei" className="mt-14 scroll-mt-36">
-        <div className="mb-6"><p className="eyebrow">Twelve palaces</p><h2 className="section-title mt-2">紫微斗數十二宮</h2><p className="mt-2 text-sm leading-6 text-mist">以 iztro 2.5.8 產生通行排法盤面，呈現命身主、五行局、十二宮、主輔星、亮度、四化與大限範圍。</p></div>
-        <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-gold/20 bg-gold/[0.055] p-4 sm:flex-row sm:items-end"><label className="min-w-0 flex-1"><span className="label">運限目標日期</span><input className="input-field" type="date" min="1900-01-01" max="2100-12-31" value={ziweiTargetDate} onChange={(event) => setZiweiTargetDate(event.target.value)} /></label><button className="btn-secondary shrink-0" type="button" disabled={ziweiBusy || !ziweiTargetDate} onClick={() => void updateZiweiTarget()}>{ziweiBusy ? '正在重算…' : '更新大限／流年／流月／流日'}</button></div>
+        <div className="mb-6"><p className="eyebrow">Twelve palaces</p><h2 className="section-title mt-2">紫微斗數十二宮</h2><p className="mt-2 text-sm leading-6 text-mist">以 iztro 2.5.8 產生盤面，呈現命身主、五行局、十二宮、主輔星、亮度、四化與大限範圍；可切換安星版本與時間分界比較差異。</p></div>
+        <div className="mb-4 rounded-2xl border border-gold/20 bg-gold/[0.055] p-4"><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><label><span className="label">安星版本</span><select className="input-field" value={ziweiSettings.algorithm} onChange={(event) => setZiweiSettings((current) => ({ ...current, algorithm: event.target.value as ZiweiCalculationSettings['algorithm'] }))}><option value="default">通行版本</option><option value="zhongzhou">中州派版本</option></select></label><label><span className="label">本命年分界</span><select className="input-field" value={ziweiSettings.yearDivide} onChange={(event) => setZiweiSettings((current) => ({ ...current, yearDivide: event.target.value as ZiweiCalculationSettings['yearDivide'] }))}><option value="normal">農曆正月初一</option><option value="exact">立春</option></select></label><label><span className="label">晚子時歸日</span><select className="input-field" value={ziweiSettings.dayDivide} onChange={(event) => setZiweiSettings((current) => ({ ...current, dayDivide: event.target.value as ZiweiCalculationSettings['dayDivide'] }))}><option value="current">歸當日</option><option value="forward">歸次日</option></select></label><label><span className="label">運限目標日期</span><input className="input-field" type="date" min="1900-01-01" max="2100-12-31" value={ziweiTargetDate} onChange={(event) => setZiweiTargetDate(event.target.value)} /></label></div><div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs leading-5 text-mist">修改設定後需重新排盤；流派設定是演算法比較入口，不代表某一版本較準。</p><button className="btn-secondary shrink-0" type="button" disabled={ziweiBusy || !ziweiTargetDate} onClick={() => void updateZiweiTarget()}>{ziweiBusy ? '正在重算…' : '套用設定並更新運限'}</button></div></div>
         {ziweiError && <div className="mb-4 rounded-xl border border-rose-200/20 bg-rose-200/[0.08] p-3 text-sm text-rose-100" role="alert">{ziweiError}</div>}
         <article className="glass-card overflow-hidden p-3 sm:p-6"><ZiweiChart result={input.ziwei} /><ZiweiKeyPalaceInsights result={input.ziwei} /></article>
       </section>}

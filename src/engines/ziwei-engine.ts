@@ -1,9 +1,17 @@
 import { astro } from 'iztro';
 import type {
-  ProfileInput, ZiweiHoroscopeLayer, ZiweiMutagen, ZiweiResult, ZiweiStar, ZiweiSurroundedPalace,
+  ProfileInput, ZiweiCalculationSettings, ZiweiHoroscopeLayer, ZiweiMutagen, ZiweiResult, ZiweiStar, ZiweiSurroundedPalace,
 } from '../types/fate';
 
 const MUTAGEN_TYPES: ZiweiMutagen['type'][] = ['祿', '權', '科', '忌'];
+
+export const DEFAULT_ZIWEI_SETTINGS: ZiweiCalculationSettings = {
+  algorithm: 'default',
+  yearDivide: 'normal',
+  horoscopeDivide: 'normal',
+  ageDivide: 'normal',
+  dayDivide: 'current',
+};
 
 export function birthHourToZiweiIndex(birthTime: string): number {
   const match = /^(\d{2}):(\d{2})$/.exec(birthTime);
@@ -43,9 +51,11 @@ function mapHoroscopeLayer(item: {
 export function calculateZiwei(
   input: Pick<ProfileInput, 'birthDate' | 'birthTime' | 'gender'>,
   targetDate: string | Date = new Date(),
+  settings: ZiweiCalculationSettings = DEFAULT_ZIWEI_SETTINGS,
 ): ZiweiResult | undefined {
   if (input.gender === 'other') return undefined;
   try {
+    astro.config(settings);
     const chart = astro.bySolar(input.birthDate, birthHourToZiweiIndex(input.birthTime), input.gender, true, 'zh-TW');
     const horoscope = chart.horoscope(targetDate);
     const surrounded = chart.surroundedPalaces('命宮');
@@ -81,6 +91,7 @@ export function calculateZiwei(
         monthly: mapHoroscopeLayer(horoscope.monthly),
         daily: mapHoroscopeLayer(horoscope.daily),
       },
+      settings: { ...settings },
       palaces: chart.palaces.map((palace) => ({
         index: palace.index,
         name: palace.name,
@@ -93,7 +104,7 @@ export function calculateZiwei(
         changsheng12: palace.changsheng12,
         decadalRange: palace.decadal.range,
       })),
-      calculationNote: '採 iztro 2.5.8 通行排法、繁體中文輸出；流年以目前日期計算，三方四正呈現命宮、遷移、財帛與官祿四個結構位置。不同流派的四化、亮度、晚子時與閏月規則可能不同，本版不自動斷吉凶。',
+      calculationNote: `採 iztro 2.5.8 ${settings.algorithm === 'zhongzhou' ? '中州派' : '通行'}安星法、繁體中文輸出；三方四正呈現命宮、遷移、財帛與官祿四個結構位置。不同流派的四化、亮度、晚子時與閏月規則可能不同，本版不自動斷吉凶。`,
       source: { sourceName: 'iztro', sourceUrl: 'https://github.com/SylarLong/iztro', license: 'MIT' },
     };
   } catch {
