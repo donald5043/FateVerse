@@ -30,8 +30,8 @@ describe('城市經緯度自動帶入', () => {
 });
 
 describe('姓名字庫擴充', () => {
-  it('字庫至少收錄 150 個常用字', () => {
-    expect(NAME_DICTIONARY_SIZE).toBeGreaterThanOrEqual(150);
+  it('字庫至少收錄 700 個常用字', () => {
+    expect(NAME_DICTIONARY_SIZE).toBeGreaterThanOrEqual(700);
     expect(Object.keys(NAME_DICTIONARY).length).toBe(NAME_DICTIONARY_SIZE);
   });
   it('常見姓名字都有字義，且分析結果引用實際字義', () => {
