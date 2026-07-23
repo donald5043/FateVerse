@@ -1,18 +1,24 @@
-import { Camera, Hand, ShieldCheck, Sparkles, X } from 'lucide-react';
+import { Camera, Hand, ScanSearch, ShieldCheck, Sparkles, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Disclaimer from '../components/common/Disclaimer';
+import { analyzePalmImageFile, type PalmConfidence } from '../engines/palm-analyzer';
 import { PALM_FEATURES, buildPalmReading, type PalmSelections } from '../engines/palm-engine';
+
+const CONFIDENCE_LABELS: Record<PalmConfidence, string> = { high: '信心高', medium: '信心中', low: '信心低' };
 
 export default function PalmPage() {
   const [imageUrl, setImageUrl] = useState('');
   const [selections, setSelections] = useState<PalmSelections>({});
   const [imageError, setImageError] = useState('');
+  const [analyzing, setAnalyzing] = useState(false);
+  const [autoMessage, setAutoMessage] = useState('');
+  const [autoConfidence, setAutoConfidence] = useState<Partial<Record<keyof PalmSelections, PalmConfidence>>>({});
   const reading = buildPalmReading(selections);
-  const answered = Object.keys(selections).length;
+  const answered = Object.keys(selections).filter((key) => selections[key as keyof PalmSelections]).length;
 
   useEffect(() => () => { if (imageUrl) URL.revokeObjectURL(imageUrl); }, [imageUrl]);
 
-  const chooseImage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const chooseImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
@@ -21,10 +27,29 @@ export default function PalmPage() {
     setImageError('');
     if (imageUrl) URL.revokeObjectURL(imageUrl);
     setImageUrl(URL.createObjectURL(file));
+    setAnalyzing(true);
+    setAutoMessage('');
+    try {
+      const analysis = await analyzePalmImageFile(file);
+      if (analysis.ok) {
+        setSelections(analysis.selections);
+        setAutoConfidence(analysis.confidence);
+        setAutoMessage(analysis.message);
+      } else {
+        setAutoConfidence({});
+        setAutoMessage(analysis.message);
+      }
+    } catch {
+      setAutoConfidence({});
+      setAutoMessage('這個瀏覽器無法執行影像分析，請改用下方選項手動指認。');
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   const select = (featureId: keyof PalmSelections, optionId: string) => {
     setSelections((current) => ({ ...current, [featureId]: current[featureId] === optionId ? undefined : optionId }));
+    setAutoConfidence((current) => ({ ...current, [featureId]: undefined }));
   };
 
   return (
@@ -32,13 +57,13 @@ export default function PalmPage() {
       <div className="max-w-3xl">
         <p className="eyebrow text-teal-300">Palmistry</p>
         <h1 className="display-title mt-3">拍手相</h1>
-        <p className="mt-5 muted">拍一張自己的手掌照片當對照，然後照著提示逐項指認你的手型與掌紋，我們用傳統手相的說法白話解讀。照片只在你的瀏覽器顯示，不會上傳。</p>
+        <p className="mt-5 muted">拍一張手掌照片，我們會直接在你的瀏覽器裡分析手型比例與掌紋走向，自動帶入判讀，再用傳統手相的說法白話解讀；覺得判讀不準的地方隨時可以手動修正。照片不會上傳到任何伺服器。</p>
       </div>
 
       <div className="mt-8 grid items-start gap-6 lg:grid-cols-[0.85fr_1.15fr]">
         <div className="lg:sticky lg:top-24">
           <article className="glass-card p-5">
-            <h2 className="flex items-center gap-2.5 font-serif text-lg font-semibold text-cream"><Camera className="text-teal-300" size={19} />手掌照片（選拍）</h2>
+            <h2 className="flex items-center gap-2.5 font-serif text-lg font-semibold text-cream"><Camera className="text-teal-300" size={19} />手掌照片</h2>
             {imageUrl ? (
               <div className="relative mt-4">
                 <img src={imageUrl} alt="你的手掌照片" className="max-h-[420px] w-full rounded-2xl border border-white/10 object-contain" />
@@ -47,13 +72,15 @@ export default function PalmPage() {
             ) : (
               <label className="mt-4 flex min-h-[220px] cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/20 bg-white/[0.03] p-6 text-center transition hover:border-teal-300/50">
                 <Hand className="text-teal-300" size={32} />
-                <span className="font-semibold text-cream">點擊上傳或拍攝手掌照片</span>
-                <span className="text-xs leading-5 text-mist">慣用手掌心朝上、光線充足最清楚；支援 JPG／PNG／WebP，上限 15 MB。</span>
+                <span className="font-semibold text-cream">點擊上傳或拍攝手掌照片，自動分析</span>
+                <span className="text-xs leading-5 text-mist">掌心朝上撐滿畫面、光線充足、指尖朝上最準；支援 JPG／PNG／WebP，上限 15 MB。</span>
                 <input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" onChange={chooseImage} />
               </label>
             )}
             {imageError && <p className="mt-3 rounded-xl border border-rose-200/20 bg-rose-200/[0.08] p-3 text-sm text-rose-100" role="alert">{imageError}</p>}
-            <p className="mt-4 text-xs leading-5 text-mist">沒有照片也可以直接看著自己的手回答右邊的問題。傳統上右撇子以左手看先天、右手看後天，可以兩隻都試。</p>
+            {analyzing && <p className="mt-3 flex items-center gap-2 rounded-xl border border-teal-300/20 bg-teal-300/[0.07] p-3 text-sm text-teal-100" role="status" aria-live="polite"><ScanSearch className="animate-pulse" size={17} />正在分析手掌照片…</p>}
+            {!analyzing && autoMessage && <p className="mt-3 rounded-xl border border-teal-300/20 bg-teal-300/[0.07] p-3 text-sm leading-6 text-teal-100" role="status">{autoMessage}</p>}
+            <p className="mt-4 text-xs leading-5 text-mist">分析全程在你的裝置上進行（膚色偵測、手型比例與掌紋邊緣量測）。沒有照片也可以直接看著自己的手，用右邊選項指認。傳統上右撇子以左手看先天、右手看後天，可以兩隻都試。</p>
           </article>
         </div>
 
@@ -62,7 +89,9 @@ export default function PalmPage() {
             <article className="glass-card p-5 sm:p-6" key={feature.id}>
               <div className="flex items-center justify-between">
                 <h2 className="font-serif text-lg font-semibold text-cream">{String(index + 1).padStart(2, '0')} · {feature.title}</h2>
-                {selections[feature.id] && <span className="rounded-full bg-teal-300/10 px-2.5 py-1 text-[11px] text-teal-200">已選擇</span>}
+                {selections[feature.id] && (autoConfidence[feature.id]
+                  ? <span className="rounded-full bg-teal-300/10 px-2.5 py-1 text-[11px] text-teal-200">自動判讀 · {CONFIDENCE_LABELS[autoConfidence[feature.id]!]}</span>
+                  : <span className="rounded-full bg-teal-300/10 px-2.5 py-1 text-[11px] text-teal-200">已選擇</span>)}
               </div>
               <p className="mt-2 text-sm leading-6 text-cream">{feature.question}</p>
               <p className="mt-1 text-xs leading-5 text-mist">{feature.howTo}</p>
