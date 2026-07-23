@@ -9,6 +9,7 @@ const links = [
   ['/', '首頁'],
   ['/profile', '探索命盤'],
   ['/daily', '今日指引'],
+  ['/tarot', '塔羅牌'],
   ['/fortune', '拍籤解籤'],
   ['/about', '關於'],
 ] as const;

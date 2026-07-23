@@ -208,16 +208,26 @@ export default function ReportPage() {
         </article>
 
         <section className="mt-10">
-          <p className="eyebrow">At a glance</p><h2 className="section-title mt-2">六大系統直接說結論</h2>
-          <p className="mt-2 text-sm leading-6 text-mist">每套系統先給你一句最重要的話；想看完整脈絡，再點上面的分頁深入。</p>
+          <p className="eyebrow">At a glance</p><h2 className="section-title mt-2">各大系統直接說結論</h2>
+          <p className="mt-2 text-sm leading-6 text-mist">每套系統先給你一句最重要的話；想看完整脈絡，點卡片下方的「查看詳細」。</p>
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {conclusions.map(({ id, system, headline, conclusion }) => {
-              const tone = ({ bazi: 'text-gold', zodiac: 'text-emerald-300', ziwei: 'text-violet-400', western: 'text-teal-300', numerology: 'text-rose-400', name: 'text-fuchsia-300' } as Record<string, string>)[id] ?? 'text-gold';
+              const tone = ({ bazi: 'text-gold', zodiac: 'text-emerald-300', ziwei: 'text-violet-400', western: 'text-teal-300', numerology: 'text-rose-400', tarot: 'text-fuchsia-300', name: 'text-amber-200' } as Record<string, string>)[id] ?? 'text-gold';
+              const detailTab = ({ bazi: 'bazi', ziwei: 'ziwei', western: 'western', numerology: 'numerology', name: 'numerology' } as Record<string, ReportTab>)[id];
               return (
                 <article className="flex flex-col rounded-[20px] border border-white/10 bg-white/[0.045] p-5" key={id}>
                   <span className={`text-[11px] font-bold tracking-[0.12em] ${tone}`}>{system}</span>
                   <h3 className="mt-1.5 font-serif text-lg font-semibold text-cream">{headline}</h3>
-                  <p className="mt-3 text-sm leading-7 text-mist">{conclusion}</p>
+                  <p className="mt-3 flex-1 text-sm leading-7 text-mist">{conclusion}</p>
+                  <div className="mt-4 border-t border-white/10 pt-3">
+                    {id === 'tarot' ? (
+                      <Link className="inline-flex items-center gap-1.5 text-sm font-semibold text-cream transition hover:text-gold" to="/tarot">查看詳細 <ChevronRight size={15} /></Link>
+                    ) : detailTab ? (
+                      <button className="inline-flex items-center gap-1.5 text-sm font-semibold text-cream transition hover:text-gold" type="button" onClick={() => { setTab(detailTab); window.scrollTo({ top: 0, left: 0, behavior: 'smooth' }); }}>查看詳細 <ChevronRight size={15} /></button>
+                    ) : (
+                      <button className="inline-flex items-center gap-1.5 text-sm font-semibold text-cream transition hover:text-gold" type="button" onClick={() => document.getElementById('systems')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>查看詳細 <ChevronRight size={15} /></button>
+                    )}
+                  </div>
                 </article>
               );
             })}
@@ -357,9 +367,25 @@ export default function ReportPage() {
         </div>
         {input.nameAnalysis && (
           <article className="mt-5 rounded-[20px] border border-white/10 bg-white/[0.045] p-6">
-            <h3 className="font-serif text-lg font-semibold text-cream">姓名基礎分析</h3>
+            <h3 className="font-serif text-lg font-semibold text-cream">姓名分析</h3>
             <p className="mt-3 leading-7 text-mist">{report.sections.name}</p>
-            <div className="mt-4 space-y-2">{input.nameAnalysis.characters.map((item, index) => <div className="flex items-center justify-between rounded-xl bg-white/[0.04] px-3 py-2 text-sm" key={`${item.character}-${index}`}><span className="font-serif text-lg text-cream">{item.character}</span><span className="text-right text-mist">{item.strokes ? `${item.strokes} 畫 · ` : ''}{({ formal: '正式資料', insufficient: '資料不足', modern: '現代筆畫', manual: '手動輸入' } as const)[item.strokeSource]}</span></div>)}</div>
+            <div className="mt-4 space-y-2">{input.nameAnalysis.characters.map((item, index) => <div className="flex items-center justify-between rounded-xl bg-white/[0.04] px-3 py-2 text-sm" key={`${item.character}-${index}`}><span className="font-serif text-lg text-cream">{item.character}{item.meaning ? <span className="ml-2 text-xs text-mist">{item.meaning}</span> : null}</span><span className="text-right text-mist">{item.strokes ? `${item.strokes} 畫 · ` : ''}{({ formal: '正式資料', insufficient: '資料不足', modern: '現代筆畫', manual: '手動輸入' } as const)[item.strokeSource]}</span></div>)}</div>
+            {input.nameAnalysis.fiveGrid && (
+              <div className="mt-5 rounded-2xl border border-amber-200/20 bg-amber-200/[0.05] p-4">
+                <h4 className="text-sm font-semibold text-amber-100">五格剖象</h4>
+                <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-5">
+                  {input.nameAnalysis.fiveGrid.grids.map((grid) => (
+                    <div className="rounded-xl border border-white/10 bg-ink/40 p-3 text-center" key={grid.name}>
+                      <span className="text-[11px] text-mist">{grid.name}</span>
+                      <div className="mt-1 font-serif text-xl font-semibold text-cream">{grid.value}</div>
+                      <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${grid.category === '吉' ? 'bg-emerald-300/10 text-emerald-200' : grid.category === '半吉' ? 'bg-amber-200/10 text-amber-200' : 'bg-rose-300/10 text-rose-200'}`}>{grid.category} · {ELEMENT_LABELS[grid.element]}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-3 text-sm leading-6 text-mist">{input.nameAnalysis.fiveGrid.sanCai.relation}</p>
+                <p className="mt-2 text-xs leading-5 text-mist">{input.nameAnalysis.fiveGrid.basis}</p>
+              </div>
+            )}
             <p className="mt-3 text-xs leading-5 text-mist">{input.nameAnalysis.strokeNotice}</p>
           </article>
         )}

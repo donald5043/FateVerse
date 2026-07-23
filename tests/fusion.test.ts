@@ -108,9 +108,9 @@ describe('融合解讀', () => {
 describe('系統一句話結論', () => {
   const input = buildInput('1990-01-02');
 
-  it('沒有紫微與姓名時給出四套系統的結論', () => {
+  it('沒有紫微與姓名時給出五套系統的結論（含生日塔羅）', () => {
     const conclusions = generateSystemConclusions(input);
-    expect(conclusions.map((item) => item.id)).toEqual(['bazi', 'zodiac', 'western', 'numerology']);
+    expect(conclusions.map((item) => item.id)).toEqual(['bazi', 'zodiac', 'western', 'numerology', 'tarot']);
     conclusions.forEach((item) => {
       expect(item.headline.length).toBeGreaterThan(0);
       expect(item.conclusion.length).toBeGreaterThan(15);

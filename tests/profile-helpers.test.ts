@@ -50,6 +50,21 @@ describe('姓名字庫擴充', () => {
     expect(ying.element).toBe('wood');
     expect(ying.strokes).toBeUndefined();
   });
+  it('全部字都有筆畫時計算五格與三才', () => {
+    const result = analyzeName('林安晨', ['metal']);
+    expect(result.fiveGrid).toBeDefined();
+    const grids = Object.fromEntries(result.fiveGrid!.grids.map((grid) => [grid.name, grid.value]));
+    expect(grids).toEqual({ 天格: 9, 人格: 14, 地格: 17, 外格: 12, 總格: 25 });
+    expect(result.fiveGrid!.sanCai.elements).toEqual(['water', 'fire', 'metal']);
+    expect(result.fiveGrid!.sanCai.relation).toContain('三才');
+    expect(result.fiveGrid!.basis).toContain('現代標準筆畫');
+  });
+  it('缺筆畫的字使五格不計算，補手動筆畫後恢復', () => {
+    expect(analyzeName('王英', ['fire']).fiveGrid).toBeUndefined();
+    const withManual = analyzeName('王英', ['fire'], { 英: 9 });
+    expect(withManual.fiveGrid).toBeDefined();
+    expect(withManual.fiveGrid!.grids.find((grid) => grid.name === '總格')?.value).toBe(13);
+  });
   it('未收錄字仍標示資料不足，可用手動筆畫補充', () => {
     const result = analyzeName('王曦', ['fire'], { 曦: 20 });
     const xi = result.characters[1];

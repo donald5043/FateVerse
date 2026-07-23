@@ -13,6 +13,7 @@ import type {
   TimelinePhase,
 } from '../types/fate';
 import { branchToElement, stemToElement } from './five-elements-engine';
+import { getBirthCards } from './tarot-engine';
 import { ELEMENT_LABELS } from '../utils/constants';
 
 const ELEMENT_ORDER: ElementName[] = ['wood', 'fire', 'earth', 'metal', 'water'];
@@ -430,6 +431,15 @@ export function generateSystemConclusions(input: FateReportInput): SystemConclus
       headline: `${input.numerology.lifePathNumber} · ${input.numerology.title}`,
       conclusion: `${input.numerology.description} 你的功課是${input.numerology.challenges[0]}。`,
     },
+    (() => {
+      const birthCards = getBirthCards(input.numerology.birthDateDigits);
+      return {
+        id: 'tarot',
+        system: '生日塔羅',
+        headline: birthCards.samePersonalityAndSoul ? birthCards.personality.name : `${birthCards.personality.name} · ${birthCards.soul.name}`,
+        conclusion: `你的人格牌是「${birthCards.personality.name}」（${birthCards.personality.keywords.join('、')}）：${birthCards.personality.upright}${birthCards.samePersonalityAndSoul ? ' 人格與靈魂同一張牌，代表內外一致。' : `靈魂牌「${birthCards.soul.name}」則是你內在深層的動力。`}`,
+      };
+    })(),
     ...(input.nameAnalysis
       ? [{
           id: 'name',

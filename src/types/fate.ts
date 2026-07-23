@@ -322,6 +322,25 @@ export interface NameCharacterResult {
   strokeSource: StrokeDataStatus;
 }
 
+export type NameGridCategory = '吉' | '半吉' | '凶';
+
+export interface NameGrid {
+  name: '天格' | '人格' | '地格' | '外格' | '總格';
+  value: number;
+  category: NameGridCategory;
+  element: ElementName;
+  meaning: string;
+}
+
+export interface NameFiveGrid {
+  grids: NameGrid[];
+  sanCai: {
+    elements: [ElementName, ElementName, ElementName];
+    relation: string;
+  };
+  basis: string;
+}
+
 export interface NameAnalysisResult {
   fullName: string;
   characterCount: number;
@@ -329,6 +348,7 @@ export interface NameAnalysisResult {
   overallImpression: string;
   elementComparison: string;
   strokeNotice: string;
+  fiveGrid?: NameFiveGrid;
   fiveGridBeta: true;
 }
 
