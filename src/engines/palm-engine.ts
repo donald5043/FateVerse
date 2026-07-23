@@ -1,9 +1,25 @@
+import type { ElementName } from '../types/fate';
+
 export interface PalmOption {
   id: string;
   label: string;
   hint: string;
   reading: string;
   tip: string;
+}
+
+// 手型四類直接對應傳統四元素；沿用本站「風≈木」的跨文化約定。
+const HAND_SHAPE_ELEMENTS: Record<string, ElementName> = {
+  earth: 'earth',
+  air: 'wood',
+  water: 'water',
+  fire: 'fire',
+};
+
+/** 手型的五行訊號；未指認手型時回傳 undefined。 */
+export function palmShapeElement(selections: PalmSelections): ElementName | undefined {
+  const shape = selections.handShape;
+  return shape ? HAND_SHAPE_ELEMENTS[shape] : undefined;
 }
 
 export interface PalmFeature {

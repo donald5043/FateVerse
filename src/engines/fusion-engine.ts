@@ -14,7 +14,7 @@ import type {
 } from '../types/fate';
 import { analyzeDayMaster } from './bazi-analysis-engine';
 import { branchToElement, stemToElement } from './five-elements-engine';
-import { getBirthCards } from './tarot-engine';
+import { birthCardElements, getBirthCards } from './tarot-engine';
 import { ELEMENT_LABELS } from '../utils/constants';
 
 const ELEMENT_ORDER: ElementName[] = ['wood', 'fire', 'earth', 'metal', 'water'];
@@ -114,7 +114,7 @@ function tallyVotes(entries: ElementVoteInput[]): FusionElementVote[] {
     .sort((a, b) => b.votes - a.votes);
 }
 
-function buildConsensus(input: FateReportInput): { consensus: FusionConsensus; voteEntries: ElementVoteInput[] } {
+function buildConsensus(input: FateReportInput, options: FusionOptions = {}): { consensus: FusionConsensus; voteEntries: ElementVoteInput[] } {
   const voteEntries: ElementVoteInput[] = [
     { system: '八字日主', element: input.bazi.dayMasterElement },
     { system: '四柱五行分布', element: input.fiveElements.strongest[0] },
@@ -123,6 +123,7 @@ function buildConsensus(input: FateReportInput): { consensus: FusionConsensus; v
   const westernElement = WESTERN_TO_FIVE[input.astrology.element];
   if (westernElement) voteEntries.push({ system: '西洋太陽星座', element: westernElement });
   voteEntries.push({ system: '生命靈數', element: numerologyElement(input.numerology.lifePathNumber) });
+  voteEntries.push({ system: '生日塔羅', element: birthCardElements(input.numerology.birthDateDigits)[0] });
   if (input.ziwei) {
     const ziweiElement = parseZiweiClassElement(input.ziwei.fiveElementsClass);
     if (ziweiElement) voteEntries.push({ system: '紫微五行局', element: ziweiElement });
@@ -131,6 +132,7 @@ function buildConsensus(input: FateReportInput): { consensus: FusionConsensus; v
     const named = input.nameAnalysis.characters.find((item) => item.element);
     if (named?.element) voteEntries.push({ system: '姓名用字', element: named.element });
   }
+  if (options.palmElement) voteEntries.push({ system: '手相手型', element: options.palmElement });
 
   const votes = tallyVotes(voteEntries);
   const top = votes[0];
@@ -573,8 +575,12 @@ function dayLabelText(element: ElementName): string {
   return ELEMENT_LABELS[element];
 }
 
-export function generateFusionReading(input: FateReportInput): FusionReading {
-  const { consensus, voteEntries } = buildConsensus(input);
+export interface FusionOptions {
+  palmElement?: ElementName;
+}
+
+export function generateFusionReading(input: FateReportInput, options: FusionOptions = {}): FusionReading {
+  const { consensus, voteEntries } = buildConsensus(input, options);
   const systemsUsed = voteEntries.map((entry) => entry.system);
   const leading = consensus.leading[0];
   const leadingLabels = consensus.leading.map((element) => ELEMENT_LABELS[element]).join('、');
@@ -586,9 +592,10 @@ export function generateFusionReading(input: FateReportInput): FusionReading {
   return {
     headline: `把 ${systemsUsed.length} 套系統疊起來看，你的主旋律偏「${leadingLabels}」：${ELEMENT_PLAIN[leading].vibe}。`,
     plainIntro:
-      '這個單元做一件事：把八字、五行、生肖、西洋星座、生命靈數' +
+      '這個單元做一件事：把八字、五行、生肖、西洋星座、生命靈數、生日塔羅' +
       (input.ziwei ? '、紫微斗數' : '') +
       (input.nameAnalysis ? '、姓名用字' : '') +
+      (options.palmElement ? '、手相手型' : '') +
       '各自的結果翻譯成同一種語言，再看它們哪裡口徑一致、哪裡各說各話。一致的地方值得你留意，分歧的地方也不是誰算錯——它們本來就是不同文化用不同工具在量同一個人。以下全部用白話說明。',
     systemsUsed,
     consensus,

@@ -1,4 +1,5 @@
-import { MAJOR_ARCANA, type TarotCard } from '../data/tarot-cards';
+import { MAJOR_ARCANA, TAROT_ELEMENTS, type TarotCard } from '../data/tarot-cards';
+import type { ElementName } from '../types/fate';
 
 export interface TarotBirthCards {
   sum: number;
@@ -26,6 +27,14 @@ export function getBirthCards(birthDateDigits: number[]): TarotBirthCards {
   const personality = MAJOR_ARCANA[personalityId];
   const soul = MAJOR_ARCANA[soulSum];
   return { sum, personality, soul, samePersonalityAndSoul: personality.id === soul.id };
+}
+
+/** 生日塔羅的五行訊號：以人格牌為主、靈魂牌為輔（相同時只回一個）。 */
+export function birthCardElements(birthDateDigits: number[]): ElementName[] {
+  const cards = getBirthCards(birthDateDigits);
+  const personality = TAROT_ELEMENTS[cards.personality.id];
+  if (cards.samePersonalityAndSoul) return [personality];
+  return [personality, TAROT_ELEMENTS[cards.soul.id]];
 }
 
 const POSITION_HINTS: Record<TarotSpreadCard['position'], string> = {

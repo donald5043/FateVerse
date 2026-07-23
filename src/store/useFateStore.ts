@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { AiFateReport, FateReportInput, FortuneStick, FortuneTopic, ProfileInput } from '../types/fate';
+import type { AiFateReport, ElementName, FateReportInput, FortuneStick, FortuneTopic, ProfileInput } from '../types/fate';
 
 export interface ModelState {
   supported: boolean | null;
@@ -19,6 +19,8 @@ interface FateState {
   customQuestion: string;
   model: ModelState;
   uiTheme: 'dark' | 'system';
+  palmElement?: ElementName;
+  setPalmElement: (palmElement?: ElementName) => void;
   setProfile: (profileInput: ProfileInput, reportInput: FateReportInput, report: AiFateReport) => void;
   setReportData: (reportInput: FateReportInput, report: AiFateReport) => void;
   setReport: (report: AiFateReport) => void;
@@ -39,6 +41,7 @@ export const useFateStore = create<FateState>((set) => ({
   customQuestion: '',
   model: initialModel,
   uiTheme: 'dark',
+  setPalmElement: (palmElement) => set({ palmElement }),
   setProfile: (profileInput, reportInput, report) => set({ profileInput, reportInput, report }),
   setReportData: (reportInput, report) => set({ reportInput, report }),
   setReport: (report) => set({ report }),
@@ -48,5 +51,5 @@ export const useFateStore = create<FateState>((set) => ({
   setCustomQuestion: (customQuestion) => set({ customQuestion }),
   setModel: (next) => set((state) => ({ model: { ...state.model, ...next } })),
   setUiTheme: (uiTheme) => set({ uiTheme }),
-  clearSession: () => set({ profileInput: undefined, reportInput: undefined, report: undefined, ocrText: '', selectedFortune: undefined, fortuneTopic: 'overall', customQuestion: '', model: initialModel }),
+  clearSession: () => set({ profileInput: undefined, reportInput: undefined, report: undefined, ocrText: '', selectedFortune: undefined, fortuneTopic: 'overall', customQuestion: '', palmElement: undefined, model: initialModel }),
 }));

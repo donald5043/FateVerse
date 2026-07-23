@@ -2,11 +2,13 @@ import { Camera, Hand, ScanSearch, ShieldCheck, Sparkles, X } from 'lucide-react
 import { useEffect, useState } from 'react';
 import Disclaimer from '../components/common/Disclaimer';
 import { analyzePalmImageFile, type PalmConfidence } from '../engines/palm-analyzer';
-import { PALM_FEATURES, buildPalmReading, type PalmSelections } from '../engines/palm-engine';
+import { PALM_FEATURES, buildPalmReading, palmShapeElement, type PalmSelections } from '../engines/palm-engine';
+import { useFateStore } from '../store/useFateStore';
 
 const CONFIDENCE_LABELS: Record<PalmConfidence, string> = { high: '信心高', medium: '信心中', low: '信心低' };
 
 export default function PalmPage() {
+  const setPalmElement = useFateStore((state) => state.setPalmElement);
   const [imageUrl, setImageUrl] = useState('');
   const [selections, setSelections] = useState<PalmSelections>({});
   const [imageError, setImageError] = useState('');
@@ -17,6 +19,8 @@ export default function PalmPage() {
   const answered = Object.keys(selections).filter((key) => selections[key as keyof PalmSelections]).length;
 
   useEffect(() => () => { if (imageUrl) URL.revokeObjectURL(imageUrl); }, [imageUrl]);
+  // 把手型的五行訊號存進 store，供報告的「全面整合」剖面使用。
+  useEffect(() => { setPalmElement(palmShapeElement(selections)); }, [selections, setPalmElement]);
 
   const chooseImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

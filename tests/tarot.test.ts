@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { MAJOR_ARCANA } from '../src/data/tarot-cards';
-import { buildSpread, drawSpread, getBirthCards } from '../src/engines/tarot-engine';
+import { MAJOR_ARCANA, TAROT_ELEMENTS } from '../src/data/tarot-cards';
+import { birthCardElements, buildSpread, drawSpread, getBirthCards } from '../src/engines/tarot-engine';
 
 const digitsOf = (birthDate: string) => birthDate.replaceAll('-', '').split('').map(Number);
 
@@ -14,6 +14,20 @@ describe('塔羅資料', () => {
       expect(card.reversed.length).toBeGreaterThan(10);
       expect(card.advice.length).toBeGreaterThan(5);
     });
+  });
+});
+
+describe('塔羅五行對應', () => {
+  it('22 張大牌都有五行歸屬，且傳統四元素不含金', () => {
+    MAJOR_ARCANA.forEach((card) => {
+      expect(['wood', 'fire', 'earth', 'water']).toContain(TAROT_ELEMENTS[card.id]);
+    });
+  });
+  it('生日塔羅回傳人格牌（與靈魂牌）的五行訊號', () => {
+    const same = birthCardElements('1990-01-02'.replaceAll('-', '').split('').map(Number));
+    expect(same).toEqual(['wood']); // 22 → 愚者（風≈木），人格靈魂同一張
+    const two = birthCardElements('1998-07-22'.replaceAll('-', '').split('').map(Number));
+    expect(two).toHaveLength(2);
   });
 });
 

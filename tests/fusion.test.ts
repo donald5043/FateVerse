@@ -49,8 +49,14 @@ describe('融合解讀', () => {
   const input = buildInput('1990-01-02');
   const reading = generateFusionReading(input);
 
-  it('沒有紫微與姓名時仍納入五套基本系統', () => {
-    expect(reading.systemsUsed).toEqual(['八字日主', '四柱五行分布', '生肖年支', '西洋太陽星座', '生命靈數']);
+  it('沒有紫微與姓名時仍納入六套基本系統（含永遠可得的生日塔羅）', () => {
+    expect(reading.systemsUsed).toEqual(['八字日主', '四柱五行分布', '生肖年支', '西洋太陽星座', '生命靈數', '生日塔羅']);
+  });
+
+  it('提供手相手型時併入投票', () => {
+    const withPalm = generateFusionReading(input, { palmElement: 'metal' });
+    expect(withPalm.systemsUsed).toContain('手相手型');
+    expect(withPalm.systemsUsed.length).toBe(reading.systemsUsed.length + 1);
   });
 
   it('五行投票總數等於系統數且有領先元素', () => {

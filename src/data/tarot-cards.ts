@@ -1,3 +1,5 @@
+import type { ElementName } from '../types/fate';
+
 export interface TarotCard {
   id: number;
   name: string;
@@ -7,6 +9,33 @@ export interface TarotCard {
   reversed: string;
   advice: string;
 }
+
+// 大阿爾克那的五行對應：簡化自金色黎明的元素／行星／星座歸屬，並沿用本站「風≈木」的跨文化約定。
+// 傳統占星四元素不含「金」，因此塔羅本身不提供金的訊號，屬正常現象。
+export const TAROT_ELEMENTS: Record<number, ElementName> = {
+  0: 'wood', // 愚者 · 風
+  1: 'wood', // 魔術師 · 水星（心智）
+  2: 'water', // 女祭司 · 月
+  3: 'earth', // 皇后 · 金星
+  4: 'fire', // 皇帝 · 牡羊
+  5: 'earth', // 教皇 · 金牛
+  6: 'wood', // 戀人 · 雙子
+  7: 'water', // 戰車 · 巨蟹
+  8: 'fire', // 力量 · 獅子
+  9: 'earth', // 隱士 · 處女
+  10: 'wood', // 命運之輪 · 木星（擴展）
+  11: 'wood', // 正義 · 天秤
+  12: 'water', // 倒吊人 · 水
+  13: 'water', // 死神 · 天蠍
+  14: 'fire', // 節制 · 射手
+  15: 'earth', // 惡魔 · 摩羯
+  16: 'fire', // 高塔 · 火星
+  17: 'wood', // 星星 · 水瓶
+  18: 'water', // 月亮 · 雙魚
+  19: 'fire', // 太陽 · 日
+  20: 'fire', // 審判 · 火
+  21: 'earth', // 世界 · 土星
+};
 
 export const MAJOR_ARCANA: TarotCard[] = [
   { id: 0, name: '愚者', en: 'The Fool', keywords: ['新開始', '冒險', '自由'], upright: '帶著好奇心出發，不被過去綁住，願意在還沒有全部答案時就跨出第一步。', reversed: '可能太衝動或猶豫不前，提醒你在自由和魯莽之間找平衡。', advice: '挑一件想做很久的小事，這週就開始，不用等準備完美。' },
