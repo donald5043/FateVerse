@@ -1,4 +1,4 @@
-import { ArrowRight, Compass, Grid2x2, Layers, Orbit, ScanLine, Sparkles } from 'lucide-react';
+import { ArrowRight, Compass, Grid2x2, Hand, Layers, Orbit, ScanLine, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Disclaimer from '../components/common/Disclaimer';
 
@@ -7,6 +7,7 @@ const features = [
   { to: '/report?tab=bazi', icon: Grid2x2, accent: '四柱 · 十神 · 大運', title: '八字命盤', text: '看懂你的天干地支與五行分布。', tone: 'text-gold', bg: 'bg-gold/[0.12]', hover: 'hover:border-gold/40' },
   { to: '/report?tab=western', icon: Orbit, accent: '十大行星 · 星座', title: '西洋星盤', text: '太陽、月亮與行星落在哪個星座。', tone: 'text-teal-300', bg: 'bg-teal-300/[0.12]', hover: 'hover:border-teal-300/40' },
   { to: '/fortune', icon: ScanLine, accent: '拍照 · OCR · 比對', title: '拍籤解籤', text: '拍下籤詩，辨識文字並找出解讀。', tone: 'text-rose-400', bg: 'bg-rose-400/[0.12]', hover: 'hover:border-rose-400/40' },
+  { to: '/palm', icon: Hand, accent: '手型 · 掌紋', title: '拍手相', text: '拍下手掌，逐項指認掌紋看解讀。', tone: 'text-teal-300', bg: 'bg-teal-300/[0.12]', hover: 'hover:border-teal-300/40' },
   { to: '/tarot', icon: Layers, accent: '三牌陣 · 生日塔羅', title: '塔羅牌', text: '抽三張牌，看看過去、現在與未來。', tone: 'text-fuchsia-300', bg: 'bg-fuchsia-300/[0.12]', hover: 'hover:border-fuchsia-300/40' },
   { to: '/daily', icon: Sparkles, accent: '每日一問', title: '今日指引', text: '給今天一個小小的反思與行動。', tone: 'text-violet-400', bg: 'bg-violet-400/[0.14]', hover: 'hover:border-violet-400/40' },
 ] as const;

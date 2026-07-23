@@ -13,6 +13,7 @@ const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const ReportPage = lazy(() => import('./pages/ReportPage'));
 const DailyPage = lazy(() => import('./pages/DailyPage'));
 const TarotPage = lazy(() => import('./pages/TarotPage'));
+const PalmPage = lazy(() => import('./pages/PalmPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="report" element={<ReportPage />} />
           <Route path="daily" element={<DailyPage />} />
           <Route path="tarot" element={<TarotPage />} />
+          <Route path="palm" element={<PalmPage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="privacy" element={<PrivacyPage />} />
           <Route path="settings" element={<SettingsPage />} />

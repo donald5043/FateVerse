@@ -1,32 +1,530 @@
 [
-  {"id":"01","title":"先看清楚","keyword":"觀察","message":"今天不急著回答，先把事實和推測分開。","reflectionQuestion":"我現在知道的是什麼，又有哪些只是猜測？","suggestedAction":"用兩欄寫下三項事實與三項推測。"},
-  {"id":"02","title":"留一點空間","keyword":"留白","message":"未排滿的時間，可能讓真正重要的事浮現。","reflectionQuestion":"什麼安排可以少做一點？","suggestedAction":"為今天保留二十分鐘無預設用途的時間。"},
-  {"id":"03","title":"微小前進","keyword":"一步","message":"方向不必一次確定，小步驟也能提供新資訊。","reflectionQuestion":"最小且可逆的一步是什麼？","suggestedAction":"選一件十五分鐘內能開始的行動。"},
-  {"id":"04","title":"整理界線","keyword":"邊界","message":"清楚的界線能讓關係更長久。","reflectionQuestion":"我答應了什麼，卻沒有說出自己的限制？","suggestedAction":"用一句溫和而明確的話表達可行範圍。"},
-  {"id":"05","title":"回到身體","keyword":"節奏","message":"在做決定前，先聽見身體正在傳達的疲憊或緊繃。","reflectionQuestion":"身體哪個部位最需要放鬆？","suggestedAction":"起身走動、伸展或安靜呼吸五分鐘。"},
-  {"id":"06","title":"重新命名","keyword":"語言","message":"換一種說法，可能看見不同選擇。","reflectionQuestion":"如果不叫它失敗，我會怎麼描述這段經驗？","suggestedAction":"以學到什麼重寫一件不如預期的事。"},
-  {"id":"07","title":"可信任的同行","keyword":"連結","message":"不必把所有問題都留給自己。","reflectionQuestion":"誰能提供具體而誠實的回饋？","suggestedAction":"向一位可信任的人提出一個清楚問題。"},
-  {"id":"08","title":"保留彈性","keyword":"調整","message":"修正路線不是反覆，而是回應新資訊。","reflectionQuestion":"哪個計畫已經需要更新？","suggestedAction":"調整一項期限或方法，並寫下理由。"},
-  {"id":"09","title":"完成一件事","keyword":"收束","message":"把注意力集中在收尾，能釋放新的空間。","reflectionQuestion":"哪件小事最接近完成？","suggestedAction":"先關閉其他分頁，完成一項待辦。"},
-  {"id":"10","title":"允許不同","keyword":"差異","message":"不同觀點不必立即分出輸贏。","reflectionQuestion":"對方在保護什麼價值？","suggestedAction":"先完整重述對方觀點，再表達自己。"},
-  {"id":"11","title":"核對資源","keyword":"盤點","message":"知道手上有什麼，比空想缺少什麼更能前進。","reflectionQuestion":"我已經擁有哪些時間、能力與支持？","suggestedAction":"列出五項目前可用的資源。"},
-  {"id":"12","title":"降低噪音","keyword":"專注","message":"少一點輸入，才能聽見自己的判斷。","reflectionQuestion":"今天哪一種資訊讓我最分心？","suggestedAction":"關閉一小時非必要通知。"},
-  {"id":"13","title":"溫和誠實","keyword":"坦白","message":"誠實可以不尖銳，溫和也不等於模糊。","reflectionQuestion":"我真正想讓對方理解的是什麼？","suggestedAction":"用「我觀察到、我感受、我需要」說明一次。"},
-  {"id":"14","title":"重新排序","keyword":"優先","message":"重要的事不一定最吵，今天替它留位置。","reflectionQuestion":"如果只能完成一件事，哪件最值得？","suggestedAction":"把最重要的任務排進一個明確時段。"},
-  {"id":"15","title":"接受未完成","keyword":"餘裕","message":"足夠好有時比無止境修整更能帶來進展。","reflectionQuestion":"哪裡已經達到可交付的程度？","suggestedAction":"為一項工作定義今天的完成標準。"},
-  {"id":"16","title":"回看來路","keyword":"累積","message":"你已經走過的路，也是一種可以使用的證據。","reflectionQuestion":"過去哪次經驗證明我能處理類似情況？","suggestedAction":"寫下一個曾經克服困難的具體做法。"},
-  {"id":"17","title":"先問再答","keyword":"好奇","message":"一個好問題，可能比快速建議更有幫助。","reflectionQuestion":"我還沒有理解哪個關鍵條件？","suggestedAction":"多問一個開放式問題。"},
-  {"id":"18","title":"照顧能量","keyword":"恢復","message":"休息不是獎勵，而是持續行動的條件。","reflectionQuestion":"什麼能讓我真正恢復，而不只是暫時麻痺？","suggestedAction":"安排一段不看螢幕的休息。"},
-  {"id":"19","title":"把目標變小","keyword":"可行","message":"看得見的下一步，比宏大的口號更可靠。","reflectionQuestion":"我如何知道今天真的前進了？","suggestedAction":"為目標加上一個可衡量的數字。"},
-  {"id":"20","title":"選擇不做","keyword":"取捨","message":"每一個承諾也代表放棄其他可能。","reflectionQuestion":"什麼事情現在不值得投入？","suggestedAction":"取消或延後一項低優先安排。"},
-  {"id":"21","title":"理解情緒","keyword":"訊息","message":"情緒提供訊息，但不必獨自決定行動。","reflectionQuestion":"這個感受想提醒我哪個需求？","suggestedAction":"為情緒命名，再選擇一個安全的回應。"},
-  {"id":"22","title":"清理桌面","keyword":"秩序","message":"外在的一小塊秩序，能降低內在的切換成本。","reflectionQuestion":"哪個空間最影響我專注？","suggestedAction":"只整理眼前一平方公尺。"},
-  {"id":"23","title":"確認期待","keyword":"對齊","message":"很多失望來自沒有說出口的標準。","reflectionQuestion":"我和對方對完成的想像相同嗎？","suggestedAction":"確認成果、期限與責任各一句。"},
-  {"id":"24","title":"保留證據","keyword":"記錄","message":"記錄讓你不必只依賴當下感受回顧。","reflectionQuestion":"什麼變化值得持續觀察？","suggestedAction":"建立一項簡單的每日紀錄。"},
-  {"id":"25","title":"練習拒絕","keyword":"選擇","message":"拒絕不適合的事，是替重要的事留出容量。","reflectionQuestion":"我怕拒絕之後會發生什麼？","suggestedAction":"先用「我需要確認後再回覆」爭取時間。"},
-  {"id":"26","title":"看見共同點","keyword":"合作","message":"從共同目標開始，差異更容易被討論。","reflectionQuestion":"我們至少都希望保留什麼？","suggestedAction":"在對話開頭先說出一項共同目標。"},
-  {"id":"27","title":"允許試作","keyword":"實驗","message":"不是每個選擇都要成為永久承諾。","reflectionQuestion":"如何用低成本測試這個想法？","suggestedAction":"設計一個兩週內可結束的小實驗。"},
-  {"id":"28","title":"感謝具體","keyword":"看見","message":"具體的感謝，讓重要的付出被真正看見。","reflectionQuestion":"誰做了哪件事，確實幫助了我？","suggestedAction":"傳一則說明具體影響的感謝訊息。"},
-  {"id":"29","title":"回到價值","keyword":"方向","message":"當選項都不完美，價值能提供排序依據。","reflectionQuestion":"這個決定最想守住哪項價值？","suggestedAction":"寫下三項價值並依重要度排序。"},
-  {"id":"30","title":"結束今天","keyword":"收心","message":"替一天畫下邊界，讓未完成的事明天再接手。","reflectionQuestion":"今天有哪一件事值得肯定？","suggestedAction":"寫下今日完成與明日第一步，然後停止工作。"}
+  {
+    "id": "01",
+    "title": "先看清楚",
+    "keyword": "觀察",
+    "message": "今天不急著回答，先把事實和推測分開。",
+    "reflectionQuestion": "我現在知道的是什麼，又有哪些只是猜測？",
+    "suggestedAction": "用兩欄寫下三項事實與三項推測。"
+  },
+  {
+    "id": "02",
+    "title": "留一點空間",
+    "keyword": "留白",
+    "message": "未排滿的時間，可能讓真正重要的事浮現。",
+    "reflectionQuestion": "什麼安排可以少做一點？",
+    "suggestedAction": "為今天保留二十分鐘無預設用途的時間。"
+  },
+  {
+    "id": "03",
+    "title": "微小前進",
+    "keyword": "一步",
+    "message": "方向不必一次確定，小步驟也能提供新資訊。",
+    "reflectionQuestion": "最小且可逆的一步是什麼？",
+    "suggestedAction": "選一件十五分鐘內能開始的行動。"
+  },
+  {
+    "id": "04",
+    "title": "整理界線",
+    "keyword": "邊界",
+    "message": "清楚的界線能讓關係更長久。",
+    "reflectionQuestion": "我答應了什麼，卻沒有說出自己的限制？",
+    "suggestedAction": "用一句溫和而明確的話表達可行範圍。"
+  },
+  {
+    "id": "05",
+    "title": "回到身體",
+    "keyword": "節奏",
+    "message": "在做決定前，先聽見身體正在傳達的疲憊或緊繃。",
+    "reflectionQuestion": "身體哪個部位最需要放鬆？",
+    "suggestedAction": "起身走動、伸展或安靜呼吸五分鐘。"
+  },
+  {
+    "id": "06",
+    "title": "重新命名",
+    "keyword": "語言",
+    "message": "換一種說法，可能看見不同選擇。",
+    "reflectionQuestion": "如果不叫它失敗，我會怎麼描述這段經驗？",
+    "suggestedAction": "以學到什麼重寫一件不如預期的事。"
+  },
+  {
+    "id": "07",
+    "title": "可信任的同行",
+    "keyword": "連結",
+    "message": "不必把所有問題都留給自己。",
+    "reflectionQuestion": "誰能提供具體而誠實的回饋？",
+    "suggestedAction": "向一位可信任的人提出一個清楚問題。"
+  },
+  {
+    "id": "08",
+    "title": "保留彈性",
+    "keyword": "調整",
+    "message": "修正路線不是反覆，而是回應新資訊。",
+    "reflectionQuestion": "哪個計畫已經需要更新？",
+    "suggestedAction": "調整一項期限或方法，並寫下理由。"
+  },
+  {
+    "id": "09",
+    "title": "完成一件事",
+    "keyword": "收束",
+    "message": "把注意力集中在收尾，能釋放新的空間。",
+    "reflectionQuestion": "哪件小事最接近完成？",
+    "suggestedAction": "先關閉其他分頁，完成一項待辦。"
+  },
+  {
+    "id": "10",
+    "title": "允許不同",
+    "keyword": "差異",
+    "message": "不同觀點不必立即分出輸贏。",
+    "reflectionQuestion": "對方在保護什麼價值？",
+    "suggestedAction": "先完整重述對方觀點，再表達自己。"
+  },
+  {
+    "id": "11",
+    "title": "核對資源",
+    "keyword": "盤點",
+    "message": "知道手上有什麼，比空想缺少什麼更能前進。",
+    "reflectionQuestion": "我已經擁有哪些時間、能力與支持？",
+    "suggestedAction": "列出五項目前可用的資源。"
+  },
+  {
+    "id": "12",
+    "title": "降低噪音",
+    "keyword": "專注",
+    "message": "少一點輸入，才能聽見自己的判斷。",
+    "reflectionQuestion": "今天哪一種資訊讓我最分心？",
+    "suggestedAction": "關閉一小時非必要通知。"
+  },
+  {
+    "id": "13",
+    "title": "溫和誠實",
+    "keyword": "坦白",
+    "message": "誠實可以不尖銳，溫和也不等於模糊。",
+    "reflectionQuestion": "我真正想讓對方理解的是什麼？",
+    "suggestedAction": "用「我觀察到、我感受、我需要」說明一次。"
+  },
+  {
+    "id": "14",
+    "title": "重新排序",
+    "keyword": "優先",
+    "message": "重要的事不一定最吵，今天替它留位置。",
+    "reflectionQuestion": "如果只能完成一件事，哪件最值得？",
+    "suggestedAction": "把最重要的任務排進一個明確時段。"
+  },
+  {
+    "id": "15",
+    "title": "接受未完成",
+    "keyword": "餘裕",
+    "message": "足夠好有時比無止境修整更能帶來進展。",
+    "reflectionQuestion": "哪裡已經達到可交付的程度？",
+    "suggestedAction": "為一項工作定義今天的完成標準。"
+  },
+  {
+    "id": "16",
+    "title": "回看來路",
+    "keyword": "累積",
+    "message": "你已經走過的路，也是一種可以使用的證據。",
+    "reflectionQuestion": "過去哪次經驗證明我能處理類似情況？",
+    "suggestedAction": "寫下一個曾經克服困難的具體做法。"
+  },
+  {
+    "id": "17",
+    "title": "先問再答",
+    "keyword": "好奇",
+    "message": "一個好問題，可能比快速建議更有幫助。",
+    "reflectionQuestion": "我還沒有理解哪個關鍵條件？",
+    "suggestedAction": "多問一個開放式問題。"
+  },
+  {
+    "id": "18",
+    "title": "照顧能量",
+    "keyword": "恢復",
+    "message": "休息不是獎勵，而是持續行動的條件。",
+    "reflectionQuestion": "什麼能讓我真正恢復，而不只是暫時麻痺？",
+    "suggestedAction": "安排一段不看螢幕的休息。"
+  },
+  {
+    "id": "19",
+    "title": "把目標變小",
+    "keyword": "可行",
+    "message": "看得見的下一步，比宏大的口號更可靠。",
+    "reflectionQuestion": "我如何知道今天真的前進了？",
+    "suggestedAction": "為目標加上一個可衡量的數字。"
+  },
+  {
+    "id": "20",
+    "title": "選擇不做",
+    "keyword": "取捨",
+    "message": "每一個承諾也代表放棄其他可能。",
+    "reflectionQuestion": "什麼事情現在不值得投入？",
+    "suggestedAction": "取消或延後一項低優先安排。"
+  },
+  {
+    "id": "21",
+    "title": "理解情緒",
+    "keyword": "訊息",
+    "message": "情緒提供訊息，但不必獨自決定行動。",
+    "reflectionQuestion": "這個感受想提醒我哪個需求？",
+    "suggestedAction": "為情緒命名，再選擇一個安全的回應。"
+  },
+  {
+    "id": "22",
+    "title": "清理桌面",
+    "keyword": "秩序",
+    "message": "外在的一小塊秩序，能降低內在的切換成本。",
+    "reflectionQuestion": "哪個空間最影響我專注？",
+    "suggestedAction": "只整理眼前一平方公尺。"
+  },
+  {
+    "id": "23",
+    "title": "確認期待",
+    "keyword": "對齊",
+    "message": "很多失望來自沒有說出口的標準。",
+    "reflectionQuestion": "我和對方對完成的想像相同嗎？",
+    "suggestedAction": "確認成果、期限與責任各一句。"
+  },
+  {
+    "id": "24",
+    "title": "保留證據",
+    "keyword": "記錄",
+    "message": "記錄讓你不必只依賴當下感受回顧。",
+    "reflectionQuestion": "什麼變化值得持續觀察？",
+    "suggestedAction": "建立一項簡單的每日紀錄。"
+  },
+  {
+    "id": "25",
+    "title": "練習拒絕",
+    "keyword": "選擇",
+    "message": "拒絕不適合的事，是替重要的事留出容量。",
+    "reflectionQuestion": "我怕拒絕之後會發生什麼？",
+    "suggestedAction": "先用「我需要確認後再回覆」爭取時間。"
+  },
+  {
+    "id": "26",
+    "title": "看見共同點",
+    "keyword": "合作",
+    "message": "從共同目標開始，差異更容易被討論。",
+    "reflectionQuestion": "我們至少都希望保留什麼？",
+    "suggestedAction": "在對話開頭先說出一項共同目標。"
+  },
+  {
+    "id": "27",
+    "title": "允許試作",
+    "keyword": "實驗",
+    "message": "不是每個選擇都要成為永久承諾。",
+    "reflectionQuestion": "如何用低成本測試這個想法？",
+    "suggestedAction": "設計一個兩週內可結束的小實驗。"
+  },
+  {
+    "id": "28",
+    "title": "感謝具體",
+    "keyword": "看見",
+    "message": "具體的感謝，讓重要的付出被真正看見。",
+    "reflectionQuestion": "誰做了哪件事，確實幫助了我？",
+    "suggestedAction": "傳一則說明具體影響的感謝訊息。"
+  },
+  {
+    "id": "29",
+    "title": "回到價值",
+    "keyword": "方向",
+    "message": "當選項都不完美，價值能提供排序依據。",
+    "reflectionQuestion": "這個決定最想守住哪項價值？",
+    "suggestedAction": "寫下三項價值並依重要度排序。"
+  },
+  {
+    "id": "30",
+    "title": "結束今天",
+    "keyword": "收心",
+    "message": "替一天畫下邊界，讓未完成的事明天再接手。",
+    "reflectionQuestion": "今天有哪一件事值得肯定？",
+    "suggestedAction": "寫下今日完成與明日第一步，然後停止工作。"
+  },
+  {
+    "id": "31",
+    "title": "把大石頭先放進去",
+    "keyword": "優先",
+    "message": "一天的容量有限，先放進最重要的事，剩下的縫隙自然會被小事填滿。順序反過來，大事就永遠放不進去了。",
+    "reflectionQuestion": "今天那顆非做不可的大石頭是什麼？",
+    "suggestedAction": "打開行事曆，把最重要的事排進今天精神最好的時段。"
+  },
+  {
+    "id": "32",
+    "title": "允許自己是新手",
+    "keyword": "學習",
+    "message": "做不好通常不是因為你不行，只是因為你還在學。把「我不會」改成「我還沒學會」，路就變長了。",
+    "reflectionQuestion": "最近有什麼事，你其實才剛開始學就要求自己精通？",
+    "suggestedAction": "挑一件正在學的事，記下今天比昨天多會的一小步。"
+  },
+  {
+    "id": "33",
+    "title": "說一次真心話",
+    "keyword": "誠實",
+    "message": "有些話在心裡放太久會發酵成距離。今天適合把一句放很久的真心話，用溫和的方式說出來。",
+    "reflectionQuestion": "有哪句話你一直想說卻沒說？",
+    "suggestedAction": "選一個信任的人，把那句話說出口或寫下來傳給對方。"
+  },
+  {
+    "id": "34",
+    "title": "給身體發言權",
+    "keyword": "身體",
+    "message": "腦子會騙人，身體不會。肩膀緊、睡不好、沒胃口，都是身體在幫你記錄你忽略的事。",
+    "reflectionQuestion": "身體最近哪裡在跟你抗議？它想說什麼？",
+    "suggestedAction": "做十分鐘伸展或散步，邊做邊聽身體的感覺。"
+  },
+  {
+    "id": "35",
+    "title": "少一個「應該」",
+    "keyword": "鬆綁",
+    "message": "很多疲累不是來自事情本身，而是來自「我應該要」的自我要求。今天試著刪掉一個不合理的應該。",
+    "reflectionQuestion": "哪一個「我應該」其實是別人的期待，不是你的？",
+    "suggestedAction": "把那句「我應該」改寫成「我可以選擇」，唸一遍給自己聽。"
+  },
+  {
+    "id": "36",
+    "title": "完成勝過完美",
+    "keyword": "行動",
+    "message": "八十分交出去的東西，勝過一百分永遠留在草稿夾。今天適合收尾，不適合再打磨。",
+    "reflectionQuestion": "哪件事你已經修改超過三次還不敢交出去？",
+    "suggestedAction": "設一個今天的交付時間，時間到就送出去。"
+  },
+  {
+    "id": "37",
+    "title": "跟未來的自己借眼光",
+    "keyword": "視野",
+    "message": "眼前的難題放到一年後看，多半只是一個轉彎。用未來的眼光看現在，輕重就清楚了。",
+    "reflectionQuestion": "一年後的你，會怎麼看今天煩惱的這件事？",
+    "suggestedAction": "寫一句「一年後的我想對現在說的話」，放在明顯的地方。"
+  },
+  {
+    "id": "38",
+    "title": "整理一個角落",
+    "keyword": "秩序",
+    "message": "外在的混亂會偷偷消耗內在的電量。不用大掃除，整理一個小角落，心就會跟著清爽。",
+    "reflectionQuestion": "哪個每天看到的角落最讓你煩躁？",
+    "suggestedAction": "花十五分鐘整理那個角落，只整理那裡就好。"
+  },
+  {
+    "id": "39",
+    "title": "把感謝說出口",
+    "keyword": "感謝",
+    "message": "放在心裡的感謝只有自己知道。說出口的感謝，會同時溫暖兩個人。",
+    "reflectionQuestion": "最近誰幫過你，而你還沒好好道謝？",
+    "suggestedAction": "今天傳一則具體的感謝訊息，寫清楚對方做了什麼。"
+  },
+  {
+    "id": "40",
+    "title": "留白不是浪費",
+    "keyword": "休息",
+    "message": "行程表塞滿不等於人生充實。留白的時間裡，靈感和恢復才有位置進來。",
+    "reflectionQuestion": "你的這一週，有沒有一段什麼都不排的時間？",
+    "suggestedAction": "在行事曆上畫掉一格，標上「留白」，到時候什麼都不排。"
+  },
+  {
+    "id": "41",
+    "title": "先處理情緒再處理事情",
+    "keyword": "情緒",
+    "message": "帶著情緒做的決定，常常要用加倍的力氣收拾。先讓情緒落地，事情反而處理得快。",
+    "reflectionQuestion": "現在這個情緒，是這件事引起的，還是累積來的？",
+    "suggestedAction": "把情緒寫成三個形容詞，然後深呼吸十次再回到事情上。"
+  },
+  {
+    "id": "42",
+    "title": "小步比大步可靠",
+    "keyword": "累積",
+    "message": "一天一小步看起來慢，一年後回頭看就是一大段路。今天不求突破，只求不中斷。",
+    "reflectionQuestion": "哪個習慣你想維持，卻總是斷斷續續？",
+    "suggestedAction": "把那個習慣縮小到五分鐘版本，今天完成它。"
+  },
+  {
+    "id": "43",
+    "title": "問一個好問題",
+    "keyword": "好奇",
+    "message": "答案讓對話結束，問題讓世界打開。今天當個提問的人，而不是急著給答案的人。",
+    "reflectionQuestion": "今天遇到的事情裡，哪一件你其實還不夠了解？",
+    "suggestedAction": "在下一次對話裡，先問對方一個真心好奇的問題。"
+  },
+  {
+    "id": "44",
+    "title": "接受不對等的一天",
+    "keyword": "彈性",
+    "message": "有些日子付出多、收穫少，這是常態不是失敗。帳不是天天結，是長期算的。",
+    "reflectionQuestion": "今天的不順，有多少是你能控制的？",
+    "suggestedAction": "把不能控制的部分寫下來，然後在旁邊寫「先放著」。"
+  },
+  {
+    "id": "45",
+    "title": "替別人開一扇門",
+    "keyword": "善意",
+    "message": "舉手之勞對你是小事，對別人可能是今天唯一的光。善意不用大，及時就好。",
+    "reflectionQuestion": "今天有沒有一個你能輕鬆幫上的人？",
+    "suggestedAction": "主動幫一個小忙，不求回報，做完就放下。"
+  },
+  {
+    "id": "46",
+    "title": "跟比較說再見",
+    "keyword": "自在",
+    "message": "別人的第三章看起來精彩，是因為你拿它比自己的第一章。今天只跟昨天的自己比。",
+    "reflectionQuestion": "最近你都拿自己跟誰比？那個比較公平嗎？",
+    "suggestedAction": "寫下你今年比去年進步的三件事，不管多小。"
+  },
+  {
+    "id": "47",
+    "title": "把擔心變成準備",
+    "keyword": "轉化",
+    "message": "擔心是原地打轉，準備是往前一步。同樣的力氣，後者划算得多。",
+    "reflectionQuestion": "你最擔心的那件事，有哪一小部分是可以先準備的？",
+    "suggestedAction": "為擔心的事做一項具體準備，做完就允許自己不再想它。"
+  },
+  {
+    "id": "48",
+    "title": "聽完再說",
+    "keyword": "傾聽",
+    "message": "很多誤會不是因為說錯話，而是因為沒聽完。今天練習把對方的話聽到最後一個字。",
+    "reflectionQuestion": "你上次被人好好聽完，是什麼感覺？",
+    "suggestedAction": "今天至少一次，等對方完全說完、停三秒，再開口。"
+  },
+  {
+    "id": "49",
+    "title": "為自己補充燃料",
+    "keyword": "滋養",
+    "message": "一直輸出不輸入，再好的引擎也會空轉。看一點好東西、吃一頓好飯，都是正經事。",
+    "reflectionQuestion": "最近讓你真心覺得「被充到電」的是什麼？",
+    "suggestedAction": "今天安排一件純粹讓自己開心的小事，並且真的去做。"
+  },
+  {
+    "id": "50",
+    "title": "誠實面對數字",
+    "keyword": "現實",
+    "message": "不敢看的帳單、不敢量的體重、不敢點開的訊息，都不會因為不看而消失。看見是改變的第一步。",
+    "reflectionQuestion": "有哪個數字或訊息你一直逃避面對？",
+    "suggestedAction": "今天打開它看一眼就好，先不用做任何決定。"
+  },
+  {
+    "id": "51",
+    "title": "讓路給運氣",
+    "keyword": "開放",
+    "message": "計畫給你方向，意外給你機會。今天如果出現計畫外的邀請或想法，先別急著拒絕。",
+    "reflectionQuestion": "你上一次因為「順便」而遇到的好事是什麼？",
+    "suggestedAction": "對今天出現的一個意外選項說「好啊，試試看」。"
+  },
+  {
+    "id": "52",
+    "title": "修一段關係",
+    "keyword": "修復",
+    "message": "關係像房子，小裂縫及早補，就不會變成大工程。一句主動的問候就是水泥。",
+    "reflectionQuestion": "哪段關係最近有點降溫，而你其實在意？",
+    "suggestedAction": "主動傳一句不帶目的的問候給那個人。"
+  },
+  {
+    "id": "53",
+    "title": "只做一件事",
+    "keyword": "專注",
+    "message": "同時做三件事，通常是三件都做一半。今天挑時段練習單工，感受完整做完一件事的踏實。",
+    "reflectionQuestion": "你最近一次心無旁騖做事是什麼時候？",
+    "suggestedAction": "設二十五分鐘計時器，期間只做一件事、關掉通知。"
+  },
+  {
+    "id": "54",
+    "title": "放下一個角色",
+    "keyword": "真實",
+    "message": "我們常常同時扮演好員工、好家人、好朋友，卻忘了排「自己」的戲份。今天讓角色下班一小時。",
+    "reflectionQuestion": "拿掉所有頭銜之後，你今天想做什麼？",
+    "suggestedAction": "給自己一小時，做一件跟任何角色都無關、純屬自己的事。"
+  },
+  {
+    "id": "55",
+    "title": "把難開的口開了",
+    "keyword": "勇氣",
+    "message": "請求幫忙不是示弱，是把力氣用在對的地方。開口的瞬間，事情通常比想像中順利。",
+    "reflectionQuestion": "哪件事你一個人扛太久了？",
+    "suggestedAction": "今天向一個適合的人開口，請求一項具體的協助。"
+  },
+  {
+    "id": "56",
+    "title": "慶祝微小的勝利",
+    "keyword": "肯定",
+    "message": "只記得沒做到的，會越走越沉重。今天的份量，要用今天完成的事來秤。",
+    "reflectionQuestion": "今天你做到了哪三件小事？",
+    "suggestedAction": "睡前寫下今天完成的三件事，說一句「做得不錯」。"
+  },
+  {
+    "id": "57",
+    "title": "換一條路走",
+    "keyword": "新鮮",
+    "message": "同樣的路走久了，風景會消失。換一條路、換一家店、換一個順序，大腦就會重新開機。",
+    "reflectionQuestion": "你的生活裡哪個部分最近特別「自動導航」？",
+    "suggestedAction": "今天刻意改變一個例行路線或順序，留意有什麼不同。"
+  },
+  {
+    "id": "58",
+    "title": "把界線畫清楚",
+    "keyword": "界線",
+    "message": "說「好」之前先想一下自己的餘裕，答應得心甘情願，關係才走得長。",
+    "reflectionQuestion": "最近哪一次答應，其實你想說不？",
+    "suggestedAction": "練習一次溫和而清楚的拒絕：「謝謝你想到我，這次我沒辦法。」"
+  },
+  {
+    "id": "59",
+    "title": "讓睡眠排第一",
+    "keyword": "睡眠",
+    "message": "睡不夠的時候，意志力、耐心和判斷力都會打折。今晚把睡覺當成最重要的行程。",
+    "reflectionQuestion": "你昨晚睡得如何？今天的狀態和它有關嗎？",
+    "suggestedAction": "訂一個今晚的就寢鬧鐘，時間到就開始收尾。"
+  },
+  {
+    "id": "60",
+    "title": "先相信再驗證",
+    "keyword": "信任",
+    "message": "凡事先懷疑很安全，但也很孤獨。對人多給一分信任，多數時候會得到超出預期的回應。",
+    "reflectionQuestion": "你最近是不是把防備當成了預設值？",
+    "suggestedAction": "今天選一件小事，先相信對方一次，看看結果。"
+  },
+  {
+    "id": "61",
+    "title": "把夢想切一片",
+    "keyword": "起步",
+    "message": "夢想不需要一次實現，需要的是今天能吃下的那一片。切得夠小，就沒有藉口不開始。",
+    "reflectionQuestion": "你的那個「總有一天」，今天能做的最小一步是什麼？",
+    "suggestedAction": "為長期目標做一件十五分鐘內能完成的小事。"
+  },
+  {
+    "id": "62",
+    "title": "對自己說話溫柔一點",
+    "keyword": "自我對話",
+    "message": "你對自己說話的方式，決定你走路的姿態。犯錯時對自己說的話，換成你會對好朋友說的版本。",
+    "reflectionQuestion": "今天你在心裡怎麼稱呼自己？",
+    "suggestedAction": "把最近一句自我批評改寫成朋友式的鼓勵，唸出來。"
+  },
+  {
+    "id": "63",
+    "title": "收集今天的好",
+    "keyword": "覺察",
+    "message": "好事天天有，只是常被待辦清單擋住。刻意收集，就會發現今天比想像中豐富。",
+    "reflectionQuestion": "今天有哪個瞬間，其實還不錯？",
+    "suggestedAction": "現在寫下今天遇到的三個小確幸，不用偉大。"
+  },
+  {
+    "id": "64",
+    "title": "讓「夠了」出場",
+    "keyword": "知足",
+    "message": "「更多」是一條沒有終點的跑道。今天練習對某件事說「這樣就夠了」，把力氣還給自己。",
+    "reflectionQuestion": "哪件事你已經做得夠好，只是還不肯承認？",
+    "suggestedAction": "對一件已經達標的事正式收工，跟自己說「夠了，很好」。"
+  },
+  {
+    "id": "65",
+    "title": "預留犯錯的空間",
+    "keyword": "寬容",
+    "message": "計畫排到全滿，一個意外就全盤崩潰。留一點犯錯和延誤的餘裕，反而走得更穩。",
+    "reflectionQuestion": "你的計畫裡，有沒有為「不順利」預留位置？",
+    "suggestedAction": "把今天的待辦刪掉一項，當作給意外的保留席。"
+  },
+  {
+    "id": "66",
+    "title": "記得你走了多遠",
+    "keyword": "回顧",
+    "message": "往前看永遠有更遠的路，偶爾回頭看，才知道自己已經翻過幾座山。今天適合回顧，不適合趕路。",
+    "reflectionQuestion": "半年前的你，遇到現在的問題會怎麼想？",
+    "suggestedAction": "寫下三件半年前做不到、現在做得到的事。"
+  }
 ]
