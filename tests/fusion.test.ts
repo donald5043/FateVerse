@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { generateFusionReading, generateSystemConclusions, generateTimelineReading, numerologyElement, parseZiweiClassElement } from '../src/engines/fusion-engine';
+import { buildSystemMatrix, generateFusionReading, generateSystemConclusions, generateTimelineReading, numerologyElement, parseZiweiClassElement } from '../src/engines/fusion-engine';
 import { calculateAstrology, calculateSunSign } from '../src/engines/astrology-engine';
 import { calculateBazi } from '../src/engines/bazi-engine';
 import { calculateFiveElements } from '../src/engines/five-elements-engine';
@@ -57,6 +57,14 @@ describe('融合解讀', () => {
     const withPalm = generateFusionReading(input, { palmElement: 'metal' });
     expect(withPalm.systemsUsed).toContain('手相手型');
     expect(withPalm.systemsUsed.length).toBe(reading.systemsUsed.length + 1);
+  });
+
+  it('性格光譜納入生日塔羅，提供手相時也納入手相', () => {
+    const paceEvidence = reading.axes.find((axis) => axis.id === 'pace')?.evidence ?? [];
+    expect(paceEvidence.some((item) => item.system === '生日塔羅')).toBe(true);
+    const withPalm = generateFusionReading(input, { palmElement: 'metal' });
+    const paceWithPalm = withPalm.axes.find((axis) => axis.id === 'pace')?.evidence ?? [];
+    expect(paceWithPalm.some((item) => item.system === '手相')).toBe(true);
   });
 
   it('五行投票總數等於系統數且有領先元素', () => {
@@ -183,5 +191,32 @@ describe('融合解讀（含紫微與完整星盤）', () => {
     if (base.bazi.luckCycles?.some((cycle) => 2026 >= cycle.startYear && 2026 <= cycle.endYear)) {
       expect(reading.timing?.plainReading).toContain('大運');
     }
+  });
+});
+
+describe('系統 × 面向矩陣', () => {
+  const input = buildInput('1990-01-02');
+
+  it('四條面向各有一列，系統集合一致且值在範圍內', () => {
+    const matrix = buildSystemMatrix(input);
+    expect(matrix.rows.map((row) => row.axisId)).toEqual(['pace', 'express', 'decide', 'energy']);
+    expect(matrix.systems).toContain('八字');
+    expect(matrix.systems).toContain('生日塔羅');
+    matrix.rows.forEach((row) => {
+      expect(row.cells.map((cell) => cell.system)).toEqual(matrix.systems);
+      row.cells.forEach((cell) => {
+        expect(cell.value).toBeGreaterThanOrEqual(-100);
+        expect(cell.value).toBeLessThanOrEqual(100);
+      });
+    });
+  });
+
+  it('提供手相時手相加入系統集合', () => {
+    const matrix = buildSystemMatrix(input, { palmElement: 'fire' });
+    expect(matrix.systems).toContain('手相');
+  });
+
+  it('相同輸入產生相同矩陣', () => {
+    expect(buildSystemMatrix(input)).toEqual(buildSystemMatrix(input));
   });
 });

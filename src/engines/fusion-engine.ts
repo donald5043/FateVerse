@@ -7,6 +7,8 @@ import type {
   FusionElementVote,
   FusionEvidence,
   FusionHighlight,
+  FusionMatrix,
+  FusionMatrixRow,
   FusionReading,
   FusionTiming,
   SystemConclusion,
@@ -192,7 +194,16 @@ function buildAxis(
   return { id, label, leftLabel, rightLabel, score, verdict, evidence };
 }
 
-function buildAxes(input: FateReportInput): FusionAxis[] {
+interface AxisSpec {
+  id: string;
+  label: string;
+  leftLabel: string;
+  rightLabel: string;
+  contributions: AxisContribution[];
+  verdicts: Parameters<typeof buildAxis>[5];
+}
+
+function buildAxisSpecs(input: FateReportInput, options: FusionOptions = {}): AxisSpec[] {
   const dayElement = input.bazi.dayMasterElement;
   const dayLabel = `日主${input.bazi.dayMaster}（${ELEMENT_LABELS[dayElement]}）`;
   const animal = input.zodiac.animal;
@@ -203,60 +214,110 @@ function buildAxes(input: FateReportInput): FusionAxis[] {
   const modalityPace = modality === '開創' ? 1 : modality === '固定' ? -1 : 0;
   const westernSocial = westernElement === '火' || westernElement === '風' ? 1 : -1;
   const westernIntuition = westernElement === '水' || westernElement === '火' ? 1 : -1;
+  const tarotElement = birthCardElements(input.numerology.birthDateDigits)[0];
+  const palmElement = options.palmElement;
+  // 塔羅（永遠可得）與手相（有做時）依其五行，套用同一組元素→軸值映射併入每條光譜。
+  const elementExtras = (map: Record<ElementName, number>): AxisContribution[] => [
+    { system: '生日塔羅', point: `人格牌屬${ELEMENT_LABELS[tarotElement]}`, value: map[tarotElement] },
+    ...(palmElement ? [{ system: '手相', point: `手型屬${ELEMENT_LABELS[palmElement]}`, value: map[palmElement] }] : []),
+  ];
 
-  const pace = buildAxis('pace', '行動節奏', '先衝再說', '想好再動', [
-    { system: '八字', point: dayLabel, value: AXIS_ELEMENT_PACE[dayElement] },
-    { system: '西洋星座', point: `${sun}屬${modality}模式`, value: modalityPace },
-    { system: '生肖', point: `${animal}年出生`, value: AXIS_ZODIAC_PACE[animal] ?? 0 },
-    { system: '生命靈數', point: `生命靈數 ${life}`, value: AXIS_NUMBER_PACE[life] ?? 0 },
-  ], {
-    strongLeft: '幾套系統一起看，你多半是「先做了再修」的類型：起步快是優勢，記得留一點回頭檢查的餘裕就好。',
-    leanLeft: '整體偏向行動派：想到就想動，但還保有踩煞車的能力，算是不錯的平衡。',
-    balanced: '快慢兩邊的訊號差不多：你大概是「看場合切換」的人，熟悉的事衝很快，沒把握的事會先觀望。',
-    leanRight: '整體偏向謀定而後動：你習慣先把路想清楚，好處是穩，只要別把「再想一下」變成拖延就行。',
-    strongRight: '幾套系統都指向沉穩慢熬型：你適合把時間當隊友，用累積換成果；偶爾也給自己一個「限時決定」的練習。',
+  return [
+    {
+      id: 'pace', label: '行動節奏', leftLabel: '先衝再說', rightLabel: '想好再動',
+      contributions: [
+        { system: '八字', point: dayLabel, value: AXIS_ELEMENT_PACE[dayElement] },
+        { system: '西洋星座', point: `${sun}屬${modality}模式`, value: modalityPace },
+        { system: '生肖', point: `${animal}年出生`, value: AXIS_ZODIAC_PACE[animal] ?? 0 },
+        { system: '生命靈數', point: `生命靈數 ${life}`, value: AXIS_NUMBER_PACE[life] ?? 0 },
+        ...elementExtras(AXIS_ELEMENT_PACE),
+      ],
+      verdicts: {
+        strongLeft: '幾套系統一起看，你多半是「先做了再修」的類型：起步快是優勢，記得留一點回頭檢查的餘裕就好。',
+        leanLeft: '整體偏向行動派：想到就想動，但還保有踩煞車的能力，算是不錯的平衡。',
+        balanced: '快慢兩邊的訊號差不多：你大概是「看場合切換」的人，熟悉的事衝很快，沒把握的事會先觀望。',
+        leanRight: '整體偏向謀定而後動：你習慣先把路想清楚，好處是穩，只要別把「再想一下」變成拖延就行。',
+        strongRight: '幾套系統都指向沉穩慢熬型：你適合把時間當隊友，用累積換成果；偶爾也給自己一個「限時決定」的練習。',
+      },
+    },
+    {
+      id: 'express', label: '表達方式', leftLabel: '有話直說', rightLabel: '放在心裡',
+      contributions: [
+        { system: '八字', point: dayLabel, value: AXIS_ELEMENT_EXPRESS[dayElement] },
+        { system: '西洋星座', point: `${sun}屬${westernElement}元素`, value: westernSocial },
+        { system: '生肖', point: `${animal}年出生`, value: AXIS_ZODIAC_EXPRESS[animal] ?? 0 },
+        { system: '生命靈數', point: `生命靈數 ${life}`, value: AXIS_NUMBER_EXPRESS[life] ?? 0 },
+        ...elementExtras(AXIS_ELEMENT_EXPRESS),
+      ],
+      verdicts: {
+        strongLeft: '你八成是「想法藏不住」的人：直說是你的魅力，只要在重要場合先想三秒再開口，就幾乎沒有缺點。',
+        leanLeft: '整體偏外放：大部分時候願意把話說出來，但也懂得看場合，這是很好用的組合。',
+        balanced: '外放和內斂的訊號各半：你可能對熟人暢所欲言、對生人先觀察，這很正常，不用勉強自己統一。',
+        leanRight: '整體偏內斂：你習慣先在心裡整理好再說。記得，別人不會通靈——重要的需求還是要說出口。',
+        strongRight: '幾套系統都說你把話放心裡：深思是優點，但憋久了容易累積誤會，可以練習每天說出一件真實感受。',
+      },
+    },
+    {
+      id: 'decide', label: '決策風格', leftLabel: '跟著感覺走', rightLabel: '按部就班算',
+      contributions: [
+        { system: '八字', point: dayLabel, value: AXIS_ELEMENT_DECIDE[dayElement] },
+        { system: '西洋星座', point: `${sun}屬${westernElement}元素`, value: westernIntuition },
+        { system: '生肖', point: `${animal}年出生`, value: AXIS_ZODIAC_DECIDE[animal] ?? 0 },
+        { system: '生命靈數', point: `生命靈數 ${life}`, value: AXIS_NUMBER_DECIDE[life] ?? 0 },
+        ...elementExtras(AXIS_ELEMENT_DECIDE),
+      ],
+      verdicts: {
+        strongLeft: '你的直覺雷達相當強：第一感覺常常是對的，但金額大或影響久的決定，還是幫直覺配一張檢查清單。',
+        leanLeft: '整體偏直覺派：先有感覺、再找理由。可以善用這個天線，同時養成把理由補齊的小習慣。',
+        balanced: '感覺與分析勢均力敵：你大概是「先感覺、再驗算」的混合型，這其實是決策裡很健康的配置。',
+        leanRight: '整體偏分析派：你喜歡把選項攤開來比。效率提示：小事給自己五分鐘上限，把火力留給大事。',
+        strongRight: '幾套系統都說你是步驟派：規劃是你的強項，但世界不會永遠照計畫走，留一格「計畫外」的彈性會更輕鬆。',
+      },
+    },
+    {
+      id: 'energy', label: '能量來源', leftLabel: '人多熱鬧充電', rightLabel: '安靜獨處回血',
+      contributions: [
+        { system: '西洋星座', point: `${sun}屬${westernElement}元素`, value: westernSocial },
+        { system: '生肖', point: `${animal}年出生`, value: AXIS_ZODIAC_ENERGY[animal] ?? 0 },
+        { system: '生命靈數', point: `生命靈數 ${life}`, value: AXIS_NUMBER_ENERGY[life] ?? 0 },
+        { system: '八字', point: `五行以${ELEMENT_LABELS[input.fiveElements.strongest[0]]}相對突出`, value: AXIS_ELEMENT_EXPRESS[input.fiveElements.strongest[0]] },
+        ...elementExtras(AXIS_ELEMENT_EXPRESS),
+      ],
+      verdicts: {
+        strongLeft: '你多半是人群充電型：跟人互動會讓你更有勁，行程太空反而悶。安排社交沒問題，睡眠別跟著犧牲就好。',
+        leanLeft: '整體偏群體型：喜歡有人一起，但也撐得住獨處，恢復方式算有彈性。',
+        balanced: '兩種充電方式訊號各半：你可能是「熱鬧完需要靜一下」的節奏型，安排行程時記得留白。',
+        leanRight: '整體偏獨處型：安靜時刻是你的行動電源。社交不是不行，但結束後給自己緩衝時間，別連趕兩攤。',
+        strongRight: '幾套系統都指向獨處回血：留白對你不是奢侈是剛需，把獨處時間當正式行程排進去，狀態會穩很多。',
+      },
+    },
+  ];
+}
+
+function buildAxes(input: FateReportInput, options: FusionOptions = {}): FusionAxis[] {
+  return buildAxisSpecs(input, options).map((spec) => buildAxis(spec.id, spec.label, spec.leftLabel, spec.rightLabel, spec.contributions, spec.verdicts));
+}
+
+export function buildSystemMatrix(input: FateReportInput, options: FusionOptions = {}): FusionMatrix {
+  const specs = buildAxisSpecs(input, options);
+  const systems: string[] = [];
+  specs.forEach((spec) => spec.contributions.forEach((contribution) => {
+    if (contribution.value !== 0 && !systems.includes(contribution.system)) systems.push(contribution.system);
+  }));
+  const rows: FusionMatrixRow[] = specs.map((spec) => {
+    const bySystem = new Map<string, number>();
+    spec.contributions.forEach((contribution) => {
+      bySystem.set(contribution.system, (bySystem.get(contribution.system) ?? 0) + contribution.value);
+    });
+    return {
+      axisId: spec.id,
+      label: spec.label,
+      leftLabel: spec.leftLabel,
+      rightLabel: spec.rightLabel,
+      cells: systems.map((system) => ({ system, value: Math.max(-100, Math.min(100, Math.round((bySystem.get(system) ?? 0) * 100))) })),
+    };
   });
-
-  const express = buildAxis('express', '表達方式', '有話直說', '放在心裡', [
-    { system: '八字', point: dayLabel, value: AXIS_ELEMENT_EXPRESS[dayElement] },
-    { system: '西洋星座', point: `${sun}屬${westernElement}元素`, value: westernSocial },
-    { system: '生肖', point: `${animal}年出生`, value: AXIS_ZODIAC_EXPRESS[animal] ?? 0 },
-    { system: '生命靈數', point: `生命靈數 ${life}`, value: AXIS_NUMBER_EXPRESS[life] ?? 0 },
-  ], {
-    strongLeft: '你八成是「想法藏不住」的人：直說是你的魅力，只要在重要場合先想三秒再開口，就幾乎沒有缺點。',
-    leanLeft: '整體偏外放：大部分時候願意把話說出來，但也懂得看場合，這是很好用的組合。',
-    balanced: '外放和內斂的訊號各半：你可能對熟人暢所欲言、對生人先觀察，這很正常，不用勉強自己統一。',
-    leanRight: '整體偏內斂：你習慣先在心裡整理好再說。記得，別人不會通靈——重要的需求還是要說出口。',
-    strongRight: '幾套系統都說你把話放心裡：深思是優點，但憋久了容易累積誤會，可以練習每天說出一件真實感受。',
-  });
-
-  const decide = buildAxis('decide', '決策風格', '跟著感覺走', '按部就班算', [
-    { system: '八字', point: dayLabel, value: AXIS_ELEMENT_DECIDE[dayElement] },
-    { system: '西洋星座', point: `${sun}屬${westernElement}元素`, value: westernIntuition },
-    { system: '生肖', point: `${animal}年出生`, value: AXIS_ZODIAC_DECIDE[animal] ?? 0 },
-    { system: '生命靈數', point: `生命靈數 ${life}`, value: AXIS_NUMBER_DECIDE[life] ?? 0 },
-  ], {
-    strongLeft: '你的直覺雷達相當強：第一感覺常常是對的，但金額大或影響久的決定，還是幫直覺配一張檢查清單。',
-    leanLeft: '整體偏直覺派：先有感覺、再找理由。可以善用這個天線，同時養成把理由補齊的小習慣。',
-    balanced: '感覺與分析勢均力敵：你大概是「先感覺、再驗算」的混合型，這其實是決策裡很健康的配置。',
-    leanRight: '整體偏分析派：你喜歡把選項攤開來比。效率提示：小事給自己五分鐘上限，把火力留給大事。',
-    strongRight: '幾套系統都說你是步驟派：規劃是你的強項，但世界不會永遠照計畫走，留一格「計畫外」的彈性會更輕鬆。',
-  });
-
-  const energy = buildAxis('energy', '能量來源', '人多熱鬧充電', '安靜獨處回血', [
-    { system: '西洋星座', point: `${sun}屬${westernElement}元素`, value: westernSocial },
-    { system: '生肖', point: `${animal}年出生`, value: AXIS_ZODIAC_ENERGY[animal] ?? 0 },
-    { system: '生命靈數', point: `生命靈數 ${life}`, value: AXIS_NUMBER_ENERGY[life] ?? 0 },
-    { system: '八字', point: `五行以${ELEMENT_LABELS[input.fiveElements.strongest[0]]}相對突出`, value: AXIS_ELEMENT_EXPRESS[input.fiveElements.strongest[0]] },
-  ], {
-    strongLeft: '你多半是人群充電型：跟人互動會讓你更有勁，行程太空反而悶。安排社交沒問題，睡眠別跟著犧牲就好。',
-    leanLeft: '整體偏群體型：喜歡有人一起，但也撐得住獨處，恢復方式算有彈性。',
-    balanced: '兩種充電方式訊號各半：你可能是「熱鬧完需要靜一下」的節奏型，安排行程時記得留白。',
-    leanRight: '整體偏獨處型：安靜時刻是你的行動電源。社交不是不行，但結束後給自己緩衝時間，別連趕兩攤。',
-    strongRight: '幾套系統都指向獨處回血：留白對你不是奢侈是剛需，把獨處時間當正式行程排進去，狀態會穩很多。',
-  });
-
-  return [pace, express, decide, energy];
+  return { systems, rows };
 }
 
 function buildDomains(input: FateReportInput, leading: ElementName): FusionDomain[] {
@@ -584,7 +645,7 @@ export function generateFusionReading(input: FateReportInput, options: FusionOpt
   const systemsUsed = voteEntries.map((entry) => entry.system);
   const leading = consensus.leading[0];
   const leadingLabels = consensus.leading.map((element) => ELEMENT_LABELS[element]).join('、');
-  const axes = buildAxes(input);
+  const axes = buildAxes(input, options);
   const domains = buildDomains(input, leading);
   const highlights = buildHighlights(input, consensus.votes);
   const timing = buildTiming(input);

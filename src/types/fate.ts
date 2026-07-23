@@ -391,6 +391,24 @@ export interface FusionDomain {
   reminder: string;
 }
 
+export interface FusionMatrixCell {
+  system: string;
+  value: number;
+}
+
+export interface FusionMatrixRow {
+  axisId: string;
+  label: string;
+  leftLabel: string;
+  rightLabel: string;
+  cells: FusionMatrixCell[];
+}
+
+export interface FusionMatrix {
+  systems: string[];
+  rows: FusionMatrixRow[];
+}
+
 export interface FusionHighlight {
   kind: 'agreement' | 'tension';
   title: string;
