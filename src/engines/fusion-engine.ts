@@ -12,6 +12,7 @@ import type {
   SystemConclusion,
   TimelinePhase,
 } from '../types/fate';
+import { analyzeDayMaster } from './bazi-analysis-engine';
 import { branchToElement, stemToElement } from './five-elements-engine';
 import { getBirthCards } from './tarot-engine';
 import { ELEMENT_LABELS } from '../utils/constants';
@@ -399,12 +400,18 @@ export function generateSystemConclusions(input: FateReportInput): SystemConclus
   const soulPalace = input.ziwei?.palaces.find((palace) => palace.name === '命宮');
   const soulStars = soulPalace?.majorStars.map((star) => star.name).join('、');
   const conclusions: SystemConclusion[] = [
-    {
-      id: 'bazi',
-      system: '八字',
-      headline: `日主 ${input.bazi.dayMaster} · ${dayLabel}`,
-      conclusion: `你的核心是${dayLabel}——${ELEMENT_PLAIN[input.bazi.dayMasterElement].vibe}。四柱裡${strongestLabel}最多、${weakestLabel}最少，用${strongestLabel}的方式做事對你來說最順手。`,
-    },
+    (() => {
+      const strength = analyzeDayMaster(input.bazi);
+      const favorableText = strength.favorable.length
+        ? `喜用五行偏向${strength.favorable.slice(0, 2).map((item) => ELEMENT_LABELS[item.element]).join('、')}`
+        : '以維持流通平衡為主';
+      return {
+        id: 'bazi',
+        system: '八字',
+        headline: `日主 ${input.bazi.dayMaster} · ${dayLabel} · ${strength.level}`,
+        conclusion: `你的核心是${dayLabel}——${ELEMENT_PLAIN[input.bazi.dayMasterElement].vibe}。四柱裡${strongestLabel}最多、${weakestLabel}最少；綜合全盤來看日主屬「${strength.level}」，${favorableText}。`,
+      };
+    })(),
     {
       id: 'zodiac',
       system: '生肖',
