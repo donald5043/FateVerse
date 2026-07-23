@@ -81,6 +81,10 @@ function reduceMasterNumber(value: number): number {
   return value;
 }
 
+export function elementVibe(element: ElementName): string {
+  return ELEMENT_PLAIN[element].vibe;
+}
+
 export function numerologyElement(lifePathNumber: number): ElementName {
   const reduced = reduceMasterNumber(lifePathNumber);
   return NUMEROLOGY_TO_FIVE[reduced] ?? 'earth';

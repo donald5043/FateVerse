@@ -12,6 +12,7 @@ const links = [
   ['/tarot', '塔羅牌'],
   ['/palm', '拍手相'],
   ['/fortune', '拍籤解籤'],
+  ['/mirror', '巴納姆鏡'],
   ['/about', '關於'],
 ] as const;
 

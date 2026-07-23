@@ -1,4 +1,4 @@
-import { ArrowRight, Compass, Grid2x2, Hand, Layers, Orbit, ScanLine, Sparkles } from 'lucide-react';
+import { ArrowRight, Compass, Eye, Grid2x2, Hand, Layers, Orbit, ScanLine, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Disclaimer from '../components/common/Disclaimer';
 
@@ -10,6 +10,7 @@ const features = [
   { to: '/palm', icon: Hand, accent: '手型 · 掌紋', title: '拍手相', text: '拍下手掌，逐項指認掌紋看解讀。', tone: 'text-teal-300', bg: 'bg-teal-300/[0.12]', hover: 'hover:border-teal-300/40' },
   { to: '/tarot', icon: Layers, accent: '三牌陣 · 生日塔羅', title: '塔羅牌', text: '抽三張牌，看看過去、現在與未來。', tone: 'text-fuchsia-300', bg: 'bg-fuchsia-300/[0.12]', hover: 'hover:border-fuchsia-300/40' },
   { to: '/daily', icon: Sparkles, accent: '每日一問', title: '今日指引', text: '給今天一個小小的反思與行動。', tone: 'text-violet-400', bg: 'bg-violet-400/[0.14]', hover: 'hover:border-violet-400/40' },
+  { to: '/mirror', icon: Eye, accent: '拆解算命話術', title: '巴納姆鏡', text: '猜猜哪句是真命盤、哪句是通用話術。', tone: 'text-amber-200', bg: 'bg-amber-200/[0.12]', hover: 'hover:border-amber-200/40' },
 ] as const;
 
 const orbitChips = [
