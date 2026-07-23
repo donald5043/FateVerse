@@ -24,6 +24,31 @@ describe('靜態資料契約', () => {
     });
   });
 
+  it('籤詩擴充後兩集各至少 10 首且籤號、id 唯一', () => {
+    expect(jiaziSticks.length).toBeGreaterThanOrEqual(10);
+    expect(guanyinSticks.length).toBeGreaterThanOrEqual(10);
+    [jiaziSticks, guanyinSticks].forEach((set) => {
+      expect(new Set(set.map((stick) => stick.id)).size).toBe(set.length);
+      expect(new Set(set.map((stick) => stick.number)).size).toBe(set.length);
+      set.forEach((stick) => {
+        expect(stick.poem).toHaveLength(4);
+        expect(stick.summary.length).toBeGreaterThan(8);
+        expect(Object.keys(stick.interpretations).length).toBeGreaterThanOrEqual(9);
+        expect(stick.keywords.length).toBeGreaterThan(0);
+      });
+    });
+  });
+
+  it('新增籤詩可被模糊比對（完整句、錯字與籤號）', async () => {
+    const { matchFortuneSticks } = await import('../src/engines/fortune-stick-matcher');
+    const springPlow = matchFortuneSticks('東風解凍雨初勻 隴上春泥待墾人', jiaziSticks as never);
+    expect(springPlow[0].item.id).toBe('fj-demo-05');
+    const withTypos = matchFortuneSticks('平地何曾有雲梯 一皆一願上天西', guanyinSticks as never);
+    expect(withTypos[0].item.id).toBe('gy-demo-94');
+    const byNumber = matchFortuneSticks('第五十八籤', jiaziSticks as never);
+    expect(byNumber[0].item.id).toBe('fj-demo-58');
+  });
+
   it('照片收錄樣本保留逐字籤文與來源說明', () => {
     expect(userSamples).toHaveLength(1);
     expect(userSamples[0].poem).toContain('舉頭三尺有神明');
