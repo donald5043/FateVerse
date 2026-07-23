@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { NAME_DICTIONARY, NAME_DICTIONARY_SIZE } from '../src/data/name-dictionary';
+import { unihanElement, unihanRadical, unihanStrokes } from '../src/engines/char-data';
 import { analyzeName } from '../src/engines/name-engine';
 import { CITY_SUGGESTIONS, lookupCityCoordinates } from '../src/utils/city-coordinates';
 
@@ -29,6 +30,29 @@ describe('城市經緯度自動帶入', () => {
   });
 });
 
+describe('Unihan 字元資料', () => {
+  it('常用字的總筆畫與 Unihan 一致', () => {
+    expect(unihanStrokes('一')).toBe(1);
+    expect(unihanStrokes('永')).toBe(5);
+    expect(unihanStrokes('陳')).toBe(10);
+    expect(unihanStrokes('龍')).toBe(16);
+    expect(unihanStrokes('曦')).toBe(20);
+  });
+  it('部首可對照到保守的五行分類', () => {
+    expect(unihanElement('江')).toBe('water');
+    expect(unihanElement('楓')).toBe('wood');
+    expect(unihanElement('曦')).toBe('fire');
+    expect(unihanElement('峰')).toBe('earth');
+    expect(unihanElement('鎧')).toBe('metal');
+    expect(unihanElement('人')).toBeUndefined();
+  });
+  it('部首編號正確且非漢字回傳 undefined', () => {
+    expect(unihanRadical('木')).toBe(75);
+    expect(unihanStrokes('A')).toBeUndefined();
+    expect(unihanElement('！')).toBeUndefined();
+  });
+});
+
 describe('姓名字庫擴充', () => {
   it('字庫至少收錄 700 個常用字', () => {
     expect(NAME_DICTIONARY_SIZE).toBeGreaterThanOrEqual(700);
@@ -43,12 +67,13 @@ describe('姓名字庫擴充', () => {
     expect(ya.meaning).toContain('高雅');
     expect(result.overallImpression).toContain('語意組合');
   });
-  it('筆畫計法有歧義的字保留字義但不顯示筆畫', () => {
+  it('精選字庫未給筆畫的字改由 Unihan 補齊', () => {
     const result = analyzeName('王英', ['fire']);
     const ying = result.characters[1];
     expect(ying.meaning).toContain('才華');
     expect(ying.element).toBe('wood');
-    expect(ying.strokes).toBeUndefined();
+    expect(ying.strokes).toBe(8);
+    expect(ying.strokeSource).toBe('modern');
   });
   it('全部字都有筆畫時計算五格與三才', () => {
     const result = analyzeName('林安晨', ['metal']);
@@ -59,17 +84,23 @@ describe('姓名字庫擴充', () => {
     expect(result.fiveGrid!.sanCai.relation).toContain('三才');
     expect(result.fiveGrid!.basis).toContain('現代標準筆畫');
   });
-  it('缺筆畫的字使五格不計算，補手動筆畫後恢復', () => {
-    expect(analyzeName('王英', ['fire']).fiveGrid).toBeUndefined();
+  it('Unihan 補齊後五格可直接計算，手動筆畫仍可覆蓋', () => {
+    const auto = analyzeName('王英', ['fire']);
+    expect(auto.fiveGrid).toBeDefined();
+    expect(auto.fiveGrid!.grids.find((grid) => grid.name === '總格')?.value).toBe(12);
     const withManual = analyzeName('王英', ['fire'], { 英: 9 });
-    expect(withManual.fiveGrid).toBeDefined();
     expect(withManual.fiveGrid!.grids.find((grid) => grid.name === '總格')?.value).toBe(13);
   });
-  it('未收錄字仍標示資料不足，可用手動筆畫補充', () => {
-    const result = analyzeName('王曦', ['fire'], { 曦: 20 });
+  it('字義未收錄的罕見字仍有 Unihan 筆畫與部首五行', () => {
+    const result = analyzeName('王曦', ['fire']);
     const xi = result.characters[1];
     expect(xi.meaning).toBeUndefined();
     expect(xi.strokes).toBe(20);
-    expect(xi.strokeSource).toBe('manual');
+    expect(xi.strokeSource).toBe('modern');
+    expect(xi.element).toBe('fire');
+    expect(result.fiveGrid).toBeDefined();
+    const manual = analyzeName('王曦', ['fire'], { 曦: 21 });
+    expect(manual.characters[1].strokes).toBe(21);
+    expect(manual.characters[1].strokeSource).toBe('manual');
   });
 });

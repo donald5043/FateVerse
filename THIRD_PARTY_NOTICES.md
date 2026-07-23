@@ -34,6 +34,13 @@ TypeScript、ESLint、Prettier、Vitest、Testing Library、PostCSS、Autoprefix
 
 啟用或重新分發外部模型與語言資料前，部署者應在上游來源再次確認當時版本、授權與使用條款。
 
+## Unicode Unihan Database
+
+- `src/data/unihan-char-data.ts`：由 Unicode® Unihan 資料庫（`Unihan_IRGSources.txt` 的 `kTotalStrokes` 與 `kRSUnicode` 欄位）自動產生的緊湊表，涵蓋 U+4E00–U+9FFF。
+- 來源：<https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip>
+- 授權：Unicode License v3（<https://www.unicode.org/license.txt>）。Copyright © Unicode, Inc.
+- 產生方式：`scripts/generate-unihan-data.py`。
+
 ## FateVerse 示範資料
 
 - `public/data/fortune-sticks/*.json`：FateVerse 自編格式示範，不是特定廟宇正式籤文，CC BY 4.0。

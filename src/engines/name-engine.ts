@@ -1,4 +1,5 @@
 import { NAME_DICTIONARY } from '../data/name-dictionary';
+import { unihanElement, unihanStrokes } from './char-data';
 import type { ElementName, NameAnalysisResult, NameCharacterResult, NameFiveGrid, NameGrid, NameGridCategory } from '../types/fate';
 
 const DICTIONARY = NAME_DICTIONARY;
@@ -78,8 +79,19 @@ export function analyzeName(fullName: string, weakest: ElementName[], manualStro
   const characters: NameCharacterResult[] = [...cleaned].map((character) => {
     const entry = DICTIONARY[character];
     const manual = manualStrokes[character];
-    if (!entry) return { character, ...(manual ? { strokes: manual, strokeSource: 'manual' as const } : { strokeSource: 'insufficient' as const }) };
-    return { character, meaning: entry.meaning, sound: entry.sound, element: entry.element, strokes: manual || entry.modernStrokes, strokeSource: manual ? 'manual' : 'modern' };
+    // 筆畫優先序：手動 > 精選字庫 > Unihan 總筆畫；五行優先序：精選字庫 > Unihan 部首對照。
+    const fallbackStrokes = unihanStrokes(character);
+    const fallbackElement = unihanElement(character);
+    const strokes = manual || entry?.modernStrokes || fallbackStrokes;
+    const element = entry?.element ?? fallbackElement;
+    return {
+      character,
+      ...(entry ? { meaning: entry.meaning, sound: entry.sound } : {}),
+      ...(element ? { element } : {}),
+      ...(strokes
+        ? { strokes, strokeSource: manual ? ('manual' as const) : ('modern' as const) }
+        : { strokeSource: 'insufficient' as const }),
+    };
   });
   const known = characters.filter((item) => item.meaning);
   const nameElements = characters.flatMap((item) => item.element ? [item.element] : []);
@@ -90,11 +102,11 @@ export function analyzeName(fullName: string, weakest: ElementName[], manualStro
     fullName: cleaned,
     characterCount: characters.length,
     characters,
-    overallImpression: known.length ? `你的名字帶有「${known.map((item) => item.meaning?.split('、')[0]).join('、')}」的語意組合；尚未收錄的字不作推測。` : '字庫尚未收錄這個姓名的字，因此不作推測；可以手動填入筆畫輔助。',
+    overallImpression: known.length ? `你的名字帶有「${known.map((item) => item.meaning?.split('、')[0]).join('、')}」的語意組合；尚未收錄字義的字不作語意推測。` : '字庫尚未收錄這些字的字義，因此不作語意推測；筆畫與五格仍以字元資料計算。',
     elementComparison: overlap.length ? '名字中部分字的五行，剛好對到你命盤相對較弱的元素——可以當成有趣的呼應，但不是「缺什麼就補什麼」的判定。' : '名字用字的五行與命盤沒有形成明確對照，這很常見，不作強行推論。',
     strokeNotice: fiveGrid
-      ? '筆畫採現代標準寫法計算（如「阝」算 3 畫），與康熙字典筆畫不同；缺筆畫的字可手動填入後重新計算。'
-      : '筆畫採現代標準寫法計算，與康熙字典筆畫不同；部分字尚無筆畫資料，補上手動筆畫後即可計算五格。',
+      ? '筆畫優先採精選字庫的現代標準計法，其餘字以 Unicode Unihan 總筆畫補齊；均與康熙字典筆畫不同，個別字與臺灣慣用計法可能差一畫，可手動修正後重算。'
+      : '筆畫採現代標準計法（精選字庫優先、Unihan 補齊），與康熙字典筆畫不同；仍缺筆畫的罕見字補上手動筆畫後即可計算五格。',
     ...(fiveGrid ? { fiveGrid } : {}),
     fiveGridBeta: true,
   };
