@@ -2,6 +2,7 @@ import { AlertCircle, ArrowRight, LockKeyhole, Sparkles } from 'lucide-react';
 import { FormEvent, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generateFallbackReport } from '../ai/fallback-report';
+import BackToReportLink from '../components/common/BackToReportLink';
 import BirthChartPreview from '../components/profile/BirthChartPreview';
 import { calculateAstrology } from '../engines/astrology-engine';
 import { calculateBazi } from '../engines/bazi-engine';
@@ -102,6 +103,7 @@ export default function ProfilePage() {
 
   return (
     <section className="page-container page-section pb-28 lg:pb-14">
+      <BackToReportLink note="你已經有一份報告。可以直接回去看，或修改下方資料重新計算。" />
       <div className="max-w-3xl"><p className="eyebrow">Cross-cultural profile</p><h1 className="display-title mt-3">探索命盤</h1><p className="mt-5 muted">填一下出生資料，我們就能整理出四柱、十神、大運、紫微十二宮、行星黃道位置、生肖與生命靈數，再用輕鬆的方式講給你聽。</p></div>
       <div className="mt-9 notice flex items-start gap-3"><LockKeyhole className="mt-0.5 shrink-0 text-gold" size={19} /><p>所有資料只在目前瀏覽器中運算，不會上傳至伺服器。出生資料預設不會永久保存。</p></div>
       <ol className="mt-6 grid grid-cols-3 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035]" aria-label="建立報告流程">

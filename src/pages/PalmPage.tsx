@@ -2,6 +2,7 @@ import { Camera, Hand, ScanSearch, ShieldCheck, Sparkles, X } from 'lucide-react
 import { useEffect, useState } from 'react';
 import Disclaimer from '../components/common/Disclaimer';
 import { analyzePalmImageFile, type PalmConfidence } from '../engines/palm-analyzer';
+import BackToReportLink from '../components/common/BackToReportLink';
 import { PALM_FEATURES, buildPalmReading, palmShapeElement, type PalmSelections } from '../engines/palm-engine';
 import { useFateStore } from '../store/useFateStore';
 
@@ -58,6 +59,7 @@ export default function PalmPage() {
 
   return (
     <section className="page-container page-section">
+      <BackToReportLink note="拍完手相後回到報告，手型會加入你的「全面整合」剖面與性格光譜；報告已建立，不用重算。" />
       <div className="max-w-3xl">
         <p className="eyebrow text-teal-300">Palmistry</p>
         <h1 className="display-title mt-3">拍手相</h1>

@@ -1,9 +1,10 @@
-import { Menu, Settings, X } from 'lucide-react';
+import { Menu, ScrollText, Settings, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import BrandMark from '../components/common/BrandMark';
 import Starfield from '../components/common/Starfield';
 import { useRouteScrollReset } from '../hooks/useRouteScrollReset';
+import { useFateStore } from '../store/useFateStore';
 
 const links = [
   ['/', '首頁'],
@@ -19,6 +20,7 @@ const links = [
 export default function AppLayout() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const hasReport = useFateStore((state) => Boolean(state.reportInput));
   useRouteScrollReset(location.pathname);
   const focusMainContent = () => document.getElementById('main-content')?.focus();
   return (
@@ -32,6 +34,9 @@ export default function AppLayout() {
             {links.map(([to, label]) => (
               <NavLink key={to} to={to} className={({ isActive }) => `rounded-lg px-4 py-2 text-sm transition ${isActive ? 'bg-white/10 text-cream' : 'text-mist hover:text-cream'}`}>{label}</NavLink>
             ))}
+            {hasReport && (
+              <NavLink to="/report" className={({ isActive }) => `ml-1 inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition ${isActive ? 'border-gold/60 bg-gold/[0.16] text-cream' : 'border-gold/35 bg-gold/[0.08] text-gold hover:bg-gold/[0.14]'}`}><ScrollText size={16} />我的報告</NavLink>
+            )}
             <NavLink to="/settings" aria-label="設定" className="ml-2 rounded-lg p-2 text-mist hover:bg-white/10 hover:text-cream"><Settings size={20} /></NavLink>
           </nav>
           <button className="rounded-lg p-2 text-cream md:hidden" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label="切換導覽選單">
@@ -40,6 +45,9 @@ export default function AppLayout() {
         </div>
         {open && (
           <nav className="mobile-menu-enter page-container grid gap-1 border-t border-white/10 py-3 md:hidden" aria-label="手機導覽">
+            {hasReport && (
+              <NavLink to="/report" onClick={() => setOpen(false)} className={({ isActive }) => `inline-flex items-center gap-2 rounded-lg border px-4 py-3 font-semibold ${isActive ? 'border-gold/60 bg-gold/[0.16] text-cream' : 'border-gold/35 bg-gold/[0.08] text-gold'}`}><ScrollText size={17} />我的報告</NavLink>
+            )}
             {[...links, ['/settings', '設定'] as const].map(([to, label]) => (
               <NavLink key={to} to={to} onClick={() => setOpen(false)} className={({ isActive }) => `rounded-lg px-4 py-3 ${isActive ? 'bg-white/10 text-cream' : 'text-mist'}`}>{label}</NavLink>
             ))}

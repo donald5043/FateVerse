@@ -1,5 +1,6 @@
 import { CalendarDays, Check, Copy, RefreshCw, RotateCcw, Sparkles } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import BackToReportLink from '../components/common/BackToReportLink';
 import Disclaimer from '../components/common/Disclaimer';
 import type { DailyGuidanceCard } from '../types/fate';
 import { dailyIndex } from '../utils/daily-guidance';
@@ -68,6 +69,7 @@ export default function DailyPage() {
 
   return (
     <section className="page-container page-section">
+      <BackToReportLink />
       <div className="mx-auto max-w-3xl text-center">
         <p className="eyebrow text-violet-400">Daily Reflection</p>
         <h1 className="display-title mt-3">今日指引</h1>

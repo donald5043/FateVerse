@@ -1,6 +1,7 @@
 import { Moon, RefreshCw, Sparkles, Star, Sun } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import BackToReportLink from '../components/common/BackToReportLink';
 import Disclaimer from '../components/common/Disclaimer';
 import { getBirthCards, drawSpread, type TarotSpreadCard } from '../engines/tarot-engine';
 import { useFateStore } from '../store/useFateStore';
@@ -22,6 +23,7 @@ export default function TarotPage() {
 
   return (
     <section className="page-container page-section">
+      <BackToReportLink note="你的生日塔羅已計入報告的整合剖面；報告已建立，隨時可回去看，不用重算。" />
       <div className="mx-auto max-w-3xl text-center">
         <p className="eyebrow text-fuchsia-300">Tarot</p>
         <h1 className="display-title mt-3">塔羅牌</h1>

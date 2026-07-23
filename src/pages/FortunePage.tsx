@@ -1,6 +1,7 @@
 import { AlertCircle, Check, Crop, FileImage, RefreshCw, RotateCw, ScanLine, Sparkles, Trash2, X } from 'lucide-react';
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import type { LoggerMessage, Worker } from 'tesseract.js';
+import BackToReportLink from '../components/common/BackToReportLink';
 import Disclaimer from '../components/common/Disclaimer';
 import { loadFortuneSticks, matchFortuneSticks, type FortuneMatch } from '../engines/fortune-stick-matcher';
 import { applyImageMode, centerCropCanvas, prepareImage, rotateCanvas, type ImageMode, type PreparedImage } from '../engines/image-preprocessor';
@@ -176,6 +177,7 @@ export default function FortunePage() {
 
   return (
     <section className="page-container page-section">
+      <BackToReportLink />
       <div className="max-w-3xl"><p className="eyebrow text-rose-400">Fortune Sticks</p><h1 className="display-title mt-3">拍籤解籤</h1><p className="mt-5 muted">拍下或上傳籤詩照片，我們會辨識上面的文字，幫你比對出最接近的籤與解讀；辨識結果都可以自己修改，最後也請再核對一次。</p></div>
       <ol className="mt-7 grid grid-cols-4 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035]" aria-label="籤詩辨識流程">
         {['來源與照片', 'OCR 校對', '候選確認', '主題解籤'].map((step, index) => {

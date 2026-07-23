@@ -1,6 +1,7 @@
 import { BrainCircuit, CheckCircle2, Eye, RefreshCw, Sparkles, XCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import BackToReportLink from '../components/common/BackToReportLink';
 import Disclaimer from '../components/common/Disclaimer';
 import {
   buildDemoReportInput, drawComparison, extractRealInsights, techniqueInfo,
@@ -38,6 +39,7 @@ export default function BarnumMirrorPage() {
 
   return (
     <section className="page-container page-section">
+      <BackToReportLink />
       <div className="mx-auto max-w-3xl text-center">
         <p className="eyebrow text-amber-200">Cold reading, exposed</p>
         <h1 className="display-title mt-3">巴納姆效應鏡子</h1>
