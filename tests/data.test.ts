@@ -15,10 +15,11 @@ describe('靜態資料契約', () => {
     });
   });
 
-  it('示範籤詩具有來源、行動與風險', () => {
+  it('籤詩具有來源標註、行動與風險', () => {
     [...guanyinSticks, ...jiaziSticks].forEach((stick) => {
       expect(stick.poem.length).toBeGreaterThanOrEqual(2);
-      expect(stick.dataSource.sourceName).toContain('FateVerse');
+      expect(stick.dataSource.sourceName.length).toBeGreaterThan(0);
+      expect(stick.dataSource.license).toBeTruthy();
       expect(stick.actions.length).toBeGreaterThan(0);
       expect(stick.risks.length).toBeGreaterThan(0);
     });
@@ -41,12 +42,14 @@ describe('靜態資料契約', () => {
 
   it('新增籤詩可被模糊比對（完整句、錯字與籤號）', async () => {
     const { matchFortuneSticks } = await import('../src/engines/fortune-stick-matcher');
-    const springPlow = matchFortuneSticks('東風解凍雨初勻 隴上春泥待墾人', jiaziSticks as never);
-    expect(springPlow[0].item.id).toBe('fj-demo-05');
+    const fullLine = matchFortuneSticks('日出便見風雲散 光明清淨照世間', jiaziSticks as never);
+    expect(fullLine[0].item.id).toBe('fj-001');
     const withTypos = matchFortuneSticks('平地何曾有雲梯 一皆一願上天西', guanyinSticks as never);
     expect(withTypos[0].item.id).toBe('gy-demo-94');
+    const jiaziTypos = matchFortuneSticks('蛇身意欲變成竜 只恐命內運未通', jiaziSticks as never);
+    expect(jiaziTypos[0].item.id).toBe('fj-058');
     const byNumber = matchFortuneSticks('第五十八籤', jiaziSticks as never);
-    expect(byNumber[0].item.id).toBe('fj-demo-58');
+    expect(byNumber[0].item.id).toBe('fj-058');
   });
 
   it('照片收錄樣本保留逐字籤文與來源說明', () => {
