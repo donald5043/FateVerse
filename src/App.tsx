@@ -15,6 +15,7 @@ const DailyPage = lazy(() => import('./pages/DailyPage'));
 const TarotPage = lazy(() => import('./pages/TarotPage'));
 const PalmPage = lazy(() => import('./pages/PalmPage'));
 const BarnumMirrorPage = lazy(() => import('./pages/BarnumMirrorPage'));
+const RitualPage = lazy(() => import('./pages/RitualPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="tarot" element={<TarotPage />} />
           <Route path="palm" element={<PalmPage />} />
           <Route path="mirror" element={<BarnumMirrorPage />} />
+          <Route path="ritual" element={<RitualPage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="privacy" element={<PrivacyPage />} />
           <Route path="settings" element={<SettingsPage />} />

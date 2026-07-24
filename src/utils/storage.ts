@@ -12,6 +12,35 @@ export interface LocalPreferences {
 
 const PREFERENCES_KEY = 'fateverse:preferences';
 const ANALYSIS_KEY = 'fateverse:last-analysis';
+const RITUALS_KEY = 'fateverse:decision-rituals';
+const RITUALS_LIMIT = 30;
+
+export interface RitualRecord {
+  id: string;
+  question: string;
+  diceSide: 'act' | 'wait';
+  hoped: 'act' | 'wait' | 'unknown';
+  reaction: 'relief' | 'disappoint' | 'neutral';
+  favored: 'act' | 'wait' | null;
+  cardText: string;
+  createdAt: string;
+}
+
+export async function loadRituals(): Promise<RitualRecord[]> {
+  return (await get<RitualRecord[]>(RITUALS_KEY)) ?? [];
+}
+
+/** 儲存一筆決策儀式紀錄（僅存本機，最多保留最近 30 筆），回傳更新後的清單。 */
+export async function saveRitual(record: RitualRecord): Promise<RitualRecord[]> {
+  const existing = await loadRituals();
+  const next = [record, ...existing].slice(0, RITUALS_LIMIT);
+  await set(RITUALS_KEY, next);
+  return next;
+}
+
+export async function clearRituals(): Promise<void> {
+  await del(RITUALS_KEY);
+}
 
 export const defaultPreferences: LocalPreferences = {
   retainAnalysis: false,
