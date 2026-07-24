@@ -83,6 +83,5 @@ export function generateFallbackReport(input: FateReportInput): AiFateReport {
       suggestions: focusSuggestions[topic] ?? focusSuggestions.all,
     })),
     cautions: ['本報告僅供文化探索、娛樂與自我反思。', '重大醫療、法律、投資或人生決策，請依實際證據並諮詢合格專業人士。'],
-    mode: 'template',
   };
 }

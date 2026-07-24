@@ -1,10 +1,10 @@
 import {
-  BrainCircuit, ChevronRight, CircleUserRound, Compass, Hash, ListTree,
-  Orbit, RefreshCw, ShieldCheck, Sparkles, Square, Waypoints,
+  ChevronRight, CircleUserRound, Compass, Hash, ListTree,
+  Orbit, RefreshCw, ShieldCheck, Sparkles, Waypoints,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { generateFallbackReport } from '../ai/fallback-report';
+import { generateFallbackReport } from '../engines/fallback-report';
 import FiveElementChart from '../components/charts/FiveElementChart';
 import Disclaimer from '../components/common/Disclaimer';
 import BaziPillars from '../components/report/BaziPillars';
@@ -46,21 +46,14 @@ export default function ReportPage() {
   const report = useFateStore((state) => state.report);
   const input = useFateStore((state) => state.reportInput);
   const profile = useFateStore((state) => state.profileInput);
-  const model = useFateStore((state) => state.model);
-  const setReport = useFateStore((state) => state.setReport);
   const setReportData = useFateStore((state) => state.setReportData);
-  const setModel = useFateStore((state) => state.setModel);
   const palmElement = useFateStore((state) => state.palmElement);
   const [searchParams] = useSearchParams();
   const [tab, setTab] = useState<ReportTab>(() => {
     const requested = searchParams.get('tab');
     return REPORT_TABS.some(([id]) => id === requested) ? (requested as ReportTab) : 'overview';
   });
-  const [aiBusy, setAiBusy] = useState(false);
-  const [aiError, setAiError] = useState('');
-  const [aiNotice, setAiNotice] = useState('');
-  const [aiStatus, setAiStatus] = useState('');
-  const [aiElapsed, setAiElapsed] = useState(0);
+  const [ziweiNotice, setZiweiNotice] = useState('');
   const [ziweiTargetDate, setZiweiTargetDate] = useState(() => toDateInputValue(input?.ziwei?.currentHoroscope?.targetDate));
   const [ziweiSettings, setZiweiSettings] = useState<ZiweiCalculationSettings>(() => input?.ziwei?.settings ?? {
     algorithm: 'default', yearDivide: 'normal', horoscopeDivide: 'normal', ageDivide: 'normal', dayDivide: 'current',
@@ -77,42 +70,6 @@ export default function ReportPage() {
     </section>
   );
 
-  const generateWithAi = async () => {
-    if (aiBusy || model.status !== 'ready') return;
-    setAiBusy(true); setAiError(''); setAiNotice(''); setAiStatus('正在準備本地 AI…'); setAiElapsed(0);
-    const startedAt = Date.now();
-    const elapsedTimer = window.setInterval(() => setAiElapsed(Math.floor((Date.now() - startedAt) / 1000)), 1000);
-    try {
-      const { generateAiReport, isModelReady } = await import('../ai/webllm');
-      const nextReport = await generateAiReport(input, (progress) => setAiStatus(progress.message));
-      setReport(nextReport);
-      setTab('overview');
-      // 記憶體吃緊的手機在生成後會主動釋放模型以免分頁崩潰；此時提醒使用者權重仍在
-      // 快取中，再次啟用很快、不需重新下載，並把模型狀態同步回設定頁。
-      if (!isModelReady()) {
-        setModel({ status: 'idle', progress: 0, message: '已釋放記憶體，權重仍在快取，可隨時再次啟用（不需重新下載）。' });
-        setAiNotice('本地 AI 已產生新摘要與行動建議。為避免手機記憶體不足崩潰，模型已自動釋放；權重仍在裝置快取，要再生成時於設定重新啟用即可，不需重新下載。');
-      } else {
-        setAiNotice('本地 AI 已成功產生新摘要與行動建議，完整計算資料仍維持原值。');
-      }
-      window.setTimeout(() => document.getElementById('ai-insight')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
-    } catch (reason) {
-      setReport(generateFallbackReport(input));
-      const { isModelReady } = await import('../ai/webllm');
-      if (!isModelReady()) setModel({ status: 'idle', progress: 0, message: '模型 Worker 已重設，請回設定重新啟用。' });
-      setAiError(reason instanceof Error ? reason.message : '本地 AI 報告產生失敗，已切回模板報告。');
-    } finally {
-      window.clearInterval(elapsedTimer);
-      setAiBusy(false);
-    }
-  };
-
-  const cancelAi = async () => {
-    const { cancelAiGeneration } = await import('../ai/webllm');
-    setAiStatus('正在停止生成…');
-    await cancelAiGeneration();
-  };
-
   const updateZiweiTarget = async () => {
     if (!profile || !input.ziwei || ziweiBusy) return;
     setZiweiBusy(true); setZiweiError('');
@@ -122,8 +79,7 @@ export default function ReportPage() {
       if (!ziwei) throw new Error('目前排盤資料未包含可用的命理排盤性別。');
       const nextInput = { ...input, ziwei };
       setReportData(nextInput, generateFallbackReport(nextInput));
-      setAiError('');
-      setAiNotice('紫微運限已依新日期重算；原 AI 文字已清除，避免和新盤面混用。');
+      setZiweiNotice('紫微運限已依新日期重算。');
     } catch (reason) {
       setZiweiError(reason instanceof Error ? reason.message : '紫微運限日期更新失敗。');
     } finally {
@@ -183,7 +139,7 @@ export default function ReportPage() {
       <header className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-4">
           <span className="fv-seal mt-1 hidden shrink-0 px-2.5 py-3 text-base sm:inline-flex vtext" aria-hidden="true">命書</span>
-          <div><p className="eyebrow">萬象報告</p><h1 className="display-title mt-3">{profile?.name ? `${profile.name}的萬象命書` : '你的萬象命書'}</h1><p className="mt-3 text-sm text-mist">在你的裝置上產生 · {report.mode === 'ai' ? '本地 AI 整理' : '規則式報告'}{profile ? ` · ${profile.birthDate} ${profile.birthTime} 出生 · ${profile.region}` : ''}</p></div>
+          <div><p className="eyebrow">萬象報告</p><h1 className="display-title mt-3">{profile?.name ? `${profile.name}的萬象命書` : '你的萬象命書'}</h1><p className="mt-3 text-sm text-mist">在你的裝置上產生{profile ? ` · ${profile.birthDate} ${profile.birthTime} 出生 · ${profile.region}` : ''}</p></div>
         </div>
         <ReportActions summary={report.summary} profile={profile} />
       </header>
@@ -271,8 +227,6 @@ export default function ReportPage() {
           </div>
         </section>
 
-        {report.aiEnhancement && <section id="ai-insight" data-testid="ai-enhancement" className="mt-6 overflow-hidden rounded-3xl border border-emerald-200/25 bg-gradient-to-br from-emerald-300/[0.09] to-cyan-300/[0.04] p-5 sm:p-7" aria-labelledby="ai-insight-title"><div className="flex flex-wrap items-start justify-between gap-3"><div className="flex items-center gap-3"><span className="grid size-11 place-items-center rounded-2xl bg-emerald-200/10 text-emerald-100"><BrainCircuit size={22} /></span><div><p className="eyebrow text-emerald-100">Generated locally</p><h2 id="ai-insight-title" className="mt-1 font-serif text-2xl font-semibold text-cream">本地 AI 生成內容</h2></div></div><span className="rounded-full border border-emerald-200/20 px-3 py-1 text-[11px] text-emerald-100">AI 原文</span></div><div className="mt-6 rounded-2xl border border-white/10 bg-ink/35 p-4 sm:p-5"><h3 className="text-xs font-semibold tracking-wider text-emerald-100">AI 摘要</h3><p className="mt-3 font-serif text-lg leading-8 text-cream">{report.aiEnhancement.summary}</p></div><div className="mt-4 grid gap-3 sm:grid-cols-2">{report.aiEnhancement.suggestions.map((suggestion, index) => <article data-testid="ai-suggestion" className="rounded-2xl border border-white/10 bg-white/[0.035] p-4" key={`${suggestion}-${index}`}><span className="text-[10px] font-semibold tracking-wider text-emerald-100">AI 建議 {index + 1}</span><p className="mt-2 leading-7 text-mist">{suggestion}</p></article>)}</div><p className="mt-4 text-xs leading-5 text-mist">這張卡的文字由你裝置上的本地 AI 生成；八字、星盤、紫微與靈數的數值都不會交給 AI 重算。生成時間：{new Date(report.aiEnhancement.generatedAt).toLocaleString('zh-TW')}。</p></section>}
-
         <div className="mt-6 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
           <article className="rounded-[20px] border border-white/10 bg-white/[0.045] p-6">
             <h3 className="font-serif text-lg font-semibold text-cream">綜合解讀摘要</h3>
@@ -334,6 +288,7 @@ export default function ReportPage() {
         <div className="mb-6"><p className="eyebrow">Twelve palaces</p><h2 className="section-title mt-2">紫微斗數十二宮</h2><p className="mt-2 text-sm leading-6 text-mist">呈現你的命身主、五行局、十二宮、主輔星、亮度、四化與大限範圍；也可以切換不同流派的排法，比較差異。</p></div>
         <div className="mb-4 rounded-2xl border border-violet-400/20 bg-violet-400/[0.055] p-4"><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><label><span className="label">安星版本</span><select className="input-field" value={ziweiSettings.algorithm} onChange={(event) => setZiweiSettings((current) => ({ ...current, algorithm: event.target.value as ZiweiCalculationSettings['algorithm'] }))}><option value="default">通行版本</option><option value="zhongzhou">中州派版本</option></select></label><label><span className="label">本命年分界</span><select className="input-field" value={ziweiSettings.yearDivide} onChange={(event) => setZiweiSettings((current) => ({ ...current, yearDivide: event.target.value as ZiweiCalculationSettings['yearDivide'] }))}><option value="normal">農曆正月初一</option><option value="exact">立春</option></select></label><label><span className="label">晚子時歸日</span><select className="input-field" value={ziweiSettings.dayDivide} onChange={(event) => setZiweiSettings((current) => ({ ...current, dayDivide: event.target.value as ZiweiCalculationSettings['dayDivide'] }))}><option value="current">歸當日</option><option value="forward">歸次日</option></select></label><label><span className="label">運限目標日期</span><input className="input-field" type="date" min="1900-01-01" max="2100-12-31" value={ziweiTargetDate} onChange={(event) => setZiweiTargetDate(event.target.value)} /></label></div><div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs leading-5 text-mist">修改設定後需重新排盤；流派設定是演算法比較入口，不代表某一版本較準。</p><button className="btn-secondary shrink-0" type="button" disabled={ziweiBusy || !ziweiTargetDate} onClick={() => void updateZiweiTarget()}>{ziweiBusy ? '正在重算…' : '套用設定並更新運限'}</button></div></div>
         {ziweiError && <div className="mb-4 rounded-xl border border-rose-200/20 bg-rose-200/[0.08] p-3 text-sm text-rose-100" role="alert">{ziweiError}</div>}
+        {ziweiNotice && <div className="mb-4 rounded-xl border border-emerald-200/20 bg-emerald-200/[0.08] p-3 text-sm text-emerald-100" role="status">{ziweiNotice}</div>}
         <article className="glass-card overflow-hidden p-3 sm:p-6"><ZiweiChart result={input.ziwei} /><ZiweiKeyPalaceInsights result={input.ziwei} /></article>
       </div>}
 
@@ -412,10 +367,7 @@ export default function ReportPage() {
 
       <section className="mt-10 rounded-3xl border border-white/10 bg-white/[0.035] p-5"><h2 className="text-sm font-semibold text-cream">閱讀時請保留的界線</h2><ul className="mt-3 space-y-2 text-sm leading-6 text-mist">{report.cautions.map((item) => <li className="flex gap-2" key={item}><ShieldCheck className="mt-1 shrink-0 text-gold" size={15} />{item}</li>)}</ul></section>
       <div className="mt-7"><Disclaimer health /></div>
-      {aiBusy && <div className="mt-5 rounded-2xl border border-gold/25 bg-gold/[0.07] p-4 print:hidden" role="status" aria-live="polite"><div className="flex items-start gap-3"><BrainCircuit className="mt-0.5 shrink-0 text-gold" size={19} /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-2"><p className="font-semibold text-cream">{aiStatus}</p><span className="text-xs tabular-nums text-mist">已執行 {aiElapsed} 秒</span></div><div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full w-2/5 animate-pulse rounded-full bg-gold" /></div><p className="mt-2 text-xs leading-5 text-mist">手機上只生成短篇摘要，再和完整報告合併；最長等待約 60–90 秒，逾時會自動停止並提示你重試。</p></div></div></div>}
-      {aiNotice && <div className="mt-5 rounded-xl border border-emerald-200/20 bg-emerald-200/[0.08] p-3 text-sm text-emerald-100" role="status">{aiNotice}</div>}
-      {aiError && <div className="mt-5 rounded-xl border border-amber-200/20 bg-amber-200/[0.08] p-3 text-sm text-amber-100" role="alert">{aiError}</div>}
-      <div className="mt-7 flex flex-wrap gap-3 print:hidden"><Link className="btn-secondary" to="/profile"><RefreshCw size={17} />重新建立</Link>{model.status === 'ready' ? <><button className="btn-primary" type="button" disabled={aiBusy} onClick={() => void generateWithAi()}><BrainCircuit size={17} />{aiBusy ? '本地 AI 整理中…' : report.mode === 'ai' ? '重新產生 AI 摘要' : '用本地 AI 重新整理'}</button>{aiBusy && <button className="btn-secondary" type="button" onClick={() => void cancelAi()}><Square size={15} />停止生成</button>}</> : <Link className="btn-primary" to="/settings">啟用本地 AI 增強</Link>}</div>
+      <div className="mt-7 flex flex-wrap gap-3 print:hidden"><Link className="btn-secondary" to="/profile"><RefreshCw size={17} />重新建立</Link></div>
     </section>
   );
 }

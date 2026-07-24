@@ -490,13 +490,6 @@ export interface AiFateReport {
     suggestions: string[];
   }[];
   cautions: string[];
-  mode: 'ai' | 'template';
-  aiEnhancement?: {
-    summary: string;
-    suggestions: string[];
-    modelId: string;
-    generatedAt: string;
-  };
 }
 
 export interface DailyGuidanceCard {

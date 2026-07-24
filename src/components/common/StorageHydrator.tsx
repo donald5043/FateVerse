@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { generateFallbackReport } from '../../ai/fallback-report';
+import { generateFallbackReport } from '../../engines/fallback-report';
 import { useFateStore } from '../../store/useFateStore';
 import { loadAnalysis, loadPreferences } from '../../utils/storage';
 

@@ -1,14 +1,11 @@
 import { clear, del, get, set } from 'idb-keyval';
-import { DEFAULT_LOCAL_MODEL_ID } from '../ai/model-options';
 import type { CapsuleRecord } from '../engines/time-capsule-engine';
 import type { FateReportInput, ProfileInput } from '../types/fate';
 
 export interface LocalPreferences {
   retainAnalysis: boolean;
-  modelId: string;
   ocrLanguage: string;
   theme: 'dark' | 'system';
-  modelNoticeSeen: boolean;
 }
 
 const PREFERENCES_KEY = 'fateverse:preferences';
@@ -79,21 +76,13 @@ export async function clearCapsules(): Promise<void> {
 
 export const defaultPreferences: LocalPreferences = {
   retainAnalysis: false,
-  modelId: DEFAULT_LOCAL_MODEL_ID,
   ocrLanguage: 'chi_tra',
   theme: 'dark',
-  modelNoticeSeen: false,
 };
 
 export async function loadPreferences(): Promise<LocalPreferences> {
   const stored = (await get<Partial<LocalPreferences>>(PREFERENCES_KEY)) ?? {};
-  return {
-    ...defaultPreferences,
-    ...stored,
-    // Qwen3 0.6B repeatedly stalled during iOS generation. Existing installs
-    // migrate to the lower-memory, non-thinking model on their next enable.
-    modelId: stored.modelId === 'Qwen3-0.6B-q4f16_1-MLC' ? DEFAULT_LOCAL_MODEL_ID : (stored.modelId ?? DEFAULT_LOCAL_MODEL_ID),
-  };
+  return { ...defaultPreferences, ...stored };
 }
 
 export async function savePreferences(value: LocalPreferences): Promise<void> {
