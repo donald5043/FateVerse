@@ -89,4 +89,20 @@ describe('聲音指紋', () => {
   it('不同命盤產生不同種子', () => {
     expect(buildSoundFingerprint(buildInput('1985-07-15')).seed).not.toBe(sound.seed);
   });
+
+  it('不同人的聲音指紋在聽感上明顯不同（根音、鼓音或和聲至少一項有別）', () => {
+    // 過去只靠日主五行決定根音，僅有五種，導致不同人常常聽起來一模一樣。
+    const dates = ['1990-01-02', '1985-07-15', '1993-03-21', '1978-11-09', '2001-06-30', '1996-09-12'];
+    const prints = dates.map((date) => buildSoundFingerprint(buildInput(date)));
+    const audibleKey = (fp: ReturnType<typeof buildSoundFingerprint>) =>
+      `${fp.droneFreq}|${fp.voices.map((v) => `${v.freq}:${v.pan}:${v.detune}`).join(',')}`;
+    const keys = prints.map(audibleKey);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  it('同一份命盤的失諧與呼吸速率是確定值，播放不會每次不同', () => {
+    const again = buildSoundFingerprint(input);
+    expect(again.voices.map((v) => v.detune)).toEqual(sound.voices.map((v) => v.detune));
+    expect(again.voices.map((v) => v.lfoHz)).toEqual(sound.voices.map((v) => v.lfoHz));
+  });
 });

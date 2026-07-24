@@ -41,16 +41,17 @@ export default function SoundFingerprintPlayer({ fingerprint }: { fingerprint: S
     master.connect(context.destination);
 
     const nodes: OscillatorNode[] = [];
-    const makeVoice = (freq: number, gain: number, pan: number, type: OscillatorType, detune: number) => {
+    const makeVoice = (freq: number, gain: number, pan: number, type: OscillatorType, detune: number, lfoHz: number) => {
       const osc = context.createOscillator();
       osc.type = type;
       osc.frequency.setValueAtTime(freq, context.currentTime);
+      // 失諧由命盤種子決定（非隨機），確保同一人每次播放完全一致、不同人彼此不同。
       osc.detune.setValueAtTime(detune, context.currentTime);
       const voiceGain = context.createGain();
       voiceGain.gain.setValueAtTime(gain, context.currentTime);
-      // 緩慢的音量起伏，讓和弦有呼吸感。
+      // 緩慢的音量起伏，讓和弦有呼吸感；速率同樣取自命盤種子。
       const lfo = context.createOscillator();
-      lfo.frequency.setValueAtTime(0.08 + Math.random() * 0.12, context.currentTime);
+      lfo.frequency.setValueAtTime(lfoHz, context.currentTime);
       const lfoGain = context.createGain();
       lfoGain.gain.setValueAtTime(gain * 0.4, context.currentTime);
       lfo.connect(lfoGain).connect(voiceGain.gain);
@@ -68,8 +69,8 @@ export default function SoundFingerprintPlayer({ fingerprint }: { fingerprint: S
       nodes.push(osc, lfo);
     };
 
-    makeVoice(fingerprint.droneFreq, 0.12, 0, 'sine', 0);
-    fingerprint.voices.forEach((voice) => makeVoice(voice.freq, voice.gain, voice.pan, voice.type, (Math.random() - 0.5) * 8));
+    makeVoice(fingerprint.droneFreq, 0.12, 0, 'sine', 0, 0.07);
+    fingerprint.voices.forEach((voice) => makeVoice(voice.freq, voice.gain, voice.pan, voice.type, voice.detune, voice.lfoHz));
 
     graphRef.current = { context, master, nodes };
     setPlaying(true);
