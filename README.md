@@ -189,6 +189,8 @@ https://donald5043.github.io/FateVerse/
 
 ## Roadmap
 
+長期產品定位與跨領域策略研究見 [docs/strategy-research.md](docs/strategy-research.md)（決策儀式、自我敘事引擎、投射式鏡子等重新定位方向，以及零後端分享、生成藝術命盤指紋等構想）。以下為近期工程項目：
+
 - 引入經授權、可追溯版本的完整籤詩資料集。
 - 拖曳式圖片裁切、透視校正與多語 OCR。
 - 正式康熙字典資料與可驗證的筆畫來源。
