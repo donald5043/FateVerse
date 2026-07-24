@@ -11,6 +11,11 @@ export interface SoundVoice {
   lfoHz: number; // 種子決定的音量呼吸速率，取代播放時的隨機值。
 }
 
+export interface MelodyStep {
+  freq: number | null; // null 代表休止符，讓旋律有呼吸與留白。
+  beats: number; // 這個音持續幾拍（配合 bpm 形成節奏）。
+}
+
 export interface SoundFingerprint {
   seed: string;
   rootNote: string;
@@ -19,6 +24,7 @@ export interface SoundFingerprint {
   bpm: number;
   scaleName: string;
   transpose: number; // 相對日主根音的整體移調半音數，是「不同人不同聲音」的主要來源。
+  melody: MelodyStep[]; // 由命盤決定的確定性旋律線，循環播放；配合 bpm 產生節奏。
 }
 
 // 各五行對應一個「調性根音」（Hz，近似平均律）與音色，日主五行決定基礎音色。
@@ -80,8 +86,29 @@ export function buildSoundFingerprint(input: FateReportInput): SoundFingerprint 
       };
     });
 
-  // 生命靈數決定節奏快慢（1–33 → 約 48–76 bpm）。
+  // 生命靈數決定節奏快慢（1–33 → 約 48–76 bpm），偏慢讓整體從容柔和。
   const bpm = 48 + Math.round((input.numerology.lifePathNumber % 12) * 2.4);
+
+  // 以根音的五聲音階橫跨兩個八度，做一段確定性的旋律線。刻意以小幅級進為主、
+  // 偶爾休止，聽起來平緩不跳躍；同一命盤永遠是同一段旋律，配合 bpm 形成節奏。
+  const scale: number[] = [];
+  for (let oct = 1; oct <= 2; oct += 1) {
+    for (let degree = 0; degree < PENTATONIC_RATIOS.length; degree += 1) {
+      scale.push(rootFreq * PENTATONIC_RATIOS[degree] * oct);
+    }
+  }
+  const melody: MelodyStep[] = [];
+  let cursor = Math.floor(random() * scale.length);
+  for (let step = 0; step < 16; step += 1) {
+    if (random() < 0.14) {
+      melody.push({ freq: null, beats: 1 });
+      continue;
+    }
+    const move = Math.floor(random() * 5) - 2; // -2..+2，以級進為主。
+    cursor = Math.max(0, Math.min(scale.length - 1, cursor + move));
+    const beats = random() < 0.28 ? 2 : 1;
+    melody.push({ freq: Number(scale[cursor].toFixed(2)), beats });
+  }
 
   return {
     seed,
@@ -93,5 +120,6 @@ export function buildSoundFingerprint(input: FateReportInput): SoundFingerprint 
     bpm,
     scaleName: '五聲音階（宮商角徵羽）',
     transpose,
+    melody,
   };
 }

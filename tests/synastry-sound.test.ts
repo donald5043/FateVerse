@@ -105,4 +105,21 @@ describe('聲音指紋', () => {
     expect(again.voices.map((v) => v.detune)).toEqual(sound.voices.map((v) => v.detune));
     expect(again.voices.map((v) => v.lfoHz)).toEqual(sound.voices.map((v) => v.lfoHz));
   });
+
+  it('帶有可循環的確定性旋律，含實際發聲的音與合理拍長', () => {
+    expect(sound.melody.length).toBeGreaterThan(0);
+    expect(sound.melody.some((step) => step.freq !== null)).toBe(true);
+    sound.melody.forEach((step) => {
+      expect(step.beats).toBeGreaterThanOrEqual(1);
+      expect(step.beats).toBeLessThanOrEqual(2);
+      if (step.freq !== null) expect(step.freq).toBeGreaterThan(0);
+    });
+    expect(buildSoundFingerprint(input).melody).toEqual(sound.melody);
+  });
+
+  it('不同命盤通常有不同旋律', () => {
+    const other = buildSoundFingerprint(buildInput('1993-03-21'));
+    const key = (m: typeof sound.melody) => m.map((s) => `${s.freq}:${s.beats}`).join('|');
+    expect(key(other.melody)).not.toBe(key(sound.melody));
+  });
 });

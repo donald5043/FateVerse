@@ -83,11 +83,18 @@ export default function ReportPage() {
     const startedAt = Date.now();
     const elapsedTimer = window.setInterval(() => setAiElapsed(Math.floor((Date.now() - startedAt) / 1000)), 1000);
     try {
-      const { generateAiReport } = await import('../ai/webllm');
+      const { generateAiReport, isModelReady } = await import('../ai/webllm');
       const nextReport = await generateAiReport(input, (progress) => setAiStatus(progress.message));
       setReport(nextReport);
       setTab('overview');
-      setAiNotice('本地 AI 已成功產生新摘要與行動建議，完整計算資料仍維持原值。');
+      // 記憶體吃緊的手機在生成後會主動釋放模型以免分頁崩潰；此時提醒使用者權重仍在
+      // 快取中，再次啟用很快、不需重新下載，並把模型狀態同步回設定頁。
+      if (!isModelReady()) {
+        setModel({ status: 'idle', progress: 0, message: '已釋放記憶體，權重仍在快取，可隨時再次啟用（不需重新下載）。' });
+        setAiNotice('本地 AI 已產生新摘要與行動建議。為避免手機記憶體不足崩潰，模型已自動釋放；權重仍在裝置快取，要再生成時於設定重新啟用即可，不需重新下載。');
+      } else {
+        setAiNotice('本地 AI 已成功產生新摘要與行動建議，完整計算資料仍維持原值。');
+      }
       window.setTimeout(() => document.getElementById('ai-insight')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     } catch (reason) {
       setReport(generateFallbackReport(input));

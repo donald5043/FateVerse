@@ -35,6 +35,30 @@ function isAppleMobile(): boolean {
     || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
 
+// 記憶體吃緊的裝置（手機、低記憶體機種）在生成後若讓幾百 MB 的模型續留 GPU 記憶體，
+// 接著又渲染含 SVG 命盤圖、Canvas、音訊的完整報告，尖峰用量常讓分頁被系統直接終止
+// （畫面閃一下資料就變白重載）。這類裝置在取得文字後主動釋放引擎、只保留快取權重。
+function isMemoryConstrainedDevice(): boolean {
+  if (isAppleMobile()) return true;
+  if (typeof navigator === 'undefined') return false;
+  const deviceMemory = (navigator as unknown as { deviceMemory?: number }).deviceMemory;
+  if (typeof deviceMemory === 'number' && deviceMemory <= 4) return true;
+  return /Android|Mobile/i.test(navigator.userAgent);
+}
+
+/** 卸載引擎並終止 Worker 以釋放 GPU/記憶體，但保留已下載的權重快取（下次啟用不需重新下載）。 */
+async function releaseEngineKeepCache(): Promise<void> {
+  try {
+    if (engine) await engine.unload();
+  } catch {
+    // 卸載失敗時仍強制終止 Worker，確保記憶體被回收。
+  }
+  engineWorker?.terminate();
+  engineWorker = null;
+  engine = null;
+  loadedModelId = null;
+}
+
 export function getGenerationProfile(appleMobile = isAppleMobile()): GenerationProfile {
   return appleMobile
     ? { id: 'mobile-fast', maxTokens: 140, firstTokenTimeoutMs: 25_000, inactivityTimeoutMs: 15_000, totalTimeoutMs: IOS_AI_GENERATION_TIMEOUT_MS }
@@ -256,7 +280,12 @@ export async function generateAiReport(
     const fallback = generateFallbackReport(input);
     // Keep deterministic content unchanged. AI text is stored separately so
     // the UI can show exactly which words came from the local model.
-    return attachAiEnhancement(fallback, enhancement, loadedModelId ?? DEFAULT_LOCAL_MODEL_ID);
+    const modelId = loadedModelId ?? DEFAULT_LOCAL_MODEL_ID;
+    const enhanced = attachAiEnhancement(fallback, enhancement, modelId);
+    // 記憶體吃緊的裝置：在把報告交回 UI 渲染「之前」先釋放模型，讓沉重的報告畫面
+    // 不必和常駐的 GPU 模型爭記憶體，避免生成後分頁被系統終止（閃一下就變白）。
+    if (isMemoryConstrainedDevice()) await releaseEngineKeepCache();
+    return enhanced;
   } catch (reason) {
     const message = reason instanceof Error ? reason.message : '';
     if (message.includes('AI_GENERATION_TIMEOUT') || message.includes('AI_STREAM_TIMEOUT')) {
