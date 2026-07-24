@@ -11,13 +11,14 @@ const bazi = calculateBazi({ birthDate: '1990-01-02', birthTime: '10:30', timezo
 const reportInput = { userFocus: ['career'], bazi, fiveElements: calculateFiveElements(bazi.pillars), zodiac: getZodiacResult(bazi.zodiac), astrology: calculateSunSign('1990-01-02'), numerology: calculateNumerology('1990-01-02') };
 
 describe('WebLLM 生成設定', () => {
-  it('Qwen2.5 使用 JSON schema 串流且不帶思考參數', () => {
+  it('Qwen2.5 串流不使用 response_format 文法約束（避免 XGrammar 讓 WebGPU 崩潰），也不帶思考參數', () => {
     const request = buildAiCompletionRequest(reportInput, false);
 
     expect(request.stream).toBe(true);
     expect(request.stream_options).toEqual({ include_usage: true });
     expect(request.extra_body).toBeUndefined();
-    expect(request.response_format?.schema).toContain('suggestions');
+    // 不再夾帶 JSON schema：靠提示詞產出 JSON、解析端優雅退回，杜絕硬崩潰。
+    expect(request.response_format).toBeUndefined();
     expect(request.max_tokens).toBeLessThanOrEqual(180);
     expect(request.messages[1]?.content).toContain('相對突出五行');
     expect(request.messages[1]?.content).toContain('兩項建議不可重複摘要');

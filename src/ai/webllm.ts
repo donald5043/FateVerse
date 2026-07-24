@@ -110,6 +110,14 @@ export async function loadLocalModel(modelId: string, onProgress: (progress: num
   try {
     const webllm = await import('@mlc-ai/web-llm');
     nextWorker = new Worker(new URL('./webllm-worker.ts', import.meta.url), { type: 'module' });
+    // 若 worker 在 WebGPU 層崩潰（例如記憶體不足或驅動中止），清掉模組狀態，
+    // 讓 isModelReady() 回報 false、UI 能提示重新啟用，而不是卡在「已就緒」。
+    const handleWorkerCrash = () => {
+      if (engineWorker === nextWorker) { engineWorker = null; engine = null; loadedModelId = null; }
+      nextWorker?.terminate();
+    };
+    nextWorker.onerror = handleWorkerCrash;
+    nextWorker.onmessageerror = handleWorkerCrash;
     engineWorker = nextWorker;
     engine = await webllm.CreateWebWorkerMLCEngine(nextWorker, modelId, {
       initProgressCallback: (report) => {
@@ -156,16 +164,6 @@ export async function clearModelCache(modelId: string): Promise<void> {
   ]);
 }
 
-const AI_ENHANCEMENT_JSON_SCHEMA = JSON.stringify({
-  type: 'object',
-  properties: {
-    summary: { type: 'string', minLength: 20, maxLength: 90 },
-    suggestions: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'string', minLength: 8, maxLength: 40 } },
-  },
-  required: ['summary', 'suggestions'],
-  additionalProperties: false,
-});
-
 export function buildAiCompletionRequest(
   input: FateReportInput,
   appleMobile = isAppleMobile(),
@@ -178,7 +176,11 @@ export function buildAiCompletionRequest(
     messages: [{ role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: buildFastReportUserPrompt(input) }],
     temperature: 0.2,
     max_tokens: profile.maxTokens,
-    response_format: { type: 'json_object', schema: AI_ENHANCEMENT_JSON_SCHEMA },
+    // 刻意不使用 response_format 的 JSON schema 約束：在部分裝置上，XGrammar
+    // 依 schema 編譯文法會讓 WebGPU worker 直接崩潰（整個分頁白屏、瀏覽器重載，
+    // 使用者會誤以為模型重新下載）。提示詞已強制輸出嚴格 JSON，且解析端
+    // parseAiReportEnhancement 會擷取 {…} 並在格式不符時優雅退回模板報告，
+    // 因此移除文法約束是安全的，換來的是不再硬崩潰。
     // Kept for users with an older cached Qwen3 model. Qwen2.5 does not have
     // a thinking stage and therefore receives no model-specific extra field.
     ...(modelId.startsWith('Qwen3-') ? { extra_body: { enable_thinking: false } } : {}),

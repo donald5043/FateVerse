@@ -20,6 +20,13 @@ describe('報告', () => {
     const result = parseAiReportEnhancement(JSON.stringify({ summary: '這是一段完整且清楚的跨系統摘要內容', suggestions: ['記錄本週三次專注工作的時段', '安排週末半小時回顧完成事項'] }));
     expect(result.suggestions).toHaveLength(2);
   });
+  it('沒有文法約束時，仍能從夾帶前後雜訊或圍欄的輸出擷取 JSON', () => {
+    const body = JSON.stringify({ summary: '這是一段完整且清楚的跨系統摘要內容', suggestions: ['記錄本週三次專注工作的時段', '安排週末半小時回顧完成事項'] });
+    const fenced = parseAiReportEnhancement('```json\n' + body + '\n```');
+    expect(fenced.suggestions).toHaveLength(2);
+    const noisy = parseAiReportEnhancement('好的，以下是結果：' + body + ' 希望對你有幫助。');
+    expect(noisy.summary).toContain('跨系統摘要');
+  });
   it('拒絕模型照抄提示指令的假內容', () => {
     const leaked = JSON.stringify({ summary: '摘要第一句寫共同傾向，摘要第二句寫差異', suggestions: ['12至25字的行動一', '12至25字的行動二'] });
     expect(() => parseAiReportEnhancement(leaked)).toThrow('格式無法驗證');

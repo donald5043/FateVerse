@@ -35,10 +35,19 @@ export function parseAiReport(raw: string): AiFateReport {
   }
 }
 
+/** 從模型輸出裡盡量抽出 JSON 物件：先去除 ```json 圍欄，再退而求其次擷取第一個 { 到最後一個 }。 */
+function extractJsonCandidate(raw: string): string {
+  const withoutFence = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  if (withoutFence.startsWith('{') && withoutFence.endsWith('}')) return withoutFence;
+  const first = withoutFence.indexOf('{');
+  const last = withoutFence.lastIndexOf('}');
+  if (first >= 0 && last > first) return withoutFence.slice(first, last + 1);
+  return withoutFence;
+}
+
 export function parseAiReportEnhancement(raw: string): AiReportEnhancement {
   try {
-    const withoutFence = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-    return aiReportEnhancementSchema.parse(JSON.parse(withoutFence));
+    return aiReportEnhancementSchema.parse(JSON.parse(extractJsonCandidate(raw)));
   } catch {
     throw new Error('本地 AI 回傳格式無法驗證，已切換為輕量模式。');
   }
