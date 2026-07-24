@@ -178,7 +178,7 @@ export default function FortunePage() {
   return (
     <section className="page-container page-section">
       <BackToReportLink />
-      <div className="max-w-3xl"><p className="eyebrow text-rose-400">Fortune Sticks</p><h1 className="display-title mt-3">拍籤解籤</h1><p className="mt-5 muted">拍下或上傳籤詩照片，我們會辨識上面的文字，幫你比對出最接近的籤與解讀；辨識結果都可以自己修改，最後也請再核對一次。</p></div>
+      <div className="max-w-3xl"><p className="eyebrow text-vermilion">Fortune Sticks</p><h1 className="display-title mt-3">拍籤解籤</h1><p className="mt-5 muted">拍下或上傳籤詩照片，我們會辨識上面的文字，幫你比對出最接近的籤與解讀；辨識結果都可以自己修改，最後也請再核對一次。</p></div>
       <ol className="mt-7 grid grid-cols-4 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035]" aria-label="籤詩辨識流程">
         {['來源與照片', 'OCR 校對', '候選確認', '主題解籤'].map((step, index) => {
           const current = selected ? 3 : matches.length ? 2 : ocrText.trim() ? 1 : 0;
@@ -212,7 +212,7 @@ export default function FortunePage() {
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full bg-gold transition-all" style={{ width: `${progress}%` }} /></div>
               {ocrConfidence !== undefined && <div className={`mt-3 rounded-lg px-3 py-2 text-xs leading-5 ${ocrConfidence >= 75 ? 'bg-emerald-300/10 text-emerald-100' : 'bg-amber-200/10 text-amber-100'}`}><strong>OCR 信心 {ocrConfidence}%：</strong>{ocrConfidence >= 75 ? '仍請核對籤號與每句文字，再選擇候選。' : '辨識信心偏低，請以候選籤詩原文為準並手動校正；系統不會只靠 OCR 籤號判定。'}</div>}
             </div>
-            <button className="btn-primary mt-4 w-full" type="button" onClick={() => void runOcr()} disabled={!preview || ['initializing', 'loading', 'recognizing'].includes(ocrState)}><ScanLine size={18} />{ocrState === 'done' ? '重新 OCR 並比對' : '開始 OCR 並自動比對'}</button>
+            <button className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-vermilion px-6 py-3 font-semibold text-cream transition hover:bg-[#d85a44] focus:outline-none focus:ring-2 focus:ring-vermilion focus:ring-offset-2 focus:ring-offset-ink active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50" type="button" onClick={() => void runOcr()} disabled={!preview || ['initializing', 'loading', 'recognizing'].includes(ocrState)}><ScanLine size={18} />{ocrState === 'done' ? '重新 OCR 並比對' : '開始 OCR 並自動比對'}</button>
             <label className="mt-5 block"><span className="label">辨識文字（可手動修正）</span><textarea className="input-field min-h-40 resize-y" value={ocrText} onChange={(e) => setOcrText(e.target.value)} placeholder="也可以直接輸入籤號、標題，或至少前兩句籤文。" /></label>
             <button className="btn-secondary mt-3 w-full" type="button" disabled={loadingMatches} onClick={() => void search()}>{loadingMatches ? '正在比對…' : '用校正文字重新比對'}</button>
           </article>

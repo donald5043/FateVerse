@@ -173,8 +173,11 @@ export default function ReportPage() {
 
   return (
     <section className="page-container page-section report-print">
-      <header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-        <div><p className="eyebrow">萬象報告</p><h1 className="display-title mt-3">{profile?.name ? `${profile.name}的萬象命書` : '你的萬象命書'}</h1><p className="mt-3 text-sm text-mist">在你的裝置上產生 · {report.mode === 'ai' ? '本地 AI 整理' : '規則式報告'}{profile ? ` · ${profile.birthDate} ${profile.birthTime} 出生 · ${profile.region}` : ''}</p></div>
+      <header className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-4">
+          <span className="fv-seal mt-1 hidden shrink-0 px-2.5 py-3 text-base sm:inline-flex vtext" aria-hidden="true">命書</span>
+          <div><p className="eyebrow">萬象報告</p><h1 className="display-title mt-3">{profile?.name ? `${profile.name}的萬象命書` : '你的萬象命書'}</h1><p className="mt-3 text-sm text-mist">在你的裝置上產生 · {report.mode === 'ai' ? '本地 AI 整理' : '規則式報告'}{profile ? ` · ${profile.birthDate} ${profile.birthTime} 出生 · ${profile.region}` : ''}</p></div>
+        </div>
         <ReportActions summary={report.summary} profile={profile} />
       </header>
 
