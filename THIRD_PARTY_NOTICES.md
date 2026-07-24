@@ -41,7 +41,7 @@ TypeScript、ESLint、Prettier、Vitest、Testing Library、PostCSS、Autoprefix
 
 ## FateVerse 示範資料
 
-- `public/data/fortune-sticks/*.json`：FateVerse 自編格式示範，不是特定廟宇正式籤文，CC BY 4.0。
+- `public/data/fortune-sticks/sixty-jiazi.json`、`guanyin-100.json`：籤詩本文與吉凶分級為傳統六十甲子籤（媽祖靈籤）與觀音一百籤，屬公有領域古典籤文，逐字校對自公開籤詩資料；隨附的白話摘要、九面向解讀、行動建議與關鍵詞為 FateVerse 自編，CC BY 4.0。各廟版本用字與吉凶分級略有出入，實際解籤請以所在廟宇為準。
 - `public/data/fortune-sticks/user-samples.json`：使用者提供照片的短篇籤文轉錄；每筆來源與解讀範圍標示於資料內，不併入 FateVerse 自編資料授權聲明。
 - `public/data/daily-guidance.json`：FateVerse 自編自我反思卡，CC BY 4.0。
 - 生肖、星座、生命靈數、姓名示範內容與現代化報告模板：FateVerse 自編基礎內容，CC BY 4.0。

@@ -44,8 +44,8 @@ describe('靜態資料契約', () => {
     const { matchFortuneSticks } = await import('../src/engines/fortune-stick-matcher');
     const fullLine = matchFortuneSticks('日出便見風雲散 光明清淨照世間', jiaziSticks as never);
     expect(fullLine[0].item.id).toBe('fj-001');
-    const withTypos = matchFortuneSticks('平地何曾有雲梯 一皆一願上天西', guanyinSticks as never);
-    expect(withTypos[0].item.id).toBe('gy-demo-94');
+    const withTypos = matchFortuneSticks('四郊田畝皆枯竭 久旱俄然三日淋', guanyinSticks as never);
+    expect(withTypos[0].item.id).toBe('gy-022');
     const jiaziTypos = matchFortuneSticks('蛇身意欲變成竜 只恐命內運未通', jiaziSticks as never);
     expect(jiaziTypos[0].item.id).toBe('fj-058');
     const byNumber = matchFortuneSticks('第五十八籤', jiaziSticks as never);
