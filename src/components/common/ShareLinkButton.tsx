@@ -1,5 +1,5 @@
-import { Check, Copy, Link2, X } from 'lucide-react';
-import { useState } from 'react';
+import { Check, Copy, Link2, Share2, X } from 'lucide-react';
+import { useRef, useState } from 'react';
 import type { ProfileInput } from '../../types/fate';
 import { buildShareUrl } from '../../utils/share-link';
 
@@ -8,16 +8,48 @@ export default function ShareLinkButton({ profile }: { profile: ProfileInput }) 
   const [open, setOpen] = useState(false);
   const [includeName, setIncludeName] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState('');
+  const urlRef = useRef<HTMLInputElement>(null);
 
   const url = buildShareUrl(profile, { includeName });
+  const canNativeShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
   const copy = async () => {
+    setCopyError('');
+    // 優先用非同步 Clipboard API；失敗時退回選取輸入框內容再 execCommand。
     try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1800);
+        return;
+      }
     } catch {
-      setCopied(false);
+      // 落到下方 fallback
+    }
+    const input = urlRef.current;
+    if (input) {
+      input.focus();
+      input.select();
+      input.setSelectionRange(0, url.length);
+      try {
+        if (document.execCommand('copy')) {
+          setCopied(true);
+          window.setTimeout(() => setCopied(false), 1800);
+          return;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    setCopyError('無法自動複製，請長按上方連結手動複製。');
+  };
+
+  const nativeShare = async () => {
+    try {
+      await navigator.share({ title: '萬象命書 FateVerse 命盤', url });
+    } catch {
+      // 使用者取消或不支援時，不視為錯誤。
     }
   };
 
@@ -39,8 +71,13 @@ export default function ShareLinkButton({ profile }: { profile: ProfileInput }) 
               <input type="checkbox" className="size-4 accent-gold" checked={includeName} onChange={(event) => setIncludeName(event.target.checked)} />
               連結也包含姓名（預設不含，較不敏感）
             </label>
-            <div className="mt-4 break-all rounded-xl border border-white/10 bg-ink/60 p-3 text-xs text-mist">{url}</div>
-            <button className="btn-primary mt-4 w-full" type="button" onClick={() => void copy()}>{copied ? <Check size={17} /> : <Copy size={17} />}{copied ? '已複製連結' : '複製連結'}</button>
+            {/* 唯讀輸入框：手機上可長按選取，也作為 execCommand 複製的來源。 */}
+            <input ref={urlRef} readOnly value={url} onFocus={(event) => event.currentTarget.select()} className="mt-4 w-full break-all rounded-xl border border-white/10 bg-ink/60 p-3 text-xs text-mist" aria-label="分享連結" />
+            {copyError && <p className="mt-2 text-xs text-rose-200">{copyError}</p>}
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+              {canNativeShare && <button className="btn-primary flex-1" type="button" onClick={() => void nativeShare()}><Share2 size={17} />分享…</button>}
+              <button className={canNativeShare ? 'btn-secondary flex-1' : 'btn-primary w-full'} type="button" onClick={() => void copy()}>{copied ? <Check size={17} /> : <Copy size={17} />}{copied ? '已複製連結' : '複製連結'}</button>
+            </div>
           </div>
         </div>
       )}

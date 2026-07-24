@@ -6,7 +6,7 @@ import { buildReportFromProfile } from '../engines/build-report';
 import { generateSynastry, type SynastryReading } from '../engines/synastry-engine';
 import { useFateStore } from '../store/useFateStore';
 import type { ProfileInput } from '../types/fate';
-import { decodeShareCodeToProfile } from '../utils/share-link';
+import { decodeShareInput } from '../utils/share-link';
 
 interface MiniForm {
   name: string;
@@ -50,7 +50,8 @@ export default function SynastryPage() {
   const [error, setError] = useState('');
 
   const applyPartnerLink = () => {
-    const decoded = decodeShareCodeToProfile(partnerLink.trim());
+    // 接受純代碼或整段分享網址（手機常直接貼整條）。
+    const decoded = decodeShareInput(partnerLink);
     if (!decoded) { setError('這個分享連結無法解讀，請確認是完整的 FateVerse 分享連結。'); return; }
     setError('');
     setFormB({ name: decoded.name, birthDate: decoded.birthDate, birthTime: decoded.birthTime, timezone: decoded.timezone, gender: decoded.gender });

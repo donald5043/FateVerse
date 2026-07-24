@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildShareUrl, decodeShareCodeToProfile, encodeProfileToShareCode } from '../src/utils/share-link';
+import { buildShareUrl, decodeShareCodeToProfile, decodeShareInput, encodeProfileToShareCode } from '../src/utils/share-link';
 import { buildReportFromProfile } from '../src/engines/build-report';
 import type { ProfileInput } from '../src/types/fate';
 
@@ -59,6 +59,17 @@ describe('分享連結編解碼', () => {
   it('分享網址使用 HashRouter 的 /shared 路徑', () => {
     const url = buildShareUrl(profile);
     expect(url).toContain('#/shared?d=v1.');
+  });
+
+  it('decodeShareInput 同時接受純代碼與整段分享網址', () => {
+    const code = encodeProfileToShareCode(profile, { includeName: true });
+    const fromCode = decodeShareInput(code);
+    const fromUrl = decodeShareInput(`https://donald5043.github.io/FateVerse/#/shared?d=${code}`);
+    expect(fromCode?.birthDate).toBe('1990-01-02');
+    expect(fromUrl?.birthDate).toBe('1990-01-02');
+    expect(fromUrl?.name).toBe('林安晨');
+    expect(decodeShareInput('  ')).toBeUndefined();
+    expect(decodeShareInput('https://example.com/no-code')).toBeUndefined();
   });
 
   it('解碼後的 profile 能實際重算出完整報告', () => {

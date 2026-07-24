@@ -79,6 +79,15 @@ export function decodeShareCodeToProfile(code: string): ProfileInput | undefined
   };
 }
 
+/** 從純代碼或整段分享網址還原 ProfileInput；容忍使用者直接貼上整條連結。 */
+export function decodeShareInput(input: string): ProfileInput | undefined {
+  const raw = input.trim();
+  if (!raw) return undefined;
+  const match = raw.match(/[?&]d=([^&\s]+)/);
+  const code = match ? decodeURIComponent(match[1]) : raw;
+  return decodeShareCodeToProfile(code);
+}
+
 /** 產生完整的分享網址（HashRouter，含 base path），可直接複製分享。 */
 export function buildShareUrl(profile: ProfileInput, options: EncodeOptions = {}): string {
   const code = encodeProfileToShareCode(profile, options);
