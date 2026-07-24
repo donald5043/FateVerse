@@ -12,6 +12,7 @@ const links = [
   ['/ritual', '決策儀式'],
   ['/imprint', '宇宙印記'],
   ['/narrative', '人生劇本'],
+  ['/capsule', '時間膠囊'],
   ['/daily', '今日指引'],
   ['/tarot', '塔羅牌'],
   ['/palm', '拍手相'],

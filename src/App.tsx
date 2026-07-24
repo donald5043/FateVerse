@@ -19,6 +19,7 @@ const RitualPage = lazy(() => import('./pages/RitualPage'));
 const CosmicImprintPage = lazy(() => import('./pages/CosmicImprintPage'));
 const SharedProfilePage = lazy(() => import('./pages/SharedProfilePage'));
 const NarrativePage = lazy(() => import('./pages/NarrativePage'));
+const TimeCapsulePage = lazy(() => import('./pages/TimeCapsulePage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="imprint" element={<CosmicImprintPage />} />
           <Route path="shared" element={<SharedProfilePage />} />
           <Route path="narrative" element={<NarrativePage />} />
+          <Route path="capsule" element={<TimeCapsulePage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="privacy" element={<PrivacyPage />} />
           <Route path="settings" element={<SettingsPage />} />

@@ -1,5 +1,6 @@
 import { clear, del, get, set } from 'idb-keyval';
 import { DEFAULT_LOCAL_MODEL_ID } from '../ai/model-options';
+import type { CapsuleRecord } from '../engines/time-capsule-engine';
 import type { FateReportInput, ProfileInput } from '../types/fate';
 
 export interface LocalPreferences {
@@ -40,6 +41,40 @@ export async function saveRitual(record: RitualRecord): Promise<RitualRecord[]> 
 
 export async function clearRituals(): Promise<void> {
   await del(RITUALS_KEY);
+}
+
+const CAPSULES_KEY = 'fateverse:time-capsules';
+const CAPSULES_LIMIT = 60;
+
+export async function loadCapsules(): Promise<CapsuleRecord[]> {
+  return (await get<CapsuleRecord[]>(CAPSULES_KEY)) ?? [];
+}
+
+/** 新增一個時間膠囊（僅存本機），回傳更新後的清單。 */
+export async function saveCapsule(record: CapsuleRecord): Promise<CapsuleRecord[]> {
+  const existing = await loadCapsules();
+  const next = [record, ...existing].slice(0, CAPSULES_LIMIT);
+  await set(CAPSULES_KEY, next);
+  return next;
+}
+
+/** 更新指定膠囊（例如開啟後補上回看內容）。 */
+export async function updateCapsule(id: string, patch: Partial<CapsuleRecord>): Promise<CapsuleRecord[]> {
+  const existing = await loadCapsules();
+  const next = existing.map((capsule) => (capsule.id === id ? { ...capsule, ...patch } : capsule));
+  await set(CAPSULES_KEY, next);
+  return next;
+}
+
+export async function deleteCapsule(id: string): Promise<CapsuleRecord[]> {
+  const existing = await loadCapsules();
+  const next = existing.filter((capsule) => capsule.id !== id);
+  await set(CAPSULES_KEY, next);
+  return next;
+}
+
+export async function clearCapsules(): Promise<void> {
+  await del(CAPSULES_KEY);
 }
 
 export const defaultPreferences: LocalPreferences = {
