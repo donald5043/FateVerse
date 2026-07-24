@@ -18,6 +18,7 @@ const BarnumMirrorPage = lazy(() => import('./pages/BarnumMirrorPage'));
 const RitualPage = lazy(() => import('./pages/RitualPage'));
 const CosmicImprintPage = lazy(() => import('./pages/CosmicImprintPage'));
 const SharedProfilePage = lazy(() => import('./pages/SharedProfilePage'));
+const NarrativePage = lazy(() => import('./pages/NarrativePage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="ritual" element={<RitualPage />} />
           <Route path="imprint" element={<CosmicImprintPage />} />
           <Route path="shared" element={<SharedProfilePage />} />
+          <Route path="narrative" element={<NarrativePage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="privacy" element={<PrivacyPage />} />
           <Route path="settings" element={<SettingsPage />} />

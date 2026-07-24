@@ -11,6 +11,7 @@ const links = [
   ['/profile', '探索命盤'],
   ['/ritual', '決策儀式'],
   ['/imprint', '宇宙印記'],
+  ['/narrative', '人生劇本'],
   ['/daily', '今日指引'],
   ['/tarot', '塔羅牌'],
   ['/palm', '拍手相'],
