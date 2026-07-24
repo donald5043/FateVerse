@@ -4,8 +4,10 @@ import { Link } from 'react-router-dom';
 import BackToReportLink from '../components/common/BackToReportLink';
 import Disclaimer from '../components/common/Disclaimer';
 import ChartFingerprintArt from '../components/report/ChartFingerprintArt';
+import SoundFingerprintPlayer from '../components/report/SoundFingerprintPlayer';
 import { buildBirthdaySky } from '../engines/birthday-sky-engine';
 import { buildChartFingerprint } from '../engines/chart-fingerprint-engine';
+import { buildSoundFingerprint } from '../engines/sound-fingerprint-engine';
 import { useFateStore } from '../store/useFateStore';
 import { renderImprintShareImage } from '../utils/imprint-share-image';
 
@@ -16,6 +18,7 @@ export default function CosmicImprintPage() {
   const [shareError, setShareError] = useState('');
 
   const fingerprint = useMemo(() => (input ? buildChartFingerprint(input) : undefined), [input]);
+  const sound = useMemo(() => (input ? buildSoundFingerprint(input) : undefined), [input]);
   const sky = useMemo(() => (input && profile ? buildBirthdaySky(input, profile.birthDate) : undefined), [input, profile]);
 
   if (!input || !fingerprint || !sky) {
@@ -82,6 +85,8 @@ export default function CosmicImprintPage() {
           <p className="mt-4 text-xs leading-5 text-mist">{sky.caveat}</p>
         </article>
       </div>
+
+      {sound && <div className="mx-auto mt-6 max-w-4xl"><SoundFingerprintPlayer fingerprint={sound} /></div>}
 
       {shareError && <p className="mx-auto mt-6 max-w-4xl rounded-xl border border-rose-200/20 bg-rose-200/[0.08] p-3 text-sm text-rose-100" role="alert">{shareError}</p>}
 

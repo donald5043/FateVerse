@@ -18,6 +18,7 @@ const playful = [
   { to: '/mirror', watermark: '鏡', title: '巴納姆鏡子', text: '猜猜哪句是真命盤、哪句是通用話術。', tone: 'text-vermilion' },
   { to: '/palm', watermark: '掌', title: '拍手相', text: '拍下手掌，自動分析手型與掌紋。', tone: 'text-celeste' },
   { to: '/capsule', watermark: '封', title: '時間膠囊', text: '寫給未來的自己，到期再回來驗證。', tone: 'text-celeste' },
+  { to: '/synastry', watermark: '合', title: '兩人合盤', text: '兩個人的命盤並排，看互補與張力。', tone: 'text-vermilion' },
   { to: '/daily', watermark: '日', title: '今日指引', text: '給今天一個小小的反思與行動。', tone: 'text-violet-400' },
 ] as const;
 
