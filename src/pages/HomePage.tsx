@@ -1,4 +1,4 @@
-import { ArrowRight, Compass, Dice5, Eye, Grid2x2, Hand, Layers, Orbit, ScanLine, Sparkles } from 'lucide-react';
+import { ArrowRight, Compass, Dice5, Eye, Fingerprint, Grid2x2, Hand, Layers, Orbit, ScanLine, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Disclaimer from '../components/common/Disclaimer';
 
@@ -12,6 +12,7 @@ const features = [
   { to: '/daily', icon: Sparkles, accent: '每日一問', title: '今日指引', text: '給今天一個小小的反思與行動。', tone: 'text-violet-400', bg: 'bg-violet-400/[0.14]', hover: 'hover:border-violet-400/40' },
   { to: '/mirror', icon: Eye, accent: '拆解算命話術', title: '巴納姆鏡', text: '猜猜哪句是真命盤、哪句是通用話術。', tone: 'text-amber-200', bg: 'bg-amber-200/[0.12]', hover: 'hover:border-amber-200/40' },
   { to: '/ritual', icon: Dice5, accent: '卡關時擲一下', title: '決策儀式', text: '不預測未來，幫你聽見心裡已有的答案。', tone: 'text-gold', bg: 'bg-gold/[0.12]', hover: 'hover:border-gold/40' },
+  { to: '/imprint', icon: Fingerprint, accent: '生成藝術 · 出生快照', title: '宇宙印記', text: '一張只屬於你的命之圖騰與出生那天的天空。', tone: 'text-teal-300', bg: 'bg-teal-300/[0.12]', hover: 'hover:border-teal-300/40' },
 ] as const;
 
 const orbitChips = [

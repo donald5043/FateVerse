@@ -1,5 +1,6 @@
 import { RITUAL_CARDS, type RitualCard } from '../data/ritual-cards';
 import type { FateReportInput } from '../types/fate';
+import { hashString, mulberry32 } from '../utils/seeded-random';
 
 export type DiceSide = 'act' | 'wait';
 export type HopedSide = 'act' | 'wait' | 'unknown';
@@ -23,27 +24,6 @@ export interface RitualReflection {
 
 const SIDE_LABELS: Record<DiceSide, string> = { act: '動', wait: '靜' };
 const opposite = (side: DiceSide): DiceSide => (side === 'act' ? 'wait' : 'act');
-
-// FNV-1a 字串雜湊，接 mulberry32：同一顆種子永遠得到同一擲，方便測試與可重現。
-function hashString(value: string): number {
-  let hash = 2166136261;
-  for (let index = 0; index < value.length; index += 1) {
-    hash ^= value.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
-}
-
-function mulberry32(seedNumber: number): () => number {
-  let state = seedNumber;
-  return () => {
-    state |= 0;
-    state = (state + 0x6d2b79f5) | 0;
-    let t = Math.imul(state ^ (state >>> 15), 1 | state);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 /** 用命盤的穩定特徵組出一段「骰種簽名」；命盤只是種子，不影響擲骰的隨機性。 */
 export function chartSeedSignature(input: FateReportInput): string {
