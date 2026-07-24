@@ -90,8 +90,9 @@ export default function DailyPage() {
         <article key={card.id} className="card-reveal-glow relative mx-auto mt-10 max-w-3xl overflow-hidden rounded-[2rem] border border-violet-400/[0.28] bg-gradient-to-br from-[#1c1a3d] via-[#11182f] to-[#0b1020] p-1">
           <div className="pointer-events-none absolute -right-20 -top-24 size-72 rounded-full border border-violet-400/10" />
           <div className="pointer-events-none absolute -left-20 -bottom-24 size-64 rounded-full border border-violet-400/10" />
-          <div className="relative rounded-[1.75rem] border border-white/[0.07] px-6 py-9 text-center sm:px-12 sm:py-12">
-            <div className="pulse-glow-fast mx-auto grid size-14 place-items-center rounded-full border border-violet-400/[0.35] bg-violet-400/10 text-violet-300">
+          <div className="relative overflow-hidden rounded-[1.75rem] border border-white/[0.07] px-6 py-9 text-center sm:px-12 sm:py-12">
+            <span className="pointer-events-none absolute left-1/2 top-1/2 -z-10 -translate-x-1/2 -translate-y-1/2 select-none font-serif text-[13rem] font-black leading-none text-violet-400/[0.05]" aria-hidden="true">{[...card.keyword][0]}</span>
+            <div className="pulse-glow-fast relative mx-auto grid size-14 place-items-center rounded-full border border-violet-400/[0.35] bg-violet-400/10 text-violet-300">
               <Sparkles size={25} />
             </div>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-2">

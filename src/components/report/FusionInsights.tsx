@@ -16,10 +16,10 @@ export default function FusionInsights({ reading }: { reading: FusionReading }) 
   const maxVotes = reading.consensus.votes[0]?.votes ?? 1;
   return (
     <div className="space-y-6">
-      <article className="relative overflow-hidden rounded-[2rem] border border-fuchsia-200/25 bg-gradient-to-br from-fuchsia-300/[0.09] via-[#161a38] to-[#0b1020] p-6 sm:p-8">
-        <div className="pointer-events-none absolute -left-16 -top-20 size-60 rounded-full border border-fuchsia-200/10" />
+      <article className="relative overflow-hidden rounded-[2rem] border border-vermilion/25 bg-gradient-to-br from-vermilion/[0.1] via-[#1a1226] to-[#0b1020] p-6 sm:p-8">
+        <span className="pointer-events-none absolute -right-4 -top-12 select-none font-serif text-[12rem] font-black leading-none text-vermilion/[0.07]" aria-hidden="true">融</span>
         <div className="relative">
-          <div className="flex items-center gap-3 text-fuchsia-200"><Blend size={22} /><span className="eyebrow">All systems combined</span></div>
+          <div className="flex items-center gap-3 text-[#e8927f]"><Blend size={22} /><span className="eyebrow text-[#e8927f]">All systems combined</span></div>
           <p className="mt-4 max-w-4xl font-serif text-xl leading-9 text-cream sm:text-2xl sm:leading-10">{reading.headline}</p>
           <p className="mt-4 max-w-4xl text-sm leading-7 text-mist">{reading.plainIntro}</p>
           <div className="mt-4 flex flex-wrap gap-1.5">{reading.systemsUsed.map((system) => <span className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-xs text-mist" key={system}>{system}</span>)}</div>

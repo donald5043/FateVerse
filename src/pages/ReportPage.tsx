@@ -362,8 +362,8 @@ export default function ReportPage() {
         <div className="mb-6"><p className="eyebrow">Life path number</p><h2 className="section-title mt-2">生命靈數</h2><p className="mt-2 text-sm leading-6 text-mist">以出生日期所有數字相加歸納；11、22、33 為大師數，保留不再相加。</p></div>
         <div className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
           <article className="rounded-[20px] border border-rose-400/25 bg-rose-400/[0.06] p-7 text-center">
-            <span className="text-xs font-bold text-rose-400">生命靈數</span>
-            <div className="my-3 font-serif text-[64px] leading-none text-rose-400">{input.numerology.lifePathNumber}</div>
+            <span className="font-display text-sm italic tracking-wider text-rose-400">生命靈數</span>
+            <div className="my-2 font-display text-[88px] font-medium italic leading-none text-rose-400">{input.numerology.lifePathNumber}</div>
             <p className="text-sm text-mist">{input.numerology.title}{input.numerology.isMasterNumber ? ' · 大師數，保留不再相加' : ''}</p>
           </article>
           <article className="rounded-[20px] border border-white/10 bg-white/[0.045] p-6">

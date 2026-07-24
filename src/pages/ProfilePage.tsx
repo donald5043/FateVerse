@@ -89,8 +89,8 @@ export default function ProfilePage() {
       <BackToReportLink note="你已經有一份報告。可以直接回去看，或修改下方資料重新計算。" />
       <div className="max-w-3xl"><p className="eyebrow">Cross-cultural profile</p><h1 className="display-title mt-3">探索命盤</h1><p className="mt-5 muted">填一下出生資料，我們就能整理出四柱、十神、大運、紫微十二宮、行星黃道位置、生肖與生命靈數，再用輕鬆的方式講給你聽。</p></div>
       <div className="mt-9 notice flex items-start gap-3"><LockKeyhole className="mt-0.5 shrink-0 text-gold" size={19} /><p>所有資料只在目前瀏覽器中運算，不會上傳至伺服器。出生資料預設不會永久保存。</p></div>
-      <ol className="mt-6 grid grid-cols-3 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035]" aria-label="建立報告流程">
-        {['出生資料', '關注主題', '萬象報告'].map((step, index) => <li className="flex items-center gap-2 border-r border-white/10 px-3 py-3 text-xs text-mist last:border-r-0 sm:px-5 sm:text-sm" key={step}><span className={`grid size-6 shrink-0 place-items-center rounded-full text-xs font-semibold ${index === 0 ? 'bg-gold text-ink' : 'bg-white/10 text-cream'}`}>{index + 1}</span><span>{step}</span></li>)}
+      <ol className="mt-7 grid grid-cols-3 gap-4" aria-label="建立報告流程">
+        {[['Ⅰ', '出生資料'], ['Ⅱ', '關注主題'], ['Ⅲ', '萬象報告']].map(([numeral, step], index) => <li className={`border-t pt-3 ${index === 0 ? 'border-gold/60' : 'border-gold/[0.18]'}`} key={step}><span className={`font-display text-2xl italic ${index === 0 ? 'text-gold' : 'text-mist'}`}>{numeral}</span><p className={`mt-0.5 text-sm ${index === 0 ? 'font-semibold text-cream' : 'text-mist'}`}>{step}</p></li>)}
       </ol>
       <form onSubmit={submit} className="mt-7 grid items-start gap-7 lg:grid-cols-[1fr_0.72fr]" noValidate>
         <div className="glass-card space-y-6 p-5 sm:p-7">
