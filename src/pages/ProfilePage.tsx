@@ -1,16 +1,11 @@
 import { AlertCircle, ArrowRight, LockKeyhole, Sparkles } from 'lucide-react';
 import { FormEvent, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { generateFallbackReport } from '../ai/fallback-report';
 import BackToReportLink from '../components/common/BackToReportLink';
 import BirthChartPreview from '../components/profile/BirthChartPreview';
-import { calculateAstrology } from '../engines/astrology-engine';
 import { calculateBazi } from '../engines/bazi-engine';
+import { buildReportFromProfile } from '../engines/build-report';
 import { calculateFiveElements } from '../engines/five-elements-engine';
-import { analyzeName } from '../engines/name-engine';
-import { calculateNumerology } from '../engines/numerology-engine';
-import { getZodiacResult } from '../engines/zodiac-engine';
-import { calculateZiwei } from '../engines/ziwei-engine';
 import { useFateStore } from '../store/useFateStore';
 import type { ProfileInput } from '../types/fate';
 import { CITY_SUGGESTIONS, lookupCityCoordinates } from '../utils/city-coordinates';
@@ -73,19 +68,7 @@ export default function ProfilePage() {
       if (!form.name.trim()) throw new Error('請填寫姓名；未收錄的文字會標示資料不足，不會偽造筆畫。');
       if (!form.gender || !form.region.trim() || !form.timezone.trim()) throw new Error('請完成性別、出生地區與時區欄位。');
       if (!form.focus.length) throw new Error('請至少選擇一個想了解的主題。');
-      const bazi = calculateBazi(form);
-      const fiveElements = calculateFiveElements(bazi.pillars);
-      const reportInput = {
-        userFocus: form.focus,
-        bazi,
-        fiveElements,
-        zodiac: getZodiacResult(bazi.zodiac),
-        astrology: calculateAstrology(form),
-        ziwei: calculateZiwei(form),
-        numerology: calculateNumerology(form.birthDate),
-        nameAnalysis: form.name.trim() ? analyzeName(form.name, fiveElements.weakest, manualStrokes) : undefined,
-      };
-      const report = generateFallbackReport(reportInput);
+      const { reportInput, report } = buildReportFromProfile(form, manualStrokes);
       setProfile(form, reportInput, report);
       try {
         const preferences = await loadPreferences();

@@ -1,7 +1,9 @@
 import { Check, Copy, Printer } from 'lucide-react';
 import { useState } from 'react';
+import type { ProfileInput } from '../../types/fate';
+import ShareLinkButton from '../common/ShareLinkButton';
 
-export default function ReportActions({ summary }: { summary: string }) {
+export default function ReportActions({ summary, profile }: { summary: string; profile?: ProfileInput }) {
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -17,6 +19,7 @@ export default function ReportActions({ summary }: { summary: string }) {
   return (
     <div className="flex flex-wrap gap-2 print:hidden">
       <button className="btn-secondary min-h-10 px-4 py-2 text-sm" type="button" onClick={() => void copy()}>{copied ? <Check size={16} /> : <Copy size={16} />}{copied ? '已複製' : '複製摘要'}</button>
+      {profile && <ShareLinkButton profile={profile} />}
       <button className="btn-secondary min-h-10 px-4 py-2 text-sm" type="button" onClick={() => window.print()}><Printer size={16} />列印／存成 PDF</button>
     </div>
   );

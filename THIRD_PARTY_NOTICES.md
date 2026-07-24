@@ -17,6 +17,7 @@
 | Tesseract.js | 瀏覽器 OCR | Apache-2.0 |
 | Fuse.js | 籤詩模糊比對 | Apache-2.0 |
 | idb-keyval | IndexedDB 封裝 | Apache-2.0 |
+| lz-string | 分享連結的字串壓縮 | MIT |
 | @mlc-ai/web-llm | 瀏覽器本地 LLM runtime | Apache-2.0 |
 | Lucide React | 圖示 | ISC |
 | Zod | JSON schema 驗證 | MIT |
