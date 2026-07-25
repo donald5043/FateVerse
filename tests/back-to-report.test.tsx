@@ -8,7 +8,7 @@ import { calculateBazi } from '../src/engines/bazi-engine';
 import { calculateFiveElements } from '../src/engines/five-elements-engine';
 import { calculateNumerology } from '../src/engines/numerology-engine';
 import { getZodiacResult } from '../src/engines/zodiac-engine';
-import { generateFallbackReport } from '../src/ai/fallback-report';
+import { generateFallbackReport } from '../src/engines/fallback-report';
 import type { ProfileInput } from '../src/types/fate';
 
 function seedReport(name: string) {

@@ -89,4 +89,37 @@ describe('聲音指紋', () => {
   it('不同命盤產生不同種子', () => {
     expect(buildSoundFingerprint(buildInput('1985-07-15')).seed).not.toBe(sound.seed);
   });
+
+  it('不同人的聲音指紋在聽感上明顯不同（根音、鼓音或和聲至少一項有別）', () => {
+    // 過去只靠日主五行決定根音，僅有五種，導致不同人常常聽起來一模一樣。
+    const dates = ['1990-01-02', '1985-07-15', '1993-03-21', '1978-11-09', '2001-06-30', '1996-09-12'];
+    const prints = dates.map((date) => buildSoundFingerprint(buildInput(date)));
+    const audibleKey = (fp: ReturnType<typeof buildSoundFingerprint>) =>
+      `${fp.droneFreq}|${fp.voices.map((v) => `${v.freq}:${v.pan}:${v.detune}`).join(',')}`;
+    const keys = prints.map(audibleKey);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  it('同一份命盤的失諧與呼吸速率是確定值，播放不會每次不同', () => {
+    const again = buildSoundFingerprint(input);
+    expect(again.voices.map((v) => v.detune)).toEqual(sound.voices.map((v) => v.detune));
+    expect(again.voices.map((v) => v.lfoHz)).toEqual(sound.voices.map((v) => v.lfoHz));
+  });
+
+  it('帶有可循環的確定性旋律，含實際發聲的音與合理拍長', () => {
+    expect(sound.melody.length).toBeGreaterThan(0);
+    expect(sound.melody.some((step) => step.freq !== null)).toBe(true);
+    sound.melody.forEach((step) => {
+      expect(step.beats).toBeGreaterThanOrEqual(1);
+      expect(step.beats).toBeLessThanOrEqual(2);
+      if (step.freq !== null) expect(step.freq).toBeGreaterThan(0);
+    });
+    expect(buildSoundFingerprint(input).melody).toEqual(sound.melody);
+  });
+
+  it('不同命盤通常有不同旋律', () => {
+    const other = buildSoundFingerprint(buildInput('1993-03-21'));
+    const key = (m: typeof sound.melody) => m.map((s) => `${s.freq}:${s.beats}`).join('|');
+    expect(key(other.melody)).not.toBe(key(sound.melody));
+  });
 });

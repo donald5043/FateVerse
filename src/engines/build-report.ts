@@ -1,4 +1,4 @@
-import { generateFallbackReport } from '../ai/fallback-report';
+import { generateFallbackReport } from './fallback-report';
 import type { AiFateReport, FateReportInput, ProfileInput } from '../types/fate';
 import { calculateAstrology } from './astrology-engine';
 import { calculateBazi } from './bazi-engine';

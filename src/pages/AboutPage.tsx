@@ -1,9 +1,9 @@
-import { BrainCircuit, Calculator, Database, ScanLine, ShieldCheck } from 'lucide-react';
+import { Calculator, Database, Laptop, ScanLine, ShieldCheck } from 'lucide-react';
 import Disclaimer from '../components/common/Disclaimer';
 
 const principles = [
-  { icon: Calculator, title: '可計算的，不交給 AI 猜', text: '八字、大運、紫微十二宮、行星星盤、靈數與籤詩比對，都先由程式或正式套件產生結構化結果。' },
-  { icon: BrainCircuit, title: 'AI 是可選的文字整理', text: '本地模型只重新組織已提供資料；不支援 WebGPU 時，規則式報告仍是完整可用路徑。' },
+  { icon: Calculator, title: '可計算的，就精確計算', text: '八字、大運、紫微十二宮、行星星盤、靈數與籤詩比對，都由程式或正式套件產生結構化結果，不用模糊話術。' },
+  { icon: Laptop, title: '全程在你的裝置上', text: '所有計算都在瀏覽器內完成，出生資料與上傳圖片不會送到任何伺服器，關掉分頁就不留痕跡。' },
   { icon: Database, title: '來源與內容分層', text: '原始籤文、資料來源、傳統說明與 FateVerse 現代化整理分開呈現，不用模糊文案掩蓋缺漏。' },
   { icon: ShieldCheck, title: '保留決策界線', text: '所有結果都是文化觀察與反思素材，不作醫療診斷、法律結論、投資保證或災難預言。' },
 ] as const;
@@ -15,7 +15,7 @@ export default function AboutPage() {
 
       <div className="mt-12 grid gap-5 md:grid-cols-2">{principles.map(({ icon: Icon, title, text }, index) => <article className="glass-card p-6" key={title}><div className="flex items-center justify-between"><span className="grid size-11 place-items-center rounded-2xl bg-gold/10 text-gold"><Icon size={21} /></span><span className="text-xs font-semibold text-gold/60">0{index + 1}</span></div><h2 className="mt-5 font-serif text-xl font-semibold text-cream">{title}</h2><p className="mt-3 leading-7 text-mist">{text}</p></article>)}</div>
 
-      <section className="mt-12 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.035] p-6 sm:p-8"><div className="flex items-center gap-3"><ScanLine className="text-gold" /><h2 className="section-title">資料如何流動</h2></div><div className="mt-7 grid gap-3 sm:grid-cols-4">{['使用者輸入', '程式精確計算', '結構化 JSON', '模板／本地 AI 整理'].map((item, index) => <div className="relative rounded-2xl border border-white/10 bg-[#0e152a] p-4 text-center" key={item}><span className="text-xs text-gold">STEP {index + 1}</span><p className="mt-2 text-sm font-semibold text-cream">{item}</p>{index < 3 && <span className="absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 text-gold sm:block">→</span>}</div>)}</div></section>
+      <section className="mt-12 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.035] p-6 sm:p-8"><div className="flex items-center gap-3"><ScanLine className="text-gold" /><h2 className="section-title">資料如何流動</h2></div><div className="mt-7 grid gap-3 sm:grid-cols-4">{['使用者輸入', '程式精確計算', '結構化資料', '規則式整理報告'].map((item, index) => <div className="relative rounded-2xl border border-white/10 bg-[#0e152a] p-4 text-center" key={item}><span className="text-xs text-gold">STEP {index + 1}</span><p className="mt-2 text-sm font-semibold text-cream">{item}</p>{index < 3 && <span className="absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 text-gold sm:block">→</span>}</div>)}</div></section>
 
       <div className="mt-10"><Disclaimer health /></div>
     </section>

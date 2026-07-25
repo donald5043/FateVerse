@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-本專案不將 WebLLM 模型或 Tesseract OCR 語言資料提交至 repository。使用者主動啟用相關功能時，瀏覽器才會依上游套件設定下載並快取內容。
+本專案不將 Tesseract OCR 語言資料提交至 repository。使用者主動啟用 OCR 功能時，瀏覽器才會依上游套件設定下載並快取內容。
 
 ## 執行階段套件
 
@@ -18,9 +18,7 @@
 | Fuse.js | 籤詩模糊比對 | Apache-2.0 |
 | idb-keyval | IndexedDB 封裝 | Apache-2.0 |
 | lz-string | 分享連結的字串壓縮 | MIT |
-| @mlc-ai/web-llm | 瀏覽器本地 LLM runtime | Apache-2.0 |
 | Lucide React | 圖示 | ISC |
-| Zod | JSON schema 驗證 | MIT |
 
 ## 開發工具
 
@@ -31,9 +29,8 @@ TypeScript、ESLint、Prettier、Vitest、Testing Library、PostCSS、Autoprefix
 ## 外部下載內容
 
 - `chi_tra` OCR traineddata：由 Tesseract.js 預設資料來源取得，授權與確切版本依該下載來源為準。
-- `Qwen2.5-0.5B-Instruct-q4f16_1-MLC`：WebLLM 預建清單指向的 MLC 量化模型。模型權重與衍生檔案適用其模型頁面所列授權；本 repository 不重分發模型。舊版曾使用的 Qwen3 0.6B 快取可在設定頁一併清除。
 
-啟用或重新分發外部模型與語言資料前，部署者應在上游來源再次確認當時版本、授權與使用條款。
+啟用或重新分發外部語言資料前，部署者應在上游來源再次確認當時版本、授權與使用條款。
 
 ## Unicode Unihan Database
 
@@ -44,7 +41,7 @@ TypeScript、ESLint、Prettier、Vitest、Testing Library、PostCSS、Autoprefix
 
 ## FateVerse 示範資料
 
-- `public/data/fortune-sticks/*.json`：FateVerse 自編格式示範，不是特定廟宇正式籤文，CC BY 4.0。
+- `public/data/fortune-sticks/sixty-jiazi.json`、`guanyin-100.json`：籤詩本文與吉凶分級為傳統六十甲子籤（媽祖靈籤）與觀音一百籤，屬公有領域古典籤文，逐字校對自公開籤詩資料；隨附的白話摘要、九面向解讀、行動建議與關鍵詞為 FateVerse 自編，CC BY 4.0。各廟版本用字與吉凶分級略有出入，實際解籤請以所在廟宇為準。
 - `public/data/fortune-sticks/user-samples.json`：使用者提供照片的短篇籤文轉錄；每筆來源與解讀範圍標示於資料內，不併入 FateVerse 自編資料授權聲明。
 - `public/data/daily-guidance.json`：FateVerse 自編自我反思卡，CC BY 4.0。
 - 生肖、星座、生命靈數、姓名示範內容與現代化報告模板：FateVerse 自編基礎內容，CC BY 4.0。
