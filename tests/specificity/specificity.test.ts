@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { analyze, OVER_GENERIC_THRESHOLD } from './analyze';
+import { analyze, OVER_GENERIC_THRESHOLD, STATIC_PLACEHOLDER_MAX } from './analyze';
 import { buildSyntheticCharts } from './synthetic-charts';
 import { normalizeSentence } from './extract-sentences';
 import { writeBaseline } from './write-baseline';
@@ -29,7 +29,9 @@ describe('具體性量測', () => {
     const result = analyze(buildSyntheticCharts());
 
     const over = result.stats.filter((s) => s.verdict === 'OVER_GENERIC');
-    const overRate = result.totalTemplates ? over.length / result.totalTemplates : 0;
+    const overStatic = over.filter((s) => s.placeholderRatio < STATIC_PLACEHOLDER_MAX);
+    const interpretationTotal = result.counts.OVER_GENERIC + result.counts.WATCH + result.counts.OK;
+    const overRate = interpretationTotal ? over.length / interpretationTotal : 0;
 
     // ── 終端摘要 ────────────────────────────────────────────
     const lines = [
@@ -37,14 +39,16 @@ describe('具體性量測', () => {
       '─── 具體性量測摘要 ─────────────────────────────',
       `  命盤樣本      ${result.chartCount} 組（種子 ${result.seed}）`,
       `  抽取句子      ${result.totalSentences.toLocaleString()} 句 → ${result.totalTemplates} 個模板`,
-      `  OVER_GENERIC  ${over.length} 條（${(overRate * 100).toFixed(1)}% 的模板）`,
+      `  OVER_GENERIC  ${over.length} 條（佔解讀類 ${(overRate * 100).toFixed(1)}%）`,
+      `   └ 靜態泛用句 ${overStatic.length} 條 ← 優先改寫目標`,
       `  WATCH         ${result.counts.WATCH} 條`,
       `  OK            ${result.counts.OK} 條`,
+      `  FRAMING       ${result.counts.FRAMING} 條（方法說明／免責／標籤，不計分）`,
       `  每份報告平均模糊限定詞 ${result.averageHedgesPerReport.toFixed(1)} 個（上限 1）`,
       `  R3 過長段落   ${result.voiceRuleTotals['R3-paragraph-length']} 個模板`,
       '',
-      '  出現率最高的 10 條：',
-      ...over.slice(0, 10).map((s, i) => `   ${String(i + 1).padStart(2)}. ${(s.rate * 100).toFixed(1).padStart(5)}%  ${s.template.slice(0, 52)}`),
+      '  靜態泛用句中出現率最高的 10 條：',
+      ...overStatic.slice(0, 10).map((s, i) => `   ${String(i + 1).padStart(2)}. ${(s.rate * 100).toFixed(1).padStart(5)}%  ${s.template.slice(0, 52)}`),
       `  耗時 ${(result.elapsedMs / 1000).toFixed(1)} 秒`,
       '────────────────────────────────────────────────',
       '',

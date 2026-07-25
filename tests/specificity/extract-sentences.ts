@@ -99,18 +99,42 @@ const FRAMING_FIELDS = new Set([
   'unified.caveat', // 免責
 ]);
 
-function kindOf(field: string): TextKind {
-  return FRAMING_FIELDS.has(field) ? 'framing' : 'interpretation';
+/**
+ * 有些免責與方法說明句被寫在解讀欄位裡（例如 sections.bazi 末尾的計分規則說明）。
+ * 這些句子在語意上仍是 framing，不該套用「必須有可能說錯」的判準。
+ * 標記詞刻意取得保守而明確，避免把真正的解讀誤放行。
+ */
+const FRAMING_SENTENCE_MARKERS = [
+  '不是預言',
+  '不是固定命運',
+  '不構成',
+  '僅供',
+  '諮詢',
+  '唯一答案',
+  '公開計分規則',
+  '不作強行推論',
+  '不以猜測補齊',
+  '不由單星',
+  '本版只呈現',
+  '不互相取代',
+  '這次的資料沒有',
+  '本次沒有',
+];
+
+function kindOf(field: string, text?: string): TextKind {
+  if (FRAMING_FIELDS.has(field)) return 'framing';
+  if (text && FRAMING_SENTENCE_MARKERS.some((marker) => text.includes(marker))) return 'framing';
+  return 'interpretation';
 }
 
 function makePush(result: ExtractionResult) {
   return (source: string, field: string, text: string | undefined): void => {
     if (!text) return;
-    const kind = kindOf(field);
-    // 先記錄整段（供 R3 檢查段落句數），再切成單句（供出現率統計）。
-    result.fields.push({ kind, source, field, text, template: normalizeSentence(text) });
+    // 欄位層級（供 R3）沿用欄位分類；句子層級再依標記詞細判，
+    // 讓夾在解讀段落裡的免責句也能被正確歸為 framing。
+    result.fields.push({ kind: kindOf(field), source, field, text, template: normalizeSentence(text) });
     for (const raw of splitSentences(text)) {
-      result.sentences.push({ kind, source, field, raw, template: normalizeSentence(raw) });
+      result.sentences.push({ kind: kindOf(field, raw), source, field, raw, template: normalizeSentence(raw) });
     }
   };
 }

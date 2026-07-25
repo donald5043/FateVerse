@@ -12,6 +12,12 @@ export type Verdict = 'OVER_GENERIC' | 'WATCH' | 'OK' | 'FRAMING';
 export interface TemplateStat {
   kind: TextKind;
   template: string;
+  /**
+   * 模板中佔位符所佔的字元比例（0–1）。
+   * 高比例代表這是「句框」——每份報告都會用到，但填入的內容因命盤而異，區辨度來自插值。
+   * 低比例代表這是「靜態文案」——不論誰來看幾乎都是同一段字，才是真正的巴納姆風險。
+   */
+  placeholderRatio: number;
   example: string;
   source: string;
   fields: string[];
@@ -35,6 +41,16 @@ export interface AnalysisResult {
   /** 違反 R3（段落 > 3 句）的欄位，格式為 `來源::欄位::句數`。 */
   longParagraphs: { source: string; field: string; sentenceCount: number; example: string }[];
   elapsedMs: number;
+}
+
+/** 佔位符低於此比例者視為靜態文案，是改寫的優先目標。 */
+export const STATIC_PLACEHOLDER_MAX = 0.25;
+
+/** 計算模板中 {佔位符} 所佔的字元比例。 */
+export function placeholderRatioOf(template: string): number {
+  if (!template.length) return 0;
+  const placeholderChars = (template.match(/\{[^}]+\}/g) ?? []).reduce((sum, token) => sum + token.length, 0);
+  return placeholderChars / template.length;
 }
 
 function verdictOf(rate: number, kind: TextKind): Verdict {
@@ -136,6 +152,7 @@ export function analyze(charts: SyntheticChart[] = buildSyntheticCharts()): Anal
       return {
         kind: entry.kind,
         template,
+        placeholderRatio: placeholderRatioOf(template),
         example: entry.example,
         source: entry.source,
         fields: [...entry.fields].sort(),

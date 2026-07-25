@@ -1,5 +1,5 @@
 import { writeFileSync } from 'node:fs';
-import { OVER_GENERIC_THRESHOLD, WATCH_THRESHOLD, type AnalysisResult, type TemplateStat } from './analyze';
+import { OVER_GENERIC_THRESHOLD, STATIC_PLACEHOLDER_MAX, WATCH_THRESHOLD, type AnalysisResult, type TemplateStat } from './analyze';
 
 const pct = (value: number): string => `${(value * 100).toFixed(1)}%`;
 
@@ -12,11 +12,11 @@ function truncate(text: string, max = 78): string {
 
 function table(stats: TemplateStat[]): string {
   if (!stats.length) return '_（無）_\n';
-  const head = '| # | 來源檔案 | 欄位 | 句子模板 | 出現率 | 判定 | 違反規則 |\n| --- | --- | --- | --- | ---: | --- | --- |\n';
+  const head = '| # | 來源檔案 | 欄位 | 句子模板 | 出現率 | 插值比例 | 判定 | 違反規則 |\n| --- | --- | --- | --- | ---: | ---: | --- | --- |\n';
   const rows = stats.map((stat, index) => {
     const fields = stat.fields.length > 2 ? `${stat.fields.slice(0, 2).join('、')} 等 ${stat.fields.length} 處` : stat.fields.join('、');
     const rules = stat.voiceRules.length ? stat.voiceRules.join('、') : '—';
-    return `| ${index + 1} | \`${cell(stat.source)}\` | \`${cell(fields)}\` | ${cell(truncate(stat.template))} | ${pct(stat.rate)} | \`${stat.verdict}\` | ${rules} |`;
+    return `| ${index + 1} | \`${cell(stat.source)}\` | \`${cell(fields)}\` | ${cell(truncate(stat.template))} | ${pct(stat.rate)} | ${pct(stat.placeholderRatio)} | \`${stat.verdict}\` | ${rules} |`;
   });
   return head + rows.join('\n') + '\n';
 }
@@ -26,6 +26,9 @@ export function renderBaseline(result: AnalysisResult): string {
   const watch = result.stats.filter((s) => s.verdict === 'WATCH');
   const ok = result.stats.filter((s) => s.verdict === 'OK');
   const framing = result.stats.filter((s) => s.verdict === 'FRAMING');
+  // 靜態文案（插值少）才是真正的巴納姆風險；高插值句框的區辨度來自填入的內容。
+  const overStatic = over.filter((s) => s.placeholderRatio < STATIC_PLACEHOLDER_MAX);
+  const overFrame = over.filter((s) => s.placeholderRatio >= STATIC_PLACEHOLDER_MAX);
   const interpretationTotal = over.length + watch.length + ok.length;
   const overRate = interpretationTotal ? over.length / interpretationTotal : 0;
 
@@ -70,9 +73,22 @@ ${result.longParagraphs.length === 0 ? '_（無）_' : `| 來源檔案 | 欄位 
 
 ## OVER_GENERIC（出現率 > ${pct(OVER_GENERIC_THRESHOLD)}）
 
-這些句子在超過三成的命盤中都會出現。依 voice.md 的核心判準——「一句解讀必須有可能說錯」——它們幾乎不可能是在描述某個特定的人。**依嚴重度（出現率）排序：**
+共 ${over.length} 條，再依「插值比例」分成兩類。插值比例是模板中 \`{佔位符}\` 所佔的字元比例：
+比例低代表不論誰來看幾乎都是同一段字；比例高代表這是句框，區辨度來自填入的命盤內容。
 
-${table(over)}
+### A. 靜態泛用句（插值 < ${pct(STATIC_PLACEHOLDER_MAX)}）——優先改寫目標
+
+共 **${overStatic.length}** 條。這些句子在超過三成的命盤中出現，而且內容幾乎不隨命盤變化，
+最符合 voice.md 核心判準所要排除的情況：換個人來看仍然成立。**依出現率排序：**
+
+${table(overStatic)}
+
+### B. 高插值句框（插值 ≥ ${pct(STATIC_PLACEHOLDER_MAX)}）——次要
+
+共 ${overFrame.length} 條。模板本身每份報告都會出現，但填入的干支、五行、星座等內容因人而異，
+實際讀到的文字並不相同。改寫優先度低於 A 類，但仍可檢查句框本身是否過於制式。
+
+${table(overFrame)}
 
 ## WATCH（出現率 ${pct(WATCH_THRESHOLD)}–${pct(OVER_GENERIC_THRESHOLD)}）
 
