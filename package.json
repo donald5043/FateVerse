@@ -10,6 +10,7 @@
     "lint": "eslint . --max-warnings 0",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:specificity": "SPECIFICITY=1 vitest run tests/specificity",
     "verify:references": "vite-node scripts/verify-lunar.ts && vite-node scripts/verify-tesseract.ts && vite-node scripts/verify-fuse.ts",
     "preview": "vite preview"
   },
