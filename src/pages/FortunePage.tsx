@@ -14,8 +14,8 @@ type OcrState = 'idle' | 'initializing' | 'loading' | 'recognizing' | 'done' | '
 type OcrLayout = 'vertical' | 'horizontal';
 
 const systems: { value: FortuneSystem; label: string; note: string }[] = [
-  { value: 'sixty-jiazi', label: '六十甲子籤', note: '目前為 3 筆自編示範' },
-  { value: 'guanyin-100', label: '觀音一百籤', note: '目前為 3 筆格式示範' },
+  { value: 'sixty-jiazi', label: '六十甲子籤', note: '媽祖靈籤．完整 60 首' },
+  { value: 'guanyin-100', label: '觀音一百籤', note: '觀音靈籤．完整 100 首' },
   { value: 'custom', label: '全部已收錄（推薦）', note: '跨資料集搜尋，含照片收錄樣本' },
 ];
 const topics: FortuneTopic[] = ['overall', 'career', 'jobChange', 'love', 'wealth', 'family', 'health', 'study', 'travel', 'custom'];
@@ -104,7 +104,7 @@ export default function FortunePage() {
       const sticks = await loadFortuneSticks(system);
       const next = matchFortuneSticks(text, sticks);
       setMatches(next);
-      if (!next.length) setError('尚未在小型資料庫中找到相似籤詩。你仍可修改 OCR 文字後重試；未收錄的籤不會被假裝成其他籤。');
+      if (!next.length) setError('沒有找到夠相似的籤詩。可能是辨識文字有誤，或這支籤不屬於已收錄的籤本；你可以修改 OCR 文字後重試。未收錄的籤不會被假裝成其他籤。');
       return next;
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : '籤詩資料載入失敗。');
