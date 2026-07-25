@@ -114,6 +114,6 @@ export async function loadFortuneSticks(system: 'sixty-jiazi' | 'guanyin-100' | 
     }));
     return groups.flat();
   } catch {
-    throw new Error('籤詩示範資料載入失敗。請確認網路，或重新整理後再試。');
+    throw new Error('籤詩資料載入失敗。請確認網路，或重新整理後再試。');
   }
 }
