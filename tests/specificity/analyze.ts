@@ -1,14 +1,16 @@
 import { buildSyntheticCharts, CHART_COUNT, CHART_SEED, type SyntheticChart } from './synthetic-charts';
-import { extractReportSentences, splitSentences, type ExtractionResult } from './extract-sentences';
+import { extractReportSentences, splitSentences, type ExtractionResult, type TextKind } from './extract-sentences';
 import { checkFieldRules, countHedges, HEDGE_LIMIT, type VoiceRuleId } from './voice-rules';
 
 /** 判定門檻：出現率 > 30% 為過度泛用，15–30% 需觀察。 */
 export const OVER_GENERIC_THRESHOLD = 0.3;
 export const WATCH_THRESHOLD = 0.15;
 
-export type Verdict = 'OVER_GENERIC' | 'WATCH' | 'OK';
+/** framing 文字（方法說明／免責／資料標籤）不適用出現率判準，另立一類。 */
+export type Verdict = 'OVER_GENERIC' | 'WATCH' | 'OK' | 'FRAMING';
 
 export interface TemplateStat {
+  kind: TextKind;
   template: string;
   example: string;
   source: string;
@@ -35,7 +37,9 @@ export interface AnalysisResult {
   elapsedMs: number;
 }
 
-function verdictOf(rate: number): Verdict {
+function verdictOf(rate: number, kind: TextKind): Verdict {
+  // 免責、方法說明與資料標籤本來就該對所有人成立，不套用巴納姆判準。
+  if (kind === 'framing') return 'FRAMING';
   if (rate > OVER_GENERIC_THRESHOLD) return 'OVER_GENERIC';
   if (rate >= WATCH_THRESHOLD) return 'WATCH';
   return 'OK';
@@ -46,6 +50,7 @@ export function analyze(charts: SyntheticChart[] = buildSyntheticCharts()): Anal
 
   // template → 統計累積
   const byTemplate = new Map<string, {
+    kind: TextKind;
     example: string;
     source: string;
     fields: Set<string>;
@@ -105,7 +110,7 @@ export function analyze(charts: SyntheticChart[] = buildSyntheticCharts()): Anal
     for (const sentence of sentences) {
       let entry = byTemplate.get(sentence.template);
       if (!entry) {
-        entry = { example: sentence.raw, source: sentence.source, fields: new Set(), charts: new Set(), voiceRules: new Set() };
+        entry = { kind: sentence.kind, example: sentence.raw, source: sentence.source, fields: new Set(), charts: new Set(), voiceRules: new Set() };
         byTemplate.set(sentence.template, entry);
       }
       entry.fields.add(sentence.field);
@@ -129,19 +134,20 @@ export function analyze(charts: SyntheticChart[] = buildSyntheticCharts()): Anal
     .map(([template, entry]) => {
       const rate = entry.charts.size / charts.length;
       return {
+        kind: entry.kind,
         template,
         example: entry.example,
         source: entry.source,
         fields: [...entry.fields].sort(),
         chartCount: entry.charts.size,
         rate,
-        verdict: verdictOf(rate),
+        verdict: verdictOf(rate, entry.kind),
         voiceRules: [...entry.voiceRules].sort(),
       };
     })
     .sort((a, b) => b.rate - a.rate || a.template.localeCompare(b.template));
 
-  const counts: Record<Verdict, number> = { OVER_GENERIC: 0, WATCH: 0, OK: 0 };
+  const counts: Record<Verdict, number> = { OVER_GENERIC: 0, WATCH: 0, OK: 0, FRAMING: 0 };
   for (const stat of stats) counts[stat.verdict] += 1;
 
   return {

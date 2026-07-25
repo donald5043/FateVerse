@@ -3,7 +3,16 @@ import { buildSystemMatrix, generateFusionReading, generateSystemConclusions, ge
 import { buildUnifiedElementProfile } from '../../src/engines/integration-engine';
 import type { ProfileInput } from '../../src/types/fate';
 
+/**
+ * 文字的性質，決定是否適用「出現率」判準。
+ * - interpretation：對「這個人」的解讀。換個命盤仍成立就是巴納姆句，適用 OVER_GENERIC 判定。
+ * - framing：方法說明、免責提醒與資料標籤。它們本來就該對所有人成立，出現率高是正常的，
+ *   若一併計入會把免責聲明誤判為泛用文案（voice.md R6 與白名單的精神）。
+ */
+export type TextKind = 'interpretation' | 'framing';
+
 export interface ExtractedSentence {
+  kind: TextKind;
   /** 產生這句話的來源檔案（相對 repo 根目錄）。 */
   source: string;
   /** 報告中的欄位路徑，例如 sections.bazi、focusAnalysis[].analysis。 */
@@ -16,6 +25,7 @@ export interface ExtractedSentence {
 
 /** 未切句的整個欄位內容。R3「段落至多 3 句」必須在此層級檢查，切句後就看不到了。 */
 export interface ExtractedField {
+  kind: TextKind;
   source: string;
   field: string;
   text: string;
@@ -73,13 +83,34 @@ export function splitSentences(text: string): string[] {
     .filter((part) => part.length > 0);
 }
 
+/**
+ * 判定欄位屬於「對人的解讀」還是「框架文字」。
+ * 未列出者一律視為 interpretation，確保新增欄位預設受最嚴格的檢驗。
+ */
+const FRAMING_FIELDS = new Set([
+  'differences[]', // 解釋各系統之間的差異，不是在描述這個人
+  'fusion.plainIntro', // 方法論說明
+  'fusion.consensus.mappingNotes[]', // 換算方式的註記
+  'fusion.domains[].reminder', // 領域邊界聲明（職涯／財務等）
+  'fusion.axes[].evidence[].point', // 依據標籤
+  'fusion.domains[].evidence[].point',
+  'fusion.timing.evidence[].point',
+  'unified.contributions[].detail', // 各系統貢獻的資料標籤
+  'unified.caveat', // 免責
+]);
+
+function kindOf(field: string): TextKind {
+  return FRAMING_FIELDS.has(field) ? 'framing' : 'interpretation';
+}
+
 function makePush(result: ExtractionResult) {
   return (source: string, field: string, text: string | undefined): void => {
     if (!text) return;
+    const kind = kindOf(field);
     // 先記錄整段（供 R3 檢查段落句數），再切成單句（供出現率統計）。
-    result.fields.push({ source, field, text, template: normalizeSentence(text) });
+    result.fields.push({ kind, source, field, text, template: normalizeSentence(text) });
     for (const raw of splitSentences(text)) {
-      result.sentences.push({ source, field, raw, template: normalizeSentence(raw) });
+      result.sentences.push({ kind, source, field, raw, template: normalizeSentence(raw) });
     }
   };
 }

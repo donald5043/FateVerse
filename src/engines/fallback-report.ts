@@ -21,7 +21,7 @@ function focusNarrative(topic: string, input: FateReportInput, strongest: string
     career: `工作上可先運用「${zodiacTrait}」與「${numberTrait}」建立可見成果；五行以${strongest}相對突出、${weakest}較少，適合拿來檢查目前是否只使用熟悉能力，而忽略協作或調整。`,
     love: `關係中可把${input.zodiac.animal}生肖的「${input.zodiac.positiveTraits[1]}」和${input.astrology.sunSign}的表達方式並看；重點不是替彼此貼標籤，而是說清楚需求、界線與期待。`,
     finance: `財務主題可借用生命靈數「${input.numerology.title}」的課題，檢查資源安排是否同時兼顧目標與風險；命理象徵不構成投資判斷。`,
-    family: `家庭互動可觀察「${zodiacTrait}」何時成為支持、何時可能變成過度承擔；先分清責任，再討論能提供的協助。`,
+    family: `家庭互動可觀察「${zodiacTrait}」什麼時候是支持、什麼時候變成替別人扛責任；先分清界線，再討論你能提供的協助。`,
     relationships: `人際上可運用${input.astrology.sunSign}的「${starTrait}」，同時留意「${input.astrology.blindSpots[0]}」是否在壓力下出現，以具體回饋取代猜測。`,
     direction: `人生方向不需要由任何單一系統決定。可把日主${input.bazi.dayMaster}、生命靈數 ${input.numerology.lifePathNumber} 與你真正重視的價值並列，透過小型實驗找出有持續感的方向。`,
     all: `目前可先從${strongest}較突出的做事模式、${input.zodiac.animal}生肖的「${zodiacTrait}」與生命靈數的「${numberTrait}」選一項最有共鳴的線索，再回到現實情境驗證。`,
@@ -70,7 +70,9 @@ export function generateFallbackReport(input: FateReportInput): AiFateReport {
     sharedPatterns,
     differences,
     sections: {
-      bazi: `你的日主為${input.bazi.dayMaster}（${ELEMENT_LABELS[input.bazi.dayMasterElement]}），四柱為${input.bazi.pillars.map((pillar) => pillar.value).join('、')}；${baziSeasonDescription}，${baziRelationDescription}。胎元${input.bazi.taiYuan}、命宮${input.bazi.mingGong}、身宮${input.bazi.shenGong}；節氣參考為${input.bazi.seasonalNode}。藏干、十神與大運都幫你排好了；完整的日主強弱與喜用神綜合判讀在八字分頁，採公開的計分規則，與各流派手工論命可能不同。`,
+      // voice.md R3：段落至多 3 句。胎元、命宮、身宮、節氣等結構資料改由八字分頁的
+      // 欄位呈現，這裡只留解讀；但計分規則與各流派差異屬透明度聲明，必須保留。
+      bazi: `你的日主是${input.bazi.dayMaster}${ELEMENT_LABELS[input.bazi.dayMasterElement]}，四柱為${input.bazi.pillars.map((pillar) => pillar.value).join('、')}。${baziSeasonDescription}，${baziRelationDescription}。日主強弱與喜用神的完整判讀在八字分頁，用的是公開計分規則，和各流派手工論命的結論不一定一樣。`,
       zodiac: `${input.zodiac.animal}對應${input.zodiac.branch}支，傳統象徵為「${input.zodiac.symbol}」。正向面可參考${input.zodiac.positiveTraits.join('、')}，同時留意${input.zodiac.blindSpots.join('、')}。`,
       astrology: `太陽位於${input.astrology.sunSign}${input.astrology.moonSign ? `，月亮位於${input.astrology.moonSign}` : ''}${input.astrology.risingSign ? `，上升位於${input.astrology.risingSign}` : ''}，太陽星座屬${input.astrology.element}元素、${input.astrology.modality}模式。${input.astrology.planets?.length ? `已計算 ${input.astrology.planets.length} 個星體與 ${input.astrology.aspects?.length ?? 0} 組主要相位；${astrologyDistributionDescription}，${astrologyHouseDescription}。` : ''}${input.astrology.houseComparisons?.length ? '報告同時保留等宮制與整宮制的落宮差異，不把任何一種當成唯一答案。' : ''}`,
       ...(input.ziwei ? { ziwei: `紫微排盤為${input.ziwei.fiveElementsClass}，命主${input.ziwei.soul}、身主${input.ziwei.body}，命宮在${input.ziwei.soulPalaceBranch}、身宮在${input.ziwei.bodyPalaceBranch}。命宮主星欄為「${soulPalaceStars}」${ziweiHoroscopeDescription}。星曜與運限需連同三方四正及流派設定閱讀，本版只呈現文化結構，不由單星預言事件。` } : {}),

@@ -7,17 +7,17 @@ import { calculateAscendant, calculatePlanetPositions, zodiacPosition } from './
 interface SignData extends AstrologyResult { start: [number, number]; end: [number, number] }
 
 const SIGNS: SignData[] = [
-  { sunSign: '摩羯座', start: [12, 22], end: [1, 19], element: '土', modality: '開創', description: '重視結構、責任與可長期累積的成果。', strengths: ['自律', '務實', '耐力'], blindSpots: ['可能過度嚴格', '不易放鬆'] },
-  { sunSign: '水瓶座', start: [1, 20], end: [2, 18], element: '風', modality: '固定', description: '重視獨立思考、觀念革新與群體價值。', strengths: ['創新', '客觀', '自主'], blindSpots: ['可能顯得疏離', '容易堅持理念'] },
-  { sunSign: '雙魚座', start: [2, 19], end: [3, 20], element: '水', modality: '變動', description: '感受力細膩，擅長想像、共情與連結不同經驗。', strengths: ['同理', '想像力', '包容'], blindSpots: ['界線容易模糊', '可能逃避壓力'] },
-  { sunSign: '牡羊座', start: [3, 21], end: [4, 19], element: '火', modality: '開創', description: '傾向直接行動，以勇氣與速度開啟新的局面。', strengths: ['果決', '熱情', '開創'], blindSpots: ['可能急躁', '需要練習傾聽'] },
-  { sunSign: '金牛座', start: [4, 20], end: [5, 20], element: '土', modality: '固定', description: '重視穩定、感官品質與一步一腳印的累積。', strengths: ['可靠', '耐心', '品味'], blindSpots: ['不易改變', '可能留戀熟悉模式'] },
-  { sunSign: '雙子座', start: [5, 21], end: [6, 20], element: '風', modality: '變動', description: '透過資訊、對話與多角度思考理解世界。', strengths: ['好奇', '靈活', '表達'], blindSpots: ['容易分散', '深度需要刻意培養'] },
-  { sunSign: '巨蟹座', start: [6, 21], end: [7, 22], element: '水', modality: '開創', description: '重視情感安全、照顧關係與熟悉的歸屬感。', strengths: ['體貼', '記憶力', '保護力'], blindSpots: ['容易防衛', '情緒受環境影響'] },
-  { sunSign: '獅子座', start: [7, 23], end: [8, 22], element: '火', modality: '固定', description: '渴望真誠表達，以創造力、熱度與自信感染他人。', strengths: ['慷慨', '創意', '領導'], blindSpots: ['在意肯定', '可能不易示弱'] },
+  { sunSign: '摩羯座', start: [12, 22], end: [1, 19], element: '土', modality: '開創', description: '重視結構、責任與可長期累積的成果。', strengths: ['自律', '務實', '耐力'], blindSpots: ['對自己的標準比對別人嚴格', '休息時會覺得該做點有產出的事'] },
+  { sunSign: '水瓶座', start: [1, 20], end: [2, 18], element: '風', modality: '固定', description: '重視獨立思考、觀念革新與群體價值。', strengths: ['創新', '客觀', '自主'], blindSpots: ['聊到私人感受時會下意識轉成分析', '認定的原則就算孤立也不放'] },
+  { sunSign: '雙魚座', start: [2, 19], end: [3, 20], element: '水', modality: '變動', description: '感受力細膩，擅長想像、共情與連結不同經驗。', strengths: ['同理', '想像力', '包容'], blindSpots: ['聽完別人的難處，你的情緒也跟著陷進去', '棘手的事會先擱著，等到不得不處理'] },
+  { sunSign: '牡羊座', start: [3, 21], end: [4, 19], element: '火', modality: '開創', description: '習慣先動起來再修正，用速度和膽識打開局面。', strengths: ['果決', '熱情', '開創'], blindSpots: ['話還沒聽完就想給答案', '等待的時候會焦躁到想乾脆自己動手'] },
+  { sunSign: '金牛座', start: [4, 20], end: [5, 20], element: '土', modality: '固定', description: '重視穩定、感官品質與一步一腳印的累積。', strengths: ['可靠', '耐心', '品味'], blindSpots: ['已經習慣的做法，就算有更好的也懶得換', '離開熟悉的環境會花很久才安頓下來'] },
+  { sunSign: '雙子座', start: [5, 21], end: [6, 20], element: '風', modality: '變動', description: '透過資訊、對話與多角度思考理解世界。', strengths: ['好奇', '靈活', '表達'], blindSpots: ['開很多分頁，每個都讀一半', '知道很多領域的皮毛，深入的少'] },
+  { sunSign: '巨蟹座', start: [6, 21], end: [7, 22], element: '水', modality: '開創', description: '重視情感安全、照顧關係與熟悉的歸屬感。', strengths: ['體貼', '記憶力', '保護力'], blindSpots: ['被說中痛處時會先反擊再理解', '家裡的氣氛決定你一整天的狀態'] },
+  { sunSign: '獅子座', start: [7, 23], end: [8, 22], element: '火', modality: '固定', description: '渴望真誠表達，以創造力、熱度與自信感染他人。', strengths: ['慷慨', '創意', '領導'], blindSpots: ['付出後沒被看見會特別在意', '狀況不好時寧可撐著也不說'] },
   { sunSign: '處女座', start: [8, 23], end: [9, 22], element: '土', modality: '變動', description: '善於觀察細節、改善流程並把抽象想法落實。', strengths: ['分析', '細緻', '服務精神'], blindSpots: ['容易過度檢查', '對自己要求高'] },
-  { sunSign: '天秤座', start: [9, 23], end: [10, 22], element: '風', modality: '開創', description: '在關係與觀點之間尋找平衡，重視公平與美感。', strengths: ['協調', '審美', '外交'], blindSpots: ['決策可能延後', '容易忽略自身需求'] },
-  { sunSign: '天蠍座', start: [10, 23], end: [11, 21], element: '水', modality: '固定', description: '傾向深入核心，重視信任、真實與深層轉化。', strengths: ['專注', '洞察', '韌性'], blindSpots: ['不易放下戒心', '可能過度投入'] },
+  { sunSign: '天秤座', start: [9, 23], end: [10, 22], element: '風', modality: '開創', description: '在關係與觀點之間尋找平衡，重視公平與美感。', strengths: ['協調', '審美', '外交'], blindSpots: ['兩個選項都有道理時，你會一直不做決定', '照顧完所有人的感受，才想到自己要什麼'] },
+  { sunSign: '天蠍座', start: [10, 23], end: [11, 21], element: '水', modality: '固定', description: '習慣直接看核心，重視信任、真實與徹底的轉變。', strengths: ['專注', '洞察', '韌性'], blindSpots: ['信任一個人之前會先觀察很久', '一旦投入就很難抽身，包括該收手的時候'] },
   { sunSign: '射手座', start: [11, 22], end: [12, 21], element: '火', modality: '變動', description: '追求視野、自由與意義，喜歡用探索擴大世界。', strengths: ['樂觀', '坦率', '遠見'], blindSpots: ['容易跳過細節', '承諾需具體化'] },
 ];
 

@@ -25,7 +25,9 @@ export function renderBaseline(result: AnalysisResult): string {
   const over = result.stats.filter((s) => s.verdict === 'OVER_GENERIC');
   const watch = result.stats.filter((s) => s.verdict === 'WATCH');
   const ok = result.stats.filter((s) => s.verdict === 'OK');
-  const overRate = result.totalTemplates ? over.length / result.totalTemplates : 0;
+  const framing = result.stats.filter((s) => s.verdict === 'FRAMING');
+  const interpretationTotal = over.length + watch.length + ok.length;
+  const overRate = interpretationTotal ? over.length / interpretationTotal : 0;
 
   return `# 具體性基線報告（Specificity Baseline）
 
@@ -40,9 +42,14 @@ export function renderBaseline(result: AnalysisResult): string {
 | --- | ---: |
 | 抽取句子總數（含重複） | ${result.totalSentences.toLocaleString()} |
 | 去重後的句子模板數 | ${result.totalTemplates} |
-| \`OVER_GENERIC\` | **${over.length}**（佔全部模板 ${pct(overRate)}） |
+| 其中屬「對人的解讀」 | ${interpretationTotal} |
+| 其中屬「框架文字」（方法說明／免責／資料標籤） | ${framing.length} |
+| \`OVER_GENERIC\` | **${over.length}**（佔解讀類 ${pct(overRate)}） |
 | \`WATCH\` | ${watch.length} |
 | \`OK\` | ${ok.length} |
+
+> 出現率判準只套用在**對人的解讀**上。方法說明、免責提醒與資料標籤（如「留意：{特質}」「生肖（子支）」）
+> 本來就該對所有人成立，把它們算進去會把免責聲明誤判成巴納姆句，因此另列為 \`FRAMING\` 不計分。
 
 ### voice.md 靜態規則違規
 
@@ -83,8 +90,8 @@ ${table(ok.slice(0, 30))}
 
 ## 備註
 
-- 本報告只做量測，**未修改任何既有文案**。
 - \`cautions\` 免責文字、\`src/data/barnum-statements.ts\`（教學用的巴納姆句）與籤詩傳統原文依 voice.md 白名單排除於統計外。
+- \`FRAMING\` 類（方法說明、免責提醒、資料標籤）不套用出現率判準，理由見上方總覽的說明。
 - 出現率的分母是命盤數（${result.chartCount}），不是句子數：同一模板在同一份報告出現多次仍只計一次。
 - 模板比對前會將干支、生肖、星座、五行、數字與日期正規化為佔位符，因此「同一個模板的不同插值」會被歸為同一句。
 `;

@@ -143,7 +143,7 @@ function buildConsensus(input: FateReportInput, options: FusionOptions = {}): { 
   const agreementLevel = ratio >= 0.5 ? 'high' : top.votes >= 2 ? 'medium' : 'low';
   const leadingLabels = leading.map((element) => ELEMENT_LABELS[element]).join('、');
   const plainByLevel: Record<FusionConsensus['agreementLevel'], string> = {
-    high: `講白話：把 ${voteEntries.length} 套系統各自換算成五行後，有 ${top.votes} 套不約而同指向「${leadingLabels}」。這麼多套不同文化的模型講到同一件事，代表「${ELEMENT_PLAIN[leading[0]].vibe}」很可能是你自己也認得出來的主旋律。`,
+    high: `講白話：把 ${voteEntries.length} 套系統各自換算成五行後，有 ${top.votes} 套不約而同指向「${leadingLabels}」。這麼多套不同文化的模型講到同一件事，代表「${ELEMENT_PLAIN[leading[0]].vibe}」是你自己也認得出來的主旋律。`,
     medium: `講白話：${voteEntries.length} 套系統換算成五行後，「${leadingLabels}」被點名 ${top.votes} 次，算是相對明顯的主題，但沒有一面倒。你可以把它當成「最常出現的底色」，其他元素則是不同場合會冒出來的配色。`,
     low: `講白話：這 ${voteEntries.length} 套系統換算成五行後意見相當分歧，沒有哪個元素特別突出。這不是系統壞掉，而是說你的組合比較多面向——不同場合會切換不同模式，別急著用單一標籤定義自己。`,
   };
@@ -252,7 +252,7 @@ function buildAxisSpecs(input: FateReportInput, options: FusionOptions = {}): Ax
       verdicts: {
         strongLeft: '你八成是「想法藏不住」的人：直說是你的魅力，只要在重要場合先想三秒再開口，就幾乎沒有缺點。',
         leanLeft: '整體偏外放：大部分時候願意把話說出來，但也懂得看場合，這是很好用的組合。',
-        balanced: '外放和內斂的訊號各半：你可能對熟人暢所欲言、對生人先觀察，這很正常，不用勉強自己統一。',
+        balanced: '外放和內斂的訊號各半：熟人面前你話多，生人面前你先觀察——這是兩種模式輪流上場，不用勉強自己統一。',
         leanRight: '整體偏內斂：你習慣先在心裡整理好再說。記得，別人不會通靈——重要的需求還是要說出口。',
         strongRight: '幾套系統都說你把話放心裡：深思是優點，但憋久了容易累積誤會，可以練習每天說出一件真實感受。',
       },
@@ -286,7 +286,7 @@ function buildAxisSpecs(input: FateReportInput, options: FusionOptions = {}): Ax
       verdicts: {
         strongLeft: '你多半是人群充電型：跟人互動會讓你更有勁，行程太空反而悶。安排社交沒問題，睡眠別跟著犧牲就好。',
         leanLeft: '整體偏群體型：喜歡有人一起，但也撐得住獨處，恢復方式算有彈性。',
-        balanced: '兩種充電方式訊號各半：你可能是「熱鬧完需要靜一下」的節奏型，安排行程時記得留白。',
+        balanced: '兩種充電方式訊號各半：熱鬧完你需要一段獨處才回得了神，安排行程時記得留白。',
         leanRight: '整體偏獨處型：安靜時刻是你的行動電源。社交不是不行，但結束後給自己緩衝時間，別連趕兩攤。',
         strongRight: '幾套系統都指向獨處回血：留白對你不是奢侈是剛需，把獨處時間當正式行程排進去，狀態會穩很多。',
       },
@@ -406,7 +406,7 @@ function buildHighlights(input: FateReportInput, votes: FusionElementVote[]): Fu
     highlights.push({
       kind: 'tension',
       title: '星座強調的能量，恰好是八字裡最少的五行',
-      plainExplanation: `${input.astrology.sunSign}偏${input.astrology.element}元素（近似${ELEMENT_LABELS[westernElement]}），但你的四柱裡${ELEMENT_LABELS[westernElement]}比例最少。白話說：太陽星座描述的是你「想活出來的樣子」，八字結構比較像「出廠預設值」——兩者打架時你可能會覺得自己內外不一致，這不是矛盾，是兩套系統本來就在量不同的東西。`,
+      plainExplanation: `${input.astrology.sunSign}偏${input.astrology.element}元素（近似${ELEMENT_LABELS[westernElement]}），但你的四柱裡${ELEMENT_LABELS[westernElement]}比例最少。白話說：太陽星座描述的是你「想活出來的樣子」，八字結構比較像「出廠預設值」——兩者打架時，你會在「想成為的樣子」和「做起來順手的方式」之間覺得卡卡的，這不是矛盾，是兩套系統本來就在量不同的東西。`,
       systems: ['西洋星座', '四柱五行'],
     });
   }
@@ -425,7 +425,7 @@ function buildHighlights(input: FateReportInput, votes: FusionElementVote[]): Fu
     highlights.push({
       kind: 'tension',
       title: '各系統看到的你相當不同',
-      plainExplanation: '五行票數分散在四種以上元素，白話說：你是「多聲道」的人——家人、同事、老朋友對你的形容可能差很多，而且他們都沒說錯。與其煩惱哪個才是真的你，不如把這當成場合切換的彈性。',
+      plainExplanation: '五行票數分散在四種以上元素，白話說：你是「多聲道」的人——家人、同事、老朋友對你的形容會差很多，而且他們都沒說錯。與其煩惱哪個才是真的你，不如把這當成場合切換的彈性。',
       systems: votes.map((vote) => vote.systems).flat(),
     });
   }
@@ -455,7 +455,9 @@ function buildTiming(input: FateReportInput): FusionTiming | undefined {
     ? `八字這邊，你目前走的是${luckCycle.ganZhi}大運，範圍大約是 ${luckCycle.startYear} 到 ${luckCycle.endYear} 年；`
     : '八字這次沒有對應的大運資料；';
   return {
-    plainReading: `講白話：兩套系統都有「十年一個大階段」的概念。${baziPart}紫微那邊，同一段時間的大限命宮落在${horoscope.decadal.palaceName}，流年命宮在${horoscope.yearly.palaceName}。把它們並排看，意思是：傳統命理認為這幾年你的人生重心會偏向「${horoscope.decadal.palaceName.replace('宮', '')}」相關的題目。這是文化模型的敘事框架，適合當年度回顧的提問清單，不是預言。`,
+    // voice.md R3：段落至多 3 句。原本 4 句，將「這是敘事框架不是預言」的提醒
+    // 併入末句，語氣不變、句數合規。
+    plainReading: `兩套系統都有「十年一個大階段」的概念。${baziPart}紫微那邊，同一段時間的大限命宮落在${horoscope.decadal.palaceName}，流年命宮在${horoscope.yearly.palaceName}。並排看的意思是：這幾年傳統命理會把你的重心放在「${horoscope.decadal.palaceName.replace('宮', '')}」這類題目上——當成年度回顧的提問清單來用，不是預言。`,
     evidence,
   };
 }
@@ -657,7 +659,7 @@ export function generateFusionReading(input: FateReportInput, options: FusionOpt
       (input.ziwei ? '、紫微斗數' : '') +
       (input.nameAnalysis ? '、姓名用字' : '') +
       (options.palmElement ? '、手相手型' : '') +
-      '各自的結果翻譯成同一種語言，再看它們哪裡口徑一致、哪裡各說各話。一致的地方值得你留意，分歧的地方也不是誰算錯——它們本來就是不同文化用不同工具在量同一個人。以下全部用白話說明。',
+      '各自的結果翻譯成同一種語言，再看它們哪裡口徑一致、哪裡各說各話。一致的地方值得你留意，分歧的地方也不是誰算錯——它們本來就是不同文化用不同工具在量同一個人。',
     systemsUsed,
     consensus,
     axes,
