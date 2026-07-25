@@ -44,7 +44,7 @@ describe('報告分頁', () => {
     expect(screen.queryByRole('heading', { name: '姓名分析' })).toBeNull();
   });
 
-  it('切換分頁時捲回該分類的最上方', () => {
+  it('切換分頁時跳到分頁最頂端', () => {
     seed('林安晨');
     const scrollTo = vi.mocked(window.scrollTo);
     // jsdom 不會自動執行 rAF 回呼，改為同步觸發以便觀察捲動行為。
@@ -60,5 +60,33 @@ describe('報告分頁', () => {
     const call = scrollTo.mock.calls[0][0] as ScrollToOptions;
     expect(call.top).toBeGreaterThanOrEqual(0);
     expect(call.left).toBe(0);
+  });
+
+  /**
+   * 迴歸測試：分頁列是 sticky，捲動後它的 getBoundingClientRect().top 會固定為
+   * 黏住的位置（64），若以它為量測基準，算出的目標會等於當前捲動位置，畫面不會動。
+   * 這裡模擬「已經捲到很下面」的狀態，確認仍會跳回分頁頂端。
+   */
+  it('已捲動到頁面深處時，仍會跳回分頁頂端而不是原地不動', () => {
+    seed('林安晨');
+    const scrollTo = vi.mocked(window.scrollTo);
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
+      cb(0);
+      return 0;
+    });
+
+    renderReport();
+    const anchor = screen.getByTestId('tab-scroll-anchor');
+
+    // 使用者已捲到 4000px；錨點的真實文件位置是 300px，因此視窗內座標為 -3700。
+    Object.defineProperty(window, 'scrollY', { value: 4000, configurable: true });
+    vi.spyOn(anchor, 'getBoundingClientRect')
+      .mockReturnValue({ top: -3700 } as DOMRect);
+
+    fireEvent.click(screen.getByRole('button', { name: '紫微斗數' }));
+
+    const call = scrollTo.mock.calls.at(-1)?.[0] as ScrollToOptions;
+    // 目標 = 300（錨點文件位置）- 64（固定頁首）＝ 236，而不是停在 4000 附近。
+    expect(call.top).toBe(236);
   });
 });

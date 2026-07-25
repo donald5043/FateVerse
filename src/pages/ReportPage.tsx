@@ -23,7 +23,7 @@ import { buildUnifiedElementProfile } from '../engines/integration-engine';
 import SystemMatrixRadar from '../components/report/SystemMatrixRadar';
 import { useFateStore } from '../store/useFateStore';
 import { ELEMENT_LABELS } from '../utils/constants';
-import { calculateStickyScrollTop, preferredScrollBehavior } from '../utils/scroll';
+import { preferredScrollBehavior } from '../utils/scroll';
 import type { ZiweiCalculationSettings } from '../types/fate';
 
 const REPORT_TABS = [
@@ -65,20 +65,22 @@ export default function ReportPage() {
   });
   const [ziweiBusy, setZiweiBusy] = useState(false);
   const [ziweiError, setZiweiError] = useState('');
-  const tabsRef = useRef<HTMLElement>(null);
+  const tabsAnchorRef = useRef<HTMLDivElement>(null);
 
   /**
-   * 切換分頁時捲到該分類內容的最上方。
-   * 分頁列本身是 sticky，因此對齊到「分頁列下緣」而不是頁面頂端，
-   * 換頁後第一眼看到的就是新分類的開頭，而不是停在前一個分頁的捲動位置。
+   * 切換分頁時跳到該分頁內容的最頂端。
+   *
+   * 錨點刻意放在分頁列「之前」且不套 sticky：分頁列本身是 `sticky top-16`，
+   * 一旦捲動超過它，getBoundingClientRect().top 會固定回傳黏住後的 64，
+   * 而不是它在文件中的真實位置，導致算出來的目標幾乎等於當前位置、畫面不動。
    */
   const selectTab = (id: ReportTab) => {
     setTab(id);
-    const nav = tabsRef.current;
-    if (!nav || typeof window === 'undefined') return;
+    const anchor = tabsAnchorRef.current;
+    if (!anchor || typeof window === 'undefined') return;
     // 等 React 換完內容再量測，避免用到舊版面的高度。
     window.requestAnimationFrame(() => {
-      const top = calculateStickyScrollTop(nav.getBoundingClientRect().top, window.scrollY, APP_HEADER_HEIGHT, 0);
+      const top = Math.max(0, anchor.getBoundingClientRect().top + window.scrollY - APP_HEADER_HEIGHT);
       window.scrollTo({ top, left: 0, behavior: preferredScrollBehavior() });
     });
   };
@@ -170,7 +172,8 @@ export default function ReportPage() {
         <ReportActions summary={report.summary} profile={profile} />
       </header>
 
-      <nav ref={tabsRef} className="sticky top-16 z-30 -mx-4 mt-7 overflow-x-auto border-y border-white/10 bg-ink/90 px-4 backdrop-blur-xl print:hidden sm:mx-0 sm:rounded-2xl sm:border" aria-label="報告分頁">
+      <div ref={tabsAnchorRef} data-testid="tab-scroll-anchor" aria-hidden="true" />
+      <nav className="sticky top-16 z-30 -mx-4 mt-7 overflow-x-auto border-y border-white/10 bg-ink/90 px-4 backdrop-blur-xl print:hidden sm:mx-0 sm:rounded-2xl sm:border" aria-label="報告分頁">
         <div className="flex min-w-max gap-2 py-2.5">
           {availableTabs.map(([id, label]) => (
             <button
