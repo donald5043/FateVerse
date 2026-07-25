@@ -2,7 +2,7 @@ import {
   ChevronRight, CircleUserRound, Compass, Hash, ListTree,
   Orbit, RefreshCw, ShieldCheck, Sparkles, Waypoints,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { generateFallbackReport } from '../engines/fallback-report';
 import FiveElementChart from '../components/charts/FiveElementChart';
@@ -23,6 +23,7 @@ import { buildUnifiedElementProfile } from '../engines/integration-engine';
 import SystemMatrixRadar from '../components/report/SystemMatrixRadar';
 import { useFateStore } from '../store/useFateStore';
 import { ELEMENT_LABELS } from '../utils/constants';
+import { calculateStickyScrollTop, preferredScrollBehavior } from '../utils/scroll';
 import type { ZiweiCalculationSettings } from '../types/fate';
 
 const REPORT_TABS = [
@@ -32,9 +33,13 @@ const REPORT_TABS = [
   ['ziwei', '紫微斗數'],
   ['western', '西洋星盤'],
   ['numerology', '生命靈數'],
+  ['name', '姓名學'],
 ] as const;
 
 type ReportTab = (typeof REPORT_TABS)[number][0];
+
+/** 全站固定頁首高度，對應分頁列的 `sticky top-16`（4rem）。 */
+const APP_HEADER_HEIGHT = 64;
 
 function toDateInputValue(value?: string): string {
   if (!value) return new Date().toISOString().slice(0, 10);
@@ -60,6 +65,23 @@ export default function ReportPage() {
   });
   const [ziweiBusy, setZiweiBusy] = useState(false);
   const [ziweiError, setZiweiError] = useState('');
+  const tabsRef = useRef<HTMLElement>(null);
+
+  /**
+   * 切換分頁時捲到該分類內容的最上方。
+   * 分頁列本身是 sticky，因此對齊到「分頁列下緣」而不是頁面頂端，
+   * 換頁後第一眼看到的就是新分類的開頭，而不是停在前一個分頁的捲動位置。
+   */
+  const selectTab = (id: ReportTab) => {
+    setTab(id);
+    const nav = tabsRef.current;
+    if (!nav || typeof window === 'undefined') return;
+    // 等 React 換完內容再量測，避免用到舊版面的高度。
+    window.requestAnimationFrame(() => {
+      const top = calculateStickyScrollTop(nav.getBoundingClientRect().top, window.scrollY, APP_HEADER_HEIGHT, 0);
+      window.scrollTo({ top, left: 0, behavior: preferredScrollBehavior() });
+    });
+  };
 
   if (!report || !input) return (
     <section className="page-container page-section text-center">
@@ -126,7 +148,11 @@ export default function ReportPage() {
     }] : []),
   ];
 
-  const availableTabs = REPORT_TABS.filter(([id]) => id !== 'ziwei' || input.ziwei);
+  const availableTabs = REPORT_TABS.filter(([id]) => {
+    if (id === 'ziwei') return Boolean(input.ziwei);
+    if (id === 'name') return Boolean(input.nameAnalysis);
+    return true;
+  });
   const statCards = [
     { label: '日主', value: `${input.bazi.dayMaster}${ELEMENT_LABELS[input.bazi.dayMasterElement]}`, tone: 'text-gold' },
     { label: '生肖', value: `屬${input.zodiac.animal}`, tone: 'text-violet-400' },
@@ -144,14 +170,14 @@ export default function ReportPage() {
         <ReportActions summary={report.summary} profile={profile} />
       </header>
 
-      <nav className="sticky top-16 z-30 -mx-4 mt-7 overflow-x-auto border-y border-white/10 bg-ink/90 px-4 backdrop-blur-xl print:hidden sm:mx-0 sm:rounded-2xl sm:border" aria-label="報告分頁">
+      <nav ref={tabsRef} className="sticky top-16 z-30 -mx-4 mt-7 overflow-x-auto border-y border-white/10 bg-ink/90 px-4 backdrop-blur-xl print:hidden sm:mx-0 sm:rounded-2xl sm:border" aria-label="報告分頁">
         <div className="flex min-w-max gap-2 py-2.5">
           {availableTabs.map(([id, label]) => (
             <button
               className={`tab-pill ${tab === id ? 'tab-pill-active' : ''}`}
               type="button"
               aria-pressed={tab === id}
-              onClick={() => setTab(id)}
+              onClick={() => selectTab(id)}
               key={id}
             >{label}</button>
           ))}
@@ -185,7 +211,7 @@ export default function ReportPage() {
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {conclusions.map(({ id, system, headline, conclusion }) => {
               const tone = ({ bazi: 'text-gold', zodiac: 'text-emerald-300', ziwei: 'text-violet-400', western: 'text-teal-300', numerology: 'text-rose-400', tarot: 'text-fuchsia-300', name: 'text-amber-200' } as Record<string, string>)[id] ?? 'text-gold';
-              const detailTab = ({ bazi: 'bazi', ziwei: 'ziwei', western: 'western', numerology: 'numerology', name: 'numerology' } as Record<string, ReportTab>)[id];
+              const detailTab = ({ bazi: 'bazi', ziwei: 'ziwei', western: 'western', numerology: 'numerology', name: 'name' } as Record<string, ReportTab>)[id];
               return (
                 <article className="flex flex-col rounded-[20px] border border-white/10 bg-white/[0.045] p-5" key={id}>
                   <span className={`text-[11px] font-bold tracking-[0.12em] ${tone}`}>{system}</span>
@@ -195,7 +221,7 @@ export default function ReportPage() {
                     {id === 'tarot' ? (
                       <Link className="inline-flex items-center gap-1.5 text-sm font-semibold text-cream transition hover:text-gold" to="/tarot">查看詳細 <ChevronRight size={15} /></Link>
                     ) : detailTab ? (
-                      <button className="inline-flex items-center gap-1.5 text-sm font-semibold text-cream transition hover:text-gold" type="button" onClick={() => { setTab(detailTab); window.scrollTo({ top: 0, left: 0, behavior: 'smooth' }); }}>查看詳細 <ChevronRight size={15} /></button>
+                      <button className="inline-flex items-center gap-1.5 text-sm font-semibold text-cream transition hover:text-gold" type="button" onClick={() => selectTab(detailTab)}>查看詳細 <ChevronRight size={15} /></button>
                     ) : (
                       <button className="inline-flex items-center gap-1.5 text-sm font-semibold text-cream transition hover:text-gold" type="button" onClick={() => document.getElementById('systems')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>查看詳細 <ChevronRight size={15} /></button>
                     )}
@@ -292,6 +318,32 @@ export default function ReportPage() {
         <article className="glass-card overflow-hidden p-3 sm:p-6"><ZiweiChart result={input.ziwei} /><ZiweiKeyPalaceInsights result={input.ziwei} /></article>
       </div>}
 
+      {tab === 'name' && input.nameAnalysis && <div key="name" className="reveal mt-7">
+        <div className="mb-6"><p className="eyebrow">Name analysis</p><h2 className="section-title mt-2">姓名學</h2><p className="mt-2 text-sm leading-6 text-mist">以字義、簡化五行對照與五格剖象呈現；筆畫優先採精選字庫，其餘由 Unicode Unihan 資料庫補齊，皆可手動修正。</p></div>
+        <article className="rounded-[20px] border border-white/10 bg-white/[0.045] p-6">
+          <h3 className="font-serif text-lg font-semibold text-cream">姓名分析</h3>
+          <p className="mt-3 leading-7 text-mist">{report.sections.name}</p>
+          <div className="mt-4 space-y-2">{input.nameAnalysis.characters.map((item, index) => <div className="flex items-center justify-between rounded-xl bg-white/[0.04] px-3 py-2 text-sm" key={`${item.character}-${index}`}><span className="font-serif text-lg text-cream">{item.character}{item.meaning ? <span className="ml-2 text-xs text-mist">{item.meaning}</span> : null}</span><span className="text-right text-mist">{item.strokes ? `${item.strokes} 畫 · ` : ''}{({ formal: '正式資料', insufficient: '資料不足', modern: '現代筆畫', manual: '手動輸入' } as const)[item.strokeSource]}</span></div>)}</div>
+          {input.nameAnalysis.fiveGrid && (
+            <div className="mt-5 rounded-2xl border border-amber-200/20 bg-amber-200/[0.05] p-4">
+              <h4 className="text-sm font-semibold text-amber-100">五格剖象</h4>
+              <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-5">
+                {input.nameAnalysis.fiveGrid.grids.map((grid) => (
+                  <div className="rounded-xl border border-white/10 bg-ink/40 p-3 text-center" key={grid.name}>
+                    <span className="text-[11px] text-mist">{grid.name}</span>
+                    <div className="mt-1 font-serif text-xl font-semibold text-cream">{grid.value}</div>
+                    <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${grid.category === '吉' ? 'bg-emerald-300/10 text-emerald-200' : grid.category === '半吉' ? 'bg-amber-200/10 text-amber-200' : 'bg-rose-300/10 text-rose-200'}`}>{grid.category} · {ELEMENT_LABELS[grid.element]}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 text-sm leading-6 text-mist">{input.nameAnalysis.fiveGrid.sanCai.relation}</p>
+              <p className="mt-2 text-xs leading-5 text-mist">{input.nameAnalysis.fiveGrid.basis}</p>
+            </div>
+          )}
+          <p className="mt-3 text-xs leading-5 text-mist">{input.nameAnalysis.strokeNotice}</p>
+        </article>
+      </div>}
+
       {tab === 'western' && <div key="western" className="reveal mt-7">
         <div className="mb-6"><p className="eyebrow">Astronomical positions</p><h2 className="section-title mt-2">西洋出生星盤</h2><p className="mt-2 text-sm leading-6 text-mist">依你的出生時間與地點，計算行星的實際天文位置、月亮星座、逆行與主要相位。{input.astrology.risingSign ? `已依出生地座標算出上升 ${input.astrology.risingSign}，並比較兩種宮位制的差異。` : '沒有提供出生地座標，所以上升與十二宮不用猜的補上。'}</p></div>
         <article className="glass-card p-4 sm:p-7"><NatalChart result={input.astrology} /><AstrologyStructurePanel result={input.astrology} /><HouseSystemComparison result={input.astrology} /><AstrologyPositionInsights result={input.astrology} /></article>
@@ -339,30 +391,6 @@ export default function ReportPage() {
             <p className="mt-4 leading-7 text-mist">{input.numerology.description} 可發揮{input.numerology.strengths.join('、')}，並練習{input.numerology.challenges.join('、')}。</p>
           </article>
         </div>
-        {input.nameAnalysis && (
-          <article className="mt-5 rounded-[20px] border border-white/10 bg-white/[0.045] p-6">
-            <h3 className="font-serif text-lg font-semibold text-cream">姓名分析</h3>
-            <p className="mt-3 leading-7 text-mist">{report.sections.name}</p>
-            <div className="mt-4 space-y-2">{input.nameAnalysis.characters.map((item, index) => <div className="flex items-center justify-between rounded-xl bg-white/[0.04] px-3 py-2 text-sm" key={`${item.character}-${index}`}><span className="font-serif text-lg text-cream">{item.character}{item.meaning ? <span className="ml-2 text-xs text-mist">{item.meaning}</span> : null}</span><span className="text-right text-mist">{item.strokes ? `${item.strokes} 畫 · ` : ''}{({ formal: '正式資料', insufficient: '資料不足', modern: '現代筆畫', manual: '手動輸入' } as const)[item.strokeSource]}</span></div>)}</div>
-            {input.nameAnalysis.fiveGrid && (
-              <div className="mt-5 rounded-2xl border border-amber-200/20 bg-amber-200/[0.05] p-4">
-                <h4 className="text-sm font-semibold text-amber-100">五格剖象</h4>
-                <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-5">
-                  {input.nameAnalysis.fiveGrid.grids.map((grid) => (
-                    <div className="rounded-xl border border-white/10 bg-ink/40 p-3 text-center" key={grid.name}>
-                      <span className="text-[11px] text-mist">{grid.name}</span>
-                      <div className="mt-1 font-serif text-xl font-semibold text-cream">{grid.value}</div>
-                      <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${grid.category === '吉' ? 'bg-emerald-300/10 text-emerald-200' : grid.category === '半吉' ? 'bg-amber-200/10 text-amber-200' : 'bg-rose-300/10 text-rose-200'}`}>{grid.category} · {ELEMENT_LABELS[grid.element]}</span>
-                    </div>
-                  ))}
-                </div>
-                <p className="mt-3 text-sm leading-6 text-mist">{input.nameAnalysis.fiveGrid.sanCai.relation}</p>
-                <p className="mt-2 text-xs leading-5 text-mist">{input.nameAnalysis.fiveGrid.basis}</p>
-              </div>
-            )}
-            <p className="mt-3 text-xs leading-5 text-mist">{input.nameAnalysis.strokeNotice}</p>
-          </article>
-        )}
       </div>}
 
       <section className="mt-10 rounded-3xl border border-white/10 bg-white/[0.035] p-5"><h2 className="text-sm font-semibold text-cream">閱讀時請保留的界線</h2><ul className="mt-3 space-y-2 text-sm leading-6 text-mist">{report.cautions.map((item) => <li className="flex gap-2" key={item}><ShieldCheck className="mt-1 shrink-0 text-gold" size={15} />{item}</li>)}</ul></section>
