@@ -4,15 +4,21 @@ import { analyze, OVER_GENERIC_THRESHOLD, STATIC_PLACEHOLDER_MAX } from './analy
 import { buildSyntheticCharts } from './synthetic-charts';
 import { normalizeSentence } from './extract-sentences';
 import { writeBaseline } from './write-baseline';
+import { collectStaticCorpus, scanStaticCorpus, summariseByCorpus } from './static-corpus';
 
 /**
  * 是否因發現 OVER_GENERIC 文案而讓測試失敗。
  *
- * 目前為 false：本階段只建立基線，不阻擋 CI。
- * 待既有文案依 docs/voice.md 改寫完成、基線降到可接受水準後，
- * 將此旗標改為 true，即可防止新的巴納姆句混入。
+ * 已啟用，但採「棘輪」方式：門檻設在目前已改寫完成的水準，而非 0。
+ * 剩餘的項目多是結構性句框（每張命盤都有最強／最弱五行，該句框必然出現），
+ * 要再降低得改報告結構而非文字。把門檻釘在現況可以擋下新增的泛用文案，
+ * 又不會被既有結構句卡住。改善後請同步調低門檻。
  */
-const FAIL_ON_OVER_GENERIC = false;
+const FAIL_ON_OVER_GENERIC = true;
+const OVER_GENERIC_BUDGET = 40;
+
+/** 靜態語料（塔羅、籤詩解讀、今日指引等）的 voice 規則違規上限。 */
+const STATIC_VIOLATION_BUDGET = 0;
 
 const BASELINE_PATH = resolve(__dirname, '../../docs/specificity-baseline.md');
 
@@ -63,8 +69,31 @@ describe('具體性量測', () => {
     expect(result.totalTemplates).toBeGreaterThan(0);
 
     if (FAIL_ON_OVER_GENERIC) {
-      expect(over, `發現 ${over.length} 條出現率超過 ${OVER_GENERIC_THRESHOLD * 100}% 的泛用文案`).toHaveLength(0);
+      expect(
+        over.length,
+        `OVER_GENERIC 為 ${over.length} 條，超過目前預算 ${OVER_GENERIC_BUDGET}（門檻 ${OVER_GENERIC_THRESHOLD * 100}%）。`
+        + '新增文案請依 docs/voice.md 撰寫；若確為結構性句框，請一併調整預算並說明理由。',
+      ).toBeLessThanOrEqual(OVER_GENERIC_BUDGET);
     }
+  });
+
+  it('報告以外的靜態文案符合 voice 規則', () => {
+    const entries = collectStaticCorpus();
+    const violations = scanStaticCorpus(entries);
+
+    if (violations.length) {
+      console.log('\n─── 靜態文案違規 ─────────────────────────────');
+      summariseByCorpus(violations, entries).filter((r) => r.violations > 0)
+        .forEach((r) => console.log(`  ${String(r.violations).padStart(3)}/${String(r.entries).padEnd(5)} ${r.corpus}（${r.source}）`));
+      violations.slice(0, 15).forEach((v) => console.log(`  [${v.rules.join(',')}] ${v.path}\n     ${v.text.slice(0, 70)}`));
+      console.log('────────────────────────────────────────────────\n');
+    }
+
+    expect(entries.length).toBeGreaterThan(1000);
+    expect(
+      violations.length,
+      `${violations.length} 條靜態文案違反 voice.md（塔羅牌義、籤詩解讀、今日指引等）`,
+    ).toBeLessThanOrEqual(STATIC_VIOLATION_BUDGET);
   });
 
   it('模板正規化把插值變數歸一，讓同一模板可被合併', () => {

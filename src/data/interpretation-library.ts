@@ -42,7 +42,7 @@ export const ASTROLOGY_ASPECT_LIBRARY: Record<string, { mode: string; descriptio
   合相: { mode: '融合', description: '兩種行星功能集中在同一方向，彼此放大也較難分開。', reflection: '何時兩種需求會同時出現？' },
   六合: { mode: '協作', description: '兩種功能有合作機會，但通常需要主動運用才會明顯。', reflection: '哪個小行動能把兩項能力接起來？' },
   四分相: { mode: '摩擦', description: '兩種功能在節奏或目標上形成張力，促使人尋找新的做法。', reflection: '目前的衝突要求調整哪個流程？' },
-  三分相: { mode: '流動', description: '兩種功能較容易互相支援，也可能因太自然而未被刻意發展。', reflection: '哪項既有優勢值得更有意識地使用？' },
+  三分相: { mode: '流動', description: '兩種功能容易互相支援，也因為太自然而少被刻意發展。', reflection: '哪項既有優勢值得更有意識地使用？' },
   對分相: { mode: '拉鋸', description: '兩端需求彼此映照，常透過關係或情境看見需要平衡的兩極。', reflection: '如何讓兩端都有被安排的位置？' },
 };
 

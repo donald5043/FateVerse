@@ -11,7 +11,7 @@
     "id": "02",
     "title": "留一點空間",
     "keyword": "留白",
-    "message": "未排滿的時間，可能讓真正重要的事浮現。",
+    "message": "未排滿的時間，會讓真正重要的事浮現。",
     "reflectionQuestion": "什麼安排可以少做一點？",
     "suggestedAction": "為今天保留二十分鐘無預設用途的時間。"
   },
@@ -43,7 +43,7 @@
     "id": "06",
     "title": "重新命名",
     "keyword": "語言",
-    "message": "換一種說法，可能看見不同選擇。",
+    "message": "換一種說法，就會看見不同選擇。",
     "reflectionQuestion": "如果不叫它失敗，我會怎麼描述這段經驗？",
     "suggestedAction": "以學到什麼重寫一件不如預期的事。"
   },
@@ -115,7 +115,7 @@
     "id": "15",
     "title": "接受未完成",
     "keyword": "餘裕",
-    "message": "足夠好有時比無止境修整更能帶來進展。",
+    "message": "足夠好，往前推得比無止境修整更遠。",
     "reflectionQuestion": "哪裡已經達到可交付的程度？",
     "suggestedAction": "為一項工作定義今天的完成標準。"
   },
@@ -131,7 +131,7 @@
     "id": "17",
     "title": "先問再答",
     "keyword": "好奇",
-    "message": "一個好問題，可能比快速建議更有幫助。",
+    "message": "一個好問題，幫的忙比快速建議更多。",
     "reflectionQuestion": "我還沒有理解哪個關鍵條件？",
     "suggestedAction": "多問一個開放式問題。"
   },
@@ -355,7 +355,7 @@
     "id": "45",
     "title": "替別人開一扇門",
     "keyword": "善意",
-    "message": "舉手之勞對你是小事，對別人可能是今天唯一的光。善意不用大，及時就好。",
+    "message": "舉手之勞對你是小事，對別人是今天唯一的光。善意不用大，及時就好。",
     "reflectionQuestion": "今天有沒有一個你能輕鬆幫上的人？",
     "suggestedAction": "主動幫一個小忙，不求回報，做完就放下。"
   },

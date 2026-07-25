@@ -38,13 +38,23 @@ export function checkFieldRules(text: string): VoiceViolation[] {
   return violations;
 }
 
+/**
+ * 這些詞形上包含限定詞，但語意不是「模糊化」，計數前先排除以免假陽性：
+ * - 「可能」作名詞（其他可能／可能性／無限可能）指的是選項，不是不確定語氣。
+ * - 「自有時」是文言的「自有其時機」，與白話的「有時（sometimes）」無關。
+ */
+const NON_HEDGE_CONTEXTS = ['可能性', '其他可能', '各種可能', '無限可能', '更多可能', '自有時'];
+
 /** 計算一段文字中模糊限定詞的總出現次數（R4 以整份報告為單位彙總）。 */
 export function countHedges(text: string): { total: number; breakdown: Record<string, number> } {
+  let scannable = text;
+  for (const context of NON_HEDGE_CONTEXTS) scannable = scannable.split(context).join('');
+
   const breakdown: Record<string, number> = {};
   let total = 0;
   for (const hedge of HEDGES) {
     // 「傾向於」包含「傾向」，為避免重複計數，此處各詞獨立比對且不重疊拆分。
-    const matches = text.split(hedge).length - 1;
+    const matches = scannable.split(hedge).length - 1;
     if (matches > 0) {
       breakdown[hedge] = matches;
       total += matches;

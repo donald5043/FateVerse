@@ -2,7 +2,7 @@
 
 > 由 `npm run test:specificity` 自動產生，請勿手動編輯。
 > 本次量測：500 組合成命盤，亂數種子 `fateverse-specificity-baseline-v1`（固定，結果可重現）。
-> 耗時 13.7 秒。
+> 耗時 24.7 秒。
 > 判定標準見 [voice.md](./voice.md)：出現率 > 30.0% 為 `OVER_GENERIC`，15.0%–30.0% 為 `WATCH`，其餘為 `OK`。
 
 ## 總覽
