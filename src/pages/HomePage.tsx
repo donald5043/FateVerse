@@ -11,14 +11,18 @@ const systemIndex = [
   { to: '/tarot', numeral: 'Ⅴ', category: '三牌陣 · 生日塔羅', title: '塔羅牌', text: '抽三張牌，看看過去、現在與未來。' },
 ] as const;
 
+// 自我覺察取向的三個入口：報告以外，真正讓人「看見自己」的功能。
+const reflective = [
+  { to: '/mirror', watermark: '鏡', title: '巴納姆鏡子', text: '兩組話中，一組來自你的真命盤，一組是誰都適用的通用句。猜猜看——分不出來的時候，最有意思。', tone: 'text-vermilion' },
+  { to: '/ritual', watermark: '擲', title: '決策儀式', text: '卡關時擲一下。重點不在骰子的答案，而在揭曉那一刻，你心裡冒出的是鬆一口氣還是失望。', tone: 'text-gold' },
+  { to: '/narrative', watermark: '章', title: '人生劇本', text: '把命盤寫成一段第一人稱的故事。不是預告結局，是提醒你筆在自己手上。', tone: 'text-gold' },
+] as const;
+
 const playful = [
-  { to: '/ritual', watermark: '擲', title: '決策儀式', text: '卡關時擲一下，聽見心裡已有的答案。', tone: 'text-gold' },
   { to: '/imprint', watermark: '印', title: '宇宙印記', text: '一張只屬於你的命之圖騰與出生那天的天空。', tone: 'text-celeste' },
-  { to: '/narrative', watermark: '章', title: '人生劇本', text: '把命盤寫成一段你自己的故事，你握著筆。', tone: 'text-gold' },
-  { to: '/mirror', watermark: '鏡', title: '巴納姆鏡子', text: '猜猜哪句是真命盤、哪句是通用話術。', tone: 'text-vermilion' },
-  { to: '/palm', watermark: '掌', title: '拍手相', text: '拍下手掌，自動分析手型與掌紋。', tone: 'text-celeste' },
   { to: '/capsule', watermark: '封', title: '時間膠囊', text: '寫給未來的自己，到期再回來驗證。', tone: 'text-celeste' },
   { to: '/synastry', watermark: '合', title: '兩人合盤', text: '兩個人的命盤並排，看互補與張力。', tone: 'text-vermilion' },
+  { to: '/palm', watermark: '掌', title: '拍手相', text: '拍下手掌，自動分析手型與掌紋。', tone: 'text-celeste' },
   { to: '/daily', watermark: '日', title: '今日指引', text: '給今天一個小小的反思與行動。', tone: 'text-violet-400' },
 ] as const;
 
@@ -40,13 +44,14 @@ export default function HomePage() {
       <section className="page-container relative grid items-center gap-12 py-12 lg:grid-cols-[1.02fr_0.98fr] lg:py-16">
         <span className="vtext pointer-events-none absolute -left-1 top-1/2 hidden -translate-y-1/2 font-serif text-sm tracking-[0.3em] text-mist/40 xl:block" aria-hidden="true">觀星知命</span>
         <div className="reveal">
-          <p className="font-display text-base italic tracking-[0.12em] text-vermilion">Same you, another sky</p>
+          <p className="font-display text-base italic tracking-[0.12em] text-vermilion">A mirror, not a prophecy</p>
           <h1 className="mt-4 font-serif text-[clamp(2.4rem,7vw,4rem)] font-black leading-[1.12] text-cream">
             同一個你<br />
             <span className="shimmer-gold">換一種星象</span><br />
             換一個故事
           </h1>
-          <p className="mt-6 max-w-lg text-lg leading-8 text-mist">從八字、紫微斗數、西洋星盤到生命靈數，把不同文化怎麼解讀「你」放在同一個畫面，用聊天般輕鬆的方式，陪你想一想接下來怎麼走。</p>
+          <p className="mt-6 max-w-lg text-lg leading-8 text-mist">八字、紫微斗數、西洋星盤與生命靈數，各自用不同的語言描述同一個人。我們把這些說法並排放著——不是為了斷言你的未來，而是讓你在其中，看見自己原本就隱約知道的事。</p>
+          <p className="mt-4 max-w-lg text-[15px] leading-7 text-mist/85">一面鏡子，不是一本預言書。</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link to="/profile" className="btn-primary whitespace-nowrap" style={{ flex: 'none' }}>開始探索命盤 <ArrowRight size={18} /></Link>
             <Link to="/daily" className="btn-secondary whitespace-nowrap" style={{ flex: 'none' }}>抽一張今日指引</Link>
@@ -82,13 +87,13 @@ export default function HomePage() {
               <span className="fv-seal vtext absolute right-0 top-0 hidden px-2.5 py-3 text-lg sm:inline-flex">命理</span>
               <p className="font-display text-base italic tracking-[0.12em] text-vermilion">How it works</p>
               <h2 className="mt-3 font-serif text-[26px] font-bold leading-tight text-cream">計算歸計算<br />解讀歸解讀</h2>
-              <p className="mt-4 max-w-sm text-[14.5px] leading-8 text-mist">四柱、紫微宮位、行星位置與靈數都是精確算出來的；文字只負責解釋，不會幫你亂猜。</p>
+              <p className="mt-4 max-w-sm text-[14.5px] leading-8 text-mist">四柱、紫微宮位、行星位置與靈數都是精確算出來的；文字只負責解釋，把「哪些是算出來的、哪些是解讀」分得清清楚楚，不會幫你亂猜。</p>
             </div>
             <div className="grid gap-6 sm:grid-cols-3">
               {[
                 { step: '01', title: '精確計算', text: '八字、紫微、星盤與靈數' },
                 { step: '02', title: '結構化資料', text: '來源、數值分層清楚' },
-                { step: '03', title: '溫和整理', text: '規則式報告，AI 只是加分' },
+                { step: '03', title: '溫和整理', text: '規則式報告，全程在你的裝置上' },
               ].map(({ step, title, text }) => (
                 <div className="border-l border-vermilion/40 pl-4" key={step}>
                   <span className="font-display text-3xl italic text-vermilion">{step}</span>
@@ -98,6 +103,25 @@ export default function HomePage() {
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* 自我覺察：本站的核心敘事 */}
+      <section className="page-container py-8">
+        <div className="max-w-2xl">
+          <p className="font-display text-base italic tracking-[0.12em] text-vermilion">Seeing yourself</p>
+          <h2 className="mt-2 font-serif text-2xl font-bold text-cream sm:text-3xl">看見自己，比算準更重要</h2>
+          <p className="mt-4 text-[15px] leading-8 text-mist">命理最迷人的地方，往往不是它預言了什麼，而是你在讀的時候，心裡浮現的那些反應。這幾個功能就是為了那一刻設計的。</p>
+        </div>
+        <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {reflective.map((item) => (
+            <Link key={item.title} to={item.to} className="lift relative overflow-hidden rounded-[22px] border border-gold/25 bg-gradient-to-br from-white/[0.05] to-white/[0.02] p-6">
+              <span className={`pointer-events-none absolute -right-2 -top-6 select-none font-serif text-[7rem] font-black leading-none opacity-[0.08] ${item.tone}`} aria-hidden="true">{item.watermark}</span>
+              <h3 className="relative font-serif text-xl font-bold text-cream">{item.title}</h3>
+              <p className="relative mt-2.5 text-sm leading-7 text-mist">{item.text}</p>
+              <span className="relative mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-gold">開始 <ArrowRight size={15} /></span>
+            </Link>
+          ))}
         </div>
       </section>
 

@@ -11,7 +11,7 @@ const principles = [
 export default function AboutPage() {
   return (
     <section className="page-container page-section">
-      <div className="grid gap-9 lg:grid-cols-[0.82fr_1.18fr] lg:items-end"><div><p className="eyebrow">About FateVerse</p><h1 className="display-title mt-3">不同系統，<br />不同觀看角度</h1></div><p className="max-w-2xl text-lg leading-8 text-mist">萬象命書不比較哪一套文化模型「更準」，也不把差異視為錯誤。我們把規則計算、原始資料與文字解讀拆開，讓每個結論都知道自己從哪裡來。</p></div>
+      <div className="grid gap-9 lg:grid-cols-[0.82fr_1.18fr] lg:items-end"><div><p className="eyebrow">About FateVerse</p><h1 className="display-title mt-3">一面鏡子，<br />不是一本預言書</h1></div><p className="max-w-2xl text-lg leading-8 text-mist">萬象命書不比較哪一套文化模型「更準」，也不把差異視為錯誤。我們把規則計算、原始資料與文字解讀拆開，讓每個結論都知道自己從哪裡來；剩下的部分，交給讀的人——你在這些說法裡認出什麼，往往比說法本身更值得留意。</p></div>
 
       <div className="mt-12 grid gap-5 md:grid-cols-2">{principles.map(({ icon: Icon, title, text }, index) => <article className="glass-card p-6" key={title}><div className="flex items-center justify-between"><span className="grid size-11 place-items-center rounded-2xl bg-gold/10 text-gold"><Icon size={21} /></span><span className="text-xs font-semibold text-gold/60">0{index + 1}</span></div><h2 className="mt-5 font-serif text-xl font-semibold text-cream">{title}</h2><p className="mt-3 leading-7 text-mist">{text}</p></article>)}</div>
 

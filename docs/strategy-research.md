@@ -3,6 +3,28 @@
 > 來源：Claude 研究結果。作為 FateVerse 未來發展規劃參考。
 > 收錄日期：2026-07-24。內容為策略研究，非既定實作承諾；數據引用請見文末 Caveats。
 
+## 執行進度（2026-07-25 更新）
+
+本報告的三個階段功能與跨領域構想**均已實作完成**：
+
+| 項目 | 實作 |
+| --- | --- |
+| 方案一 決策儀式「擲」 | `src/pages/RitualPage.tsx`、`decision-ritual-engine.ts` |
+| 方案二 自我敘事「本章」 | `src/pages/NarrativePage.tsx`、`narrative-engine.ts` |
+| 方案三 投射式鏡子 | `src/pages/BarnumMirrorPage.tsx`、`barnum-engine.ts` |
+| C1 你出生那天的世界 | `birthday-sky-engine.ts`（真實天文／曆法，未採用需外部爬取的歌曲榜單） |
+| C2 生成藝術命盤指紋 | `chart-fingerprint-engine.ts`、`CosmicImprintPage.tsx` |
+| C3 URL 編碼分享 + 分享圖 | `utils/share-link.ts`（lz-string）、`imprint-share-image.ts`（Canvas `toBlob`，採建議 (c) 方案） |
+| C4 時間膠囊 | `TimeCapsulePage.tsx`、`time-capsule-engine.ts`（IndexedDB） |
+| C5 兩人合盤 | `SynastryPage.tsx`、`synastry-engine.ts` |
+| C6 聲音指紋 | `sound-fingerprint-engine.ts`、`SoundFingerprintPlayer.tsx` |
+| C7 AI 塔羅對話 | **刻意不做**（報告列為低優先／謹慎） |
+| 貫穿全程的定位動作 | 已執行：首頁、關於頁、README 與社群預覽文案轉為「一面鏡子，不是一本預言書」，並將巴納姆鏡子、決策儀式、人生劇本提升為首頁「看見自己」專區 |
+
+**與報告的一項重大偏離**：報告多處假設 WebLLM（瀏覽器端 AI）為既有資產、可作為敘事引擎的「錦上添花重寫層」。實測後 WebLLM 在部分行動裝置會導致分頁崩潰，體驗不穩定，**已於 2026-07-25 將該功能完整移除**。這符合報告 Recommendations 中預留的調整訊號（「若 WebLLM 在真實裝置上的完成率或品質不佳，則敘事引擎全面改走規則模板，AI 僅作選配」）——實際做法比備案更徹底：全站文字改為純規則式引擎產生，完全離線。閱讀下文技術備忘中的 WebLLM 相關段落時請留意此變更。
+
+定位調性採「溫和版」：保留萬象命書的典雅感，把重心從「多系統聚合」移到「自我覺察」，但不強調「拆穿算命話術」的對抗性語氣。
+
 ## TL;DR
 
 - **FateVerse 的真正機會不是「再做一個更好的排盤網站」，而是把產品從「輸出一份命盤報告」升級為「一套會反映使用者自己的互動介面」——最強的三個重新定位是：決策儀式（Decision Ritual）、自我敘事生成器（Narrative Engine）、投射式鏡子（Projective Mirror）。你的 repo 已經內建了做這件事最稀缺的資產：真實星曆計算（astronomy-engine）、瀏覽器端 AI（WebLLM）、以及一個「巴納姆效應鏡子」教學模組——這個誠實、拆解話術的定位，正是全世界競品都沒有的差異點。**
