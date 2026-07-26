@@ -19,6 +19,7 @@ import UnifiedIntegrationPanel from '../components/report/UnifiedIntegrationPane
 import NatalChart from '../components/report/NatalChart';
 import HouseSystemComparison from '../components/report/HouseSystemComparison';
 import ReportActions from '../components/report/ReportActions';
+import ShareCardButton from '../components/report/ShareCardButton';
 import ZiweiChart from '../components/report/ZiweiChart';
 import { buildSystemMatrix, generateFusionReading, generateSystemConclusions, generateTimelineReading } from '../engines/fusion-engine';
 import { computeFateSnapshot } from '../engines/fate-snapshot-engine';
@@ -302,6 +303,18 @@ export default function ReportPage() {
 
       {tab === 'fusion' && <div key="fusion" className="reveal mt-7">
         <FateSnapshotCard snapshot={snapshot} />
+        <div className="mt-5">
+          <ShareCardButton data={{
+            percentages: unifiedProfile.percentages,
+            headline: snapshot.consensusLine,
+            labels: [
+              `日主 ${input.bazi.dayMaster}${ELEMENT_LABELS[input.bazi.dayMasterElement]}`,
+              `太陽 ${input.astrology.sunSign}`,
+              `生肖 ${input.zodiac.animal}`,
+              `靈數 ${input.numerology.lifePathNumber}`,
+            ],
+          }} />
+        </div>
         <div className="mb-6 mt-14"><p className="eyebrow">Unified profile</p><h2 className="section-title mt-2">全面整合：所有系統的加權剖面</h2><p className="mt-2 text-sm leading-6 text-mist">把每套系統換算到同一套五行座標後加權平均，得到一張最完整的整體剖面；下方再逐一比對共識與差異。</p></div>
         <UnifiedIntegrationPanel profile={unifiedProfile} />
         <div className="mt-6"><SystemMatrixRadar matrix={systemMatrix} /></div>
