@@ -1,5 +1,6 @@
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import BarnumChallengeEntry from '../components/common/BarnumChallengeEntry';
 import DailyFortuneCard from '../components/common/DailyFortuneCard';
 import Disclaimer from '../components/common/Disclaimer';
 import StarChartWheel from '../components/common/StarChartWheel';
@@ -42,7 +43,7 @@ export default function HomePage() {
       </div>
 
       {/* Hero */}
-      <section className="page-container relative grid items-center gap-12 overflow-hidden py-12 lg:grid-cols-[1.02fr_0.98fr] lg:py-16">
+      <section className="page-container relative grid items-center gap-10 overflow-hidden py-8 lg:grid-cols-[1.02fr_0.98fr] lg:py-16">
         <div className="hero-art pointer-events-none absolute inset-0 -z-10 opacity-45 [mask-image:linear-gradient(90deg,transparent_0%,black_35%,black_100%)]" aria-hidden="true" />
         <span className="vtext pointer-events-none absolute -left-1 top-1/2 hidden -translate-y-1/2 font-serif text-sm tracking-[0.3em] text-mist/40 xl:block" aria-hidden="true">觀星知命</span>
         <div className="reveal">
@@ -52,13 +53,14 @@ export default function HomePage() {
             <span className="shimmer-gold">換一種星象</span><br />
             換一個故事
           </h1>
-          <p className="mt-6 max-w-lg text-lg leading-8 text-mist">八字、紫微斗數、西洋星盤與生命靈數，各自用不同的語言描述同一個人。我們把這些說法並排放著——不是為了斷言你的未來，而是讓你在其中，看見自己原本就隱約知道的事。</p>
-          <p className="mt-4 max-w-lg text-[15px] leading-7 text-mist/85">一面鏡子，不是一本預言書。</p>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <p className="mt-4 max-w-lg text-lg leading-8 text-mist/90">一面鏡子，不是一本預言書。</p>
+          <div className="mt-6 flex flex-wrap gap-3">
             <Link to="/profile" className="btn-primary whitespace-nowrap" style={{ flex: 'none' }}>開始探索命盤 <ArrowRight size={18} /></Link>
             <Link to="/daily" className="btn-secondary whitespace-nowrap" style={{ flex: 'none' }}>抽一張今日指引</Link>
           </div>
-          <div className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-sm text-mist">
+          <div className="mt-5"><BarnumChallengeEntry /></div>
+          <p className="mt-6 max-w-lg leading-8 text-mist">八字、紫微斗數、西洋星盤與生命靈數，各自用不同的語言描述同一個人。我們把這些說法並排放著——不是為了斷言你的未來，而是讓你在其中，看見自己原本就隱約知道的事。</p>
+          <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-mist">
             {['全程瀏覽器運算', '不用登入', '免費看完整報告'].map((tag) => (
               <span className="flex items-center gap-2" key={tag}><span className="text-gold">◦</span>{tag}</span>
             ))}
