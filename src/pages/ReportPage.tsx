@@ -7,6 +7,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { generateFallbackReport } from '../engines/fallback-report';
 import FiveElementChart from '../components/charts/FiveElementChart';
 import Disclaimer from '../components/common/Disclaimer';
+import SystemArtwork, { type SystemArtworkKind } from '../components/common/SystemArtwork';
 import BaziPillars from '../components/report/BaziPillars';
 import BaziRelations from '../components/report/BaziRelations';
 import BaziStrengthPanel from '../components/report/BaziStrengthPanel';
@@ -37,6 +38,16 @@ const REPORT_TABS = [
 ] as const;
 
 type ReportTab = (typeof REPORT_TABS)[number][0];
+
+const REPORT_ARTWORK: Record<ReportTab, SystemArtworkKind> = {
+  overview: 'fusion',
+  fusion: 'fusion',
+  bazi: 'bazi',
+  ziwei: 'ziwei',
+  western: 'western',
+  numerology: 'numerology',
+  name: 'name',
+};
 
 /** 全站固定頁首高度，對應分頁列的 `sticky top-16`（4rem）。 */
 const APP_HEADER_HEIGHT = 64;
@@ -186,6 +197,8 @@ export default function ReportPage() {
           ))}
         </div>
       </nav>
+
+      <SystemArtwork className="mt-6 print:hidden" kind={REPORT_ARTWORK[tab]} priority />
 
       {tab === 'overview' && <div key="overview" className="reveal">
         <div className="mt-7 grid grid-cols-2 gap-4 lg:grid-cols-4">

@@ -2,6 +2,7 @@ import { Menu, ScrollText, Settings, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import BrandMark from '../components/common/BrandMark';
+import { RouteSystemArtwork } from '../components/common/SystemArtwork';
 import Starfield from '../components/common/Starfield';
 import { useRouteScrollReset } from '../hooks/useRouteScrollReset';
 import { useFateStore } from '../store/useFateStore';
@@ -59,7 +60,10 @@ export default function AppLayout() {
           </nav>
         )}
       </header>
-      <main id="main-content" tabIndex={-1}><div className="route-enter" key={location.pathname}><Outlet /></div></main>
+      <main id="main-content" tabIndex={-1}>
+        <RouteSystemArtwork pathname={location.pathname} />
+        <div className="route-enter" key={location.pathname}><Outlet /></div>
+      </main>
       <footer className="border-t border-white/10 py-8">
         <div className="page-container flex flex-col gap-4 text-sm text-mist sm:flex-row sm:items-center sm:justify-between">
           <p>© 2026 萬象命書 FateVerse</p>
