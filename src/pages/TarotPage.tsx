@@ -29,6 +29,14 @@ export default function TarotPage() {
   const birthCards = profile?.birthDate
     ? getBirthCards(profile.birthDate.replaceAll('-', '').split('').map(Number))
     : undefined;
+  const birthCardDisplay = birthCards
+    ? birthCards.samePersonalityAndSoul
+      ? [{ label: '人格與靈魂牌', card: birthCards.personality }]
+      : [
+          { label: '人格牌', card: birthCards.personality },
+          { label: '靈魂牌', card: birthCards.soul },
+        ]
+    : [];
 
   const draw = () => {
     setSpread(drawSpread());
@@ -64,12 +72,21 @@ export default function TarotPage() {
                 <button type="button" onClick={() => flipOne(index)} className="mt-3 block w-full [perspective:1200px]" aria-label={`翻開${position}的牌`}>
                   <div className={`card3d relative mx-auto aspect-[2/3] w-full max-w-[220px] ${flipped[index] ? 'flipped' : ''}`} style={{ transitionDelay: `${index * 120}ms` }}>
                     <div className="card-face"><CardBack /></div>
-                    <div className={`card-face card-back grid place-items-center rounded-[20px] border p-4 text-center ${reversed ? 'border-vermilion/40 bg-gradient-to-b from-vermilion/[0.08] to-[#0b1020]' : 'border-[#c9a0f0]/35 bg-gradient-to-b from-[#c9a0f0]/[0.09] to-[#0b1020]'}`}>
-                      <div>
-                        <p className="font-display text-4xl italic text-gold">{ROMAN[card.id]}</p>
-                        <p className="mt-2 font-display text-[11px] italic tracking-[0.14em] text-mist">{card.en}</p>
-                        <h2 className="mt-1 font-serif text-2xl font-black text-cream">{card.name}</h2>
-                        <span className={`mt-3 inline-block rounded-full px-3 py-1 text-[11px] font-semibold ${reversed ? 'bg-vermilion/15 text-[#e8927f]' : 'bg-emerald-300/10 text-emerald-200'}`}>{reversed ? '逆位' : '正位'}</span>
+                    <div className={`card-face card-back tarot-card-front rounded-[20px] border ${reversed ? 'border-vermilion/45' : 'border-[#c9a0f0]/40'}`}>
+                      <img
+                        className={`tarot-card-image ${reversed ? 'tarot-card-image-reversed' : ''}`}
+                        src={`${import.meta.env.BASE_URL}art/tarot/${String(card.id).padStart(2, '0')}.webp`}
+                        alt={`${card.name}（${card.en}）塔羅牌插畫`}
+                        decoding="async"
+                      />
+                      <span className="tarot-card-sheen" aria-hidden="true" />
+                      <div className="tarot-card-label">
+                        <p className="font-display text-2xl italic text-gold">{ROMAN[card.id]}</p>
+                        <div>
+                          <p className="font-display text-[9px] italic tracking-[0.14em] text-mist">{card.en}</p>
+                          <h2 className="font-serif text-lg font-black text-cream">{card.name}</h2>
+                        </div>
+                        <span className={`ml-auto shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold ${reversed ? 'bg-vermilion/20 text-[#f1a08d]' : 'bg-emerald-300/15 text-emerald-100'}`}>{reversed ? '逆位' : '正位'}</span>
                       </div>
                     </div>
                   </div>
@@ -102,6 +119,19 @@ export default function TarotPage() {
           <h2 className="flex items-center gap-2.5 font-serif text-xl font-bold text-cream"><Star className="text-[#c9a0f0]" size={20} />你的生日塔羅</h2>
           {birthCards ? (
             <div className="mt-4">
+              <div className={`mb-5 grid gap-3 ${birthCardDisplay.length > 1 ? 'sm:grid-cols-2' : ''}`}>
+                {birthCardDisplay.map(({ label, card }) => (
+                  <figure className="tarot-birth-card" key={label}>
+                    <img
+                      src={`${import.meta.env.BASE_URL}art/tarot/${String(card.id).padStart(2, '0')}.webp`}
+                      alt={`${card.name}（${card.en}）塔羅牌插畫`}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <figcaption><span>{label}</span><strong>{card.name}</strong><small>{card.en}</small></figcaption>
+                  </figure>
+                ))}
+              </div>
               <p className="leading-7 text-mist">把你生日的所有數字相加得到 {birthCards.sum}，對應的人格牌是「<span className="text-cream">{birthCards.personality.name}</span>」——{birthCards.personality.upright}{!birthCards.samePersonalityAndSoul && <>；再把數字加總一次，靈魂牌是「<span className="text-cream">{birthCards.soul.name}</span>」——{birthCards.soul.upright}</>}</p>
               <p className="mt-3 text-sm leading-6 text-mist">人格牌是你外在的行事風格，靈魂牌是內在深層的動力；{birthCards.samePersonalityAndSoul ? '你的兩張牌相同，代表內外一致。' : '兩張牌一起看，就是外在與內在的對照。'}</p>
             </div>
