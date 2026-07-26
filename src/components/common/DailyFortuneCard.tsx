@@ -2,6 +2,7 @@ import { ArrowRight, CalendarDays } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { computeDailyFortune, RELATION_LABELS, type ElementRelation } from '../../engines/daily-fortune-engine';
 import { useFateStore } from '../../store/useFateStore';
+import DailyFeedback from './DailyFeedback';
 
 /** 關係分類的配色。刻意只有三種描述性分類，不是分數或星等。 */
 const RELATION_TONE: Record<ElementRelation, string> = {
@@ -49,6 +50,9 @@ export default function DailyFortuneCard({ today = new Date() }: { today?: Date 
       </div>
 
       <p className="mt-3 text-xs leading-6 text-mist">{fortune.watchOut}</p>
+
+      <DailyFeedback today={today} />
+
       <p className="mt-3 text-[11px] leading-5 text-mist/70">
         依你的日主與當日天干（{fortune.tenGodCategory}）推得，全程在你的裝置上計算。這是反思用的參考，不是預言。
       </p>

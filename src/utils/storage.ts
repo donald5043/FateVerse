@@ -1,5 +1,6 @@
 import { clear, del, get, set } from 'idb-keyval';
 import type { CapsuleRecord } from '../engines/time-capsule-engine';
+import { upsertFeedback, type FeedbackRecord } from '../engines/fortune-feedback-engine';
 import type { FateReportInput, ProfileInput } from '../types/fate';
 
 export interface LocalPreferences {
@@ -72,6 +73,71 @@ export async function deleteCapsule(id: string): Promise<CapsuleRecord[]> {
 
 export async function clearCapsules(): Promise<void> {
   await del(CAPSULES_KEY);
+}
+
+const FEEDBACK_KEY = 'fateverse:daily-feedback';
+const FEEDBACK_LIMIT = 400;
+
+/**
+ * 今日回饋。同意狀態與紀錄放在同一個 key：沒有同意過，這個 key 根本不存在，
+ * 所以「沒同意就不寫入」在資料層是可驗證的，而不是只靠 UI 擋。
+ */
+export interface FeedbackStore {
+  consented: boolean;
+  records: FeedbackRecord[];
+}
+
+const emptyFeedback: FeedbackStore = { consented: false, records: [] };
+
+/**
+ * 隱私模式等環境沒有 IndexedDB。idb-keyval 會在內部建立連線 promise，
+ * 它的 rejection 攔不到，所以在呼叫之前先擋掉。
+ */
+function hasIndexedDb(): boolean {
+  return typeof indexedDB !== 'undefined';
+}
+
+export async function loadFeedback(): Promise<FeedbackStore> {
+  if (!hasIndexedDb()) return emptyFeedback;
+  try {
+    const stored = await get<Partial<FeedbackStore>>(FEEDBACK_KEY);
+    if (!stored) return emptyFeedback;
+    return { consented: stored.consented === true, records: stored.records ?? [] };
+  } catch {
+    // file:// 或被封鎖的儲存空間：當成沒紀錄，卡片照樣顯示。
+    return emptyFeedback;
+  }
+}
+
+/** 記錄同意。這是唯一會在未同意狀態下寫入的動作。 */
+export async function grantFeedbackConsent(): Promise<FeedbackStore> {
+  if (!hasIndexedDb()) throw new Error('這個瀏覽器環境無法保存紀錄。');
+  const existing = await loadFeedback();
+  const next: FeedbackStore = { ...existing, consented: true };
+  await set(FEEDBACK_KEY, next);
+  return next;
+}
+
+/**
+ * 儲存一筆今日回饋。未同意時不寫入任何東西，直接回傳現況——
+ * 呼叫端就算漏掉檢查，也不會偷偷留下資料。
+ */
+export async function saveFeedback(record: FeedbackRecord): Promise<FeedbackStore> {
+  if (!hasIndexedDb()) throw new Error('這個瀏覽器環境無法保存紀錄。');
+  const existing = await loadFeedback();
+  if (!existing.consented) return existing;
+  const next: FeedbackStore = {
+    consented: true,
+    records: upsertFeedback(existing.records, record).slice(0, FEEDBACK_LIMIT),
+  };
+  await set(FEEDBACK_KEY, next);
+  return next;
+}
+
+/** 刪除全部回饋紀錄，並收回同意。 */
+export async function clearFeedback(): Promise<void> {
+  if (!hasIndexedDb()) return;
+  await del(FEEDBACK_KEY);
 }
 
 export const defaultPreferences: LocalPreferences = {

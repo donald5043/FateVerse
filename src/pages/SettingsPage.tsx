@@ -25,7 +25,7 @@ export default function SettingsPage() {
   };
 
   const clearEverything = async () => {
-    if (!window.confirm('確定清除 FateVerse 的偏好、最近分析與網站快取嗎？此動作無法復原。')) return;
+    if (!window.confirm('確定清除 FateVerse 的偏好、最近分析、決策紀錄、時間膠囊、今日回饋與網站快取嗎？此動作無法復原。')) return;
     try {
       await clearLocalData();
       clearSession(); setPreferences(defaultPreferences); setStorageSummary('本地資料已清除；瀏覽器稍後會重新計算用量。'); setNotice('所有 FateVerse 本地資料與網站快取已清除。');
