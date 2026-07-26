@@ -64,7 +64,7 @@ export default function CosmicImprintPage() {
         <article className="glass-card p-6 sm:p-7">
           <h2 className="flex items-center gap-2.5 font-serif text-xl font-semibold text-cream"><Fingerprint className="text-gold" size={20} />命之圖騰</h2>
           <div className="mt-5"><ChartFingerprintArt fingerprint={fingerprint} /></div>
-          <p className="mt-4 text-sm leading-6 text-mist">這張圖由你的命盤程序化生成：外圈與輻條的疏密來自你的命盤種子，中央的五角星形正比於你的五行占比，落點對應你的行星位置。</p>
+          <p className="mt-4 text-sm leading-6 text-mist">五行主調會先選出一幅由影像模型生成的元素世界，再疊上你的命盤幾何：外圈與輻條的疏密來自命盤種子，中央五角星正比於五行占比，落點則對應行星位置。同一份命盤永遠會得到同一張圖。</p>
           <div className="mt-3 flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-3">
             <Waypoints className="shrink-0 text-gold" size={16} />
             <p className="text-xs leading-5 text-mist">底部的 <span className="font-mono text-cream">{fingerprint.binaryCode}</span> 是把你的五行與日主陰陽編成的二進位卦碼（第 {fingerprint.hexagramIndex} 號）——呼應萊布尼茲 1703 年發現的「易經即二進位」。</p>

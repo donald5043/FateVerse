@@ -8,8 +8,24 @@ export interface ImprintShareContent {
   facts: SkyFact[];
 }
 
+function loadImage(source: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('圖騰底圖載入失敗。'));
+    image.src = source;
+  });
+}
+
+function drawImageCover(context: CanvasRenderingContext2D, image: HTMLImageElement, width: number, height: number) {
+  const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
+  const drawWidth = image.naturalWidth * scale;
+  const drawHeight = image.naturalHeight * scale;
+  context.drawImage(image, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
+}
+
 /** 把命之圖騰與出生那天快照畫成可下載分享的 PNG（1080×1350）；純瀏覽器端，不上傳。 */
-export function renderImprintShareImage(content: ImprintShareContent): Promise<Blob> {
+export async function renderImprintShareImage(content: ImprintShareContent): Promise<Blob> {
   const width = 1080;
   const height = 1350;
   const canvas = document.createElement('canvas');
@@ -24,6 +40,22 @@ export function renderImprintShareImage(content: ImprintShareContent): Promise<B
   background.addColorStop(1, '#0a0f20');
   context.fillStyle = background;
   context.fillRect(0, 0, width, height);
+
+  try {
+    const source = new URL(`${import.meta.env.BASE_URL}art/imprint/${content.fingerprint.theme}.webp`, window.location.href).href;
+    const image = await loadImage(source);
+    context.globalAlpha = 0.72;
+    drawImageCover(context, image, width, height);
+    context.globalAlpha = 1;
+    const veil = context.createLinearGradient(0, 0, 0, height);
+    veil.addColorStop(0, 'rgba(4,8,18,.16)');
+    veil.addColorStop(0.62, 'rgba(4,8,18,.48)');
+    veil.addColorStop(1, 'rgba(4,8,18,.92)');
+    context.fillStyle = veil;
+    context.fillRect(0, 0, width, height);
+  } catch {
+    // 底圖載入失敗時仍保留原本的程序生成分享圖。
+  }
 
   const centerX = width / 2;
   context.textAlign = 'center';

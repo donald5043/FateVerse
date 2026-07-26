@@ -3,15 +3,18 @@ import type { ChartFingerprint } from '../../engines/chart-fingerprint-engine';
 export default function ChartFingerprintArt({ fingerprint }: { fingerprint: ChartFingerprint }) {
   const { size } = fingerprint;
   const center = size / 2;
+  const backgroundSrc = `${import.meta.env.BASE_URL}art/imprint/${fingerprint.theme}.webp`;
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} className="chart-enter mx-auto h-auto w-full max-w-[360px]" role="img" aria-label="由你的命盤生成的獨一無二命之圖騰">
+    <svg viewBox={`0 0 ${size} ${size}`} className="chart-enter imprint-art mx-auto h-auto w-full max-w-[420px]" role="img" aria-label="由你的命盤與五行意象生成的獨一無二命之圖騰">
       <defs>
         <radialGradient id="fp-core-glow">
           <stop offset="0%" stopColor={fingerprint.coreColor} stopOpacity="0.5" />
           <stop offset="100%" stopColor={fingerprint.coreColor} stopOpacity="0" />
         </radialGradient>
       </defs>
-      <rect x="0" y="0" width={size} height={size} fill="#0a0f20" rx="20" />
+      <clipPath id="fp-rounded"><rect x="0" y="0" width={size} height={size} rx="20" /></clipPath>
+      <image className="imprint-art-background" href={backgroundSrc} x="0" y="0" width={size} height={size} preserveAspectRatio="xMidYMid slice" clipPath="url(#fp-rounded)" />
+      <rect x="0" y="0" width={size} height={size} fill="rgba(5,9,18,.32)" rx="20" />
       <circle cx={center} cy={center} r={size * 0.28} fill="url(#fp-core-glow)" />
 
       {fingerprint.rings.map((ring, index) => (
@@ -22,7 +25,7 @@ export default function ChartFingerprintArt({ fingerprint }: { fingerprint: Char
       ))}
       <polygon points={fingerprint.corePolygon.map((point) => `${point.x},${point.y}`).join(' ')} fill={fingerprint.coreColor} fillOpacity="0.16" stroke={fingerprint.coreColor} strokeWidth="1.4" strokeOpacity="0.8" />
       {fingerprint.nodes.map((node, index) => (
-        <circle key={`node-${index}`} cx={node.x} cy={node.y} r={node.size} fill={node.color} fillOpacity="0.85" />
+        <circle className="imprint-art-node" key={`node-${index}`} cx={node.x} cy={node.y} r={node.size} fill={node.color} fillOpacity="0.85" style={{ animationDelay: `${index * 170}ms` }} />
       ))}
       <circle cx={center} cy={center} r="3" fill={fingerprint.coreColor} />
       <text x={center} y={size - 12} textAnchor="middle" fill="rgba(174,184,214,0.6)" fontSize="9" fontFamily="ui-monospace, monospace" style={{ letterSpacing: '0.2em' }}>{fingerprint.binaryCode} · 卦 {fingerprint.hexagramIndex}</text>

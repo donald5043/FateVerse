@@ -33,6 +33,7 @@ export interface Point { x: number; y: number; }
 
 export interface ChartFingerprint {
   seed: string;
+  theme: ElementName;
   binaryCode: string;
   hexagramIndex: number;
   palette: string[];
@@ -113,6 +114,7 @@ export function buildChartFingerprint(input: FateReportInput): ChartFingerprint 
 
   return {
     seed,
+    theme: input.bazi.dayMasterElement,
     binaryCode,
     hexagramIndex,
     palette,
