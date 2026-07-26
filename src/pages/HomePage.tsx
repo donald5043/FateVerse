@@ -1,5 +1,6 @@
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import DailyFortuneCard from '../components/common/DailyFortuneCard';
 import Disclaimer from '../components/common/Disclaimer';
 import StarChartWheel from '../components/common/StarChartWheel';
 
@@ -64,6 +65,11 @@ export default function HomePage() {
           </div>
         </div>
         <StarChartWheel />
+      </section>
+
+      {/* 今日與你：每日回訪入口 */}
+      <section className="page-container py-4">
+        <DailyFortuneCard />
       </section>
 
       {/* 系統索引：羅馬數字無卡片列 */}
