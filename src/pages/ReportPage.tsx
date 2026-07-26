@@ -13,6 +13,7 @@ import BaziRelations from '../components/report/BaziRelations';
 import BaziStrengthPanel from '../components/report/BaziStrengthPanel';
 import AstrologyStructurePanel from '../components/report/AstrologyStructurePanel';
 import { AstrologyPositionInsights, BaziTenGodInsights, ZiweiKeyPalaceInsights } from '../components/report/CulturalInsights';
+import FateSnapshotCard from '../components/report/FateSnapshotCard';
 import FusionInsights from '../components/report/FusionInsights';
 import UnifiedIntegrationPanel from '../components/report/UnifiedIntegrationPanel';
 import NatalChart from '../components/report/NatalChart';
@@ -20,6 +21,7 @@ import HouseSystemComparison from '../components/report/HouseSystemComparison';
 import ReportActions from '../components/report/ReportActions';
 import ZiweiChart from '../components/report/ZiweiChart';
 import { buildSystemMatrix, generateFusionReading, generateSystemConclusions, generateTimelineReading } from '../engines/fusion-engine';
+import { computeFateSnapshot } from '../engines/fate-snapshot-engine';
 import { buildUnifiedElementProfile } from '../engines/integration-engine';
 import SystemMatrixRadar from '../components/report/SystemMatrixRadar';
 import { useFateStore } from '../store/useFateStore';
@@ -127,6 +129,7 @@ export default function ReportPage() {
   const systemMatrix = buildSystemMatrix(input, { palmElement });
   const conclusions = generateSystemConclusions(input);
   const timeline = generateTimelineReading(input);
+  const snapshot = computeFateSnapshot(fusion, systemMatrix);
 
   const systems = [
     {
@@ -298,7 +301,8 @@ export default function ReportPage() {
       </div>}
 
       {tab === 'fusion' && <div key="fusion" className="reveal mt-7">
-        <div className="mb-6"><p className="eyebrow">Unified profile</p><h2 className="section-title mt-2">全面整合：所有系統的加權剖面</h2><p className="mt-2 text-sm leading-6 text-mist">把每套系統換算到同一套五行座標後加權平均，得到一張最完整的整體剖面；下方再逐一比對共識與差異。</p></div>
+        <FateSnapshotCard snapshot={snapshot} />
+        <div className="mb-6 mt-14"><p className="eyebrow">Unified profile</p><h2 className="section-title mt-2">全面整合：所有系統的加權剖面</h2><p className="mt-2 text-sm leading-6 text-mist">把每套系統換算到同一套五行座標後加權平均，得到一張最完整的整體剖面；下方再逐一比對共識與差異。</p></div>
         <UnifiedIntegrationPanel profile={unifiedProfile} />
         <div className="mt-6"><SystemMatrixRadar matrix={systemMatrix} /></div>
         <div className="mb-6 mt-14"><p className="eyebrow">Fusion reading</p><h2 className="section-title mt-2">融合解讀：所有系統一起說</h2><p className="mt-2 text-sm leading-6 text-mist">把每套系統的結果翻譯成同一種語言後交叉比對，全程用白話說明哪裡有共識、哪裡各說各話。</p></div>
