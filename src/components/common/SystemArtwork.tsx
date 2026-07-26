@@ -8,7 +8,18 @@ export type SystemArtworkKind =
   | 'fortune'
   | 'palm'
   | 'daily'
-  | 'fusion';
+  | 'fusion'
+  | 'profile'
+  | 'ritual'
+  | 'imprint'
+  | 'shared'
+  | 'narrative'
+  | 'capsule'
+  | 'synastry'
+  | 'mirror'
+  | 'about'
+  | 'privacy'
+  | 'settings';
 
 const ARTWORK_META: Record<SystemArtworkKind, { label: string; alt: string }> = {
   bazi: { label: '八字四柱', alt: '四柱、藏干層次與五行循環交織的八字意象' },
@@ -21,24 +32,35 @@ const ARTWORK_META: Record<SystemArtworkKind, { label: string; alt: string }> = 
   palm: { label: '手相', alt: '三大掌紋與五行節點相互連結的手相版畫' },
   daily: { label: '今日指引', alt: '從月夜走向晨光、象徵每日方向的一張指引卡' },
   fusion: { label: '萬象合參', alt: '八字、紫微、星盤、靈數、塔羅與手相匯聚的綜合命理圖' },
+  profile: { label: '探索命盤', alt: '出生紀錄、時間、地點與四柱座標匯聚成個人命盤的起點' },
+  ritual: { label: '決策儀式', alt: '命運骰子在兩條選擇路徑之間落下、映照第一反應的決策儀式意象' },
+  imprint: { label: '宇宙印記', alt: '木火土金水五種元素環繞獨特指紋、交織成個人命之圖騰' },
+  shared: { label: '分享命盤', alt: '受保護的命盤透過一道光傳遞至另一份星圖、象徵自主分享' },
+  narrative: { label: '人生劇本', alt: '一本展開的書延伸出多條人生章節與仍可選擇的道路' },
+  capsule: { label: '時間膠囊', alt: '星光、信件與新芽封存在時間容器中、等待未來的自己開啟' },
+  synastry: { label: '兩人合盤', alt: '兩張不同星圖相互交疊、形成共享空間又保留各自軌道' },
+  mirror: { label: '巴納姆鏡子', alt: '不同面具在鏡中看見相似星圖、揭示巴納姆效應與冷讀機制' },
+  about: { label: '關於萬象命書', alt: '命理資料、計算、符號與詮釋分層展開、呈現透明的方法框架' },
+  privacy: { label: '隱私設計', alt: '個人星圖被完整收納在本機邊界與鎖具之內、沒有向外傳送' },
+  settings: { label: '資料設定', alt: '可調節的星圖儀器、動態控制與本機收納象徵個人資料掌控' },
 };
 
 const ROUTE_ARTWORK: Record<string, SystemArtworkKind> = {
-  '/profile': 'bazi',
+  '/profile': 'profile',
   '/daily': 'daily',
   '/tarot': 'tarot',
   '/palm': 'palm',
   '/fortune': 'fortune',
-  '/mirror': 'name',
-  '/ritual': 'tarot',
-  '/imprint': 'western',
-  '/shared': 'fusion',
-  '/narrative': 'name',
-  '/capsule': 'daily',
-  '/synastry': 'fusion',
-  '/about': 'fusion',
-  '/privacy': 'daily',
-  '/settings': 'numerology',
+  '/mirror': 'mirror',
+  '/ritual': 'ritual',
+  '/imprint': 'imprint',
+  '/shared': 'shared',
+  '/narrative': 'narrative',
+  '/capsule': 'capsule',
+  '/synastry': 'synastry',
+  '/about': 'about',
+  '/privacy': 'privacy',
+  '/settings': 'settings',
 };
 
 interface SystemArtworkProps {
@@ -64,7 +86,7 @@ export default function SystemArtwork({
         loading={priority ? 'eager' : 'lazy'}
       />
       <span className="system-artwork-glow" aria-hidden="true" />
-      <figcaption><span>命理章節</span>{meta.label}</figcaption>
+      <figcaption><span>萬象命書</span>{meta.label}</figcaption>
     </figure>
   );
 }
