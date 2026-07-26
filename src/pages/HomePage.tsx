@@ -41,7 +41,8 @@ export default function HomePage() {
       </div>
 
       {/* Hero */}
-      <section className="page-container relative grid items-center gap-12 py-12 lg:grid-cols-[1.02fr_0.98fr] lg:py-16">
+      <section className="page-container relative grid items-center gap-12 overflow-hidden py-12 lg:grid-cols-[1.02fr_0.98fr] lg:py-16">
+        <div className="hero-art pointer-events-none absolute inset-0 -z-10 opacity-45 [mask-image:linear-gradient(90deg,transparent_0%,black_35%,black_100%)]" aria-hidden="true" />
         <span className="vtext pointer-events-none absolute -left-1 top-1/2 hidden -translate-y-1/2 font-serif text-sm tracking-[0.3em] text-mist/40 xl:block" aria-hidden="true">觀星知命</span>
         <div className="reveal">
           <p className="font-display text-base italic tracking-[0.12em] text-vermilion">A mirror, not a prophecy</p>

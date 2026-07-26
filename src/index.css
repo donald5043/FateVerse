@@ -63,6 +63,11 @@ body::after {
   .vtext { writing-mode: vertical-rl; text-orientation: upright; }
   .shimmer-gold { background: linear-gradient(100deg, #b48a3d, #ecd39a 45%, #fff6df 55%, #ecd39a 65%, #b48a3d); background-size: 220% auto; -webkit-background-clip: text; background-clip: text; color: transparent; }
   .fv-seal { @apply inline-flex items-center justify-center rounded-md bg-vermilion font-serif font-bold text-cream; }
+  .hero-art {
+    background-image: linear-gradient(90deg, #070b16 0%, rgba(7, 11, 22, .7) 24%, rgba(7, 11, 22, .08) 58%), url('/hero-celestial-almanac.webp');
+    background-position: center;
+    background-size: cover;
+  }
 }
 
 .fv-star {
