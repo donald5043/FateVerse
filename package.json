@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "test:specificity": "SPECIFICITY=1 vitest run tests/specificity",
     "verify:references": "vite-node scripts/verify-lunar.ts && vite-node scripts/verify-tesseract.ts && vite-node scripts/verify-fuse.ts",
-    "preview": "vite preview"
+    "preview": "npm run build && wrangler dev",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "astronomy-engine": "2.1.19",
@@ -29,6 +30,7 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.47.0",
     "@eslint/js": "^9.17.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
@@ -49,6 +51,7 @@
     "typescript-eslint": "^8.20.0",
     "vite": "^6.0.7",
     "vite-plugin-pwa": "1.3.0",
-    "vitest": "^3.0.4"
+    "vitest": "^3.0.4",
+    "wrangler": "^4.114.0"
   }
 }
