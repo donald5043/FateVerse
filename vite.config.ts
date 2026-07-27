@@ -2,8 +2,17 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+/**
+ * 同一份原始碼要出兩種產物：
+ * - Cloudflare Workers 掛在網域根目錄，base 是 `/`（預設）
+ * - GitHub Pages 掛在 `/FateVerse/` 子路徑，由 FATEVERSE_BASE 指定
+ *
+ * index.html 用的是 `%BASE_URL%`，所以兩邊共用同一份，不需要各留一份。
+ */
+const base = process.env.FATEVERSE_BASE || '/';
+
 export default defineConfig({
-  base: '/',
+  base,
   plugins: [
     react(),
     VitePWA({

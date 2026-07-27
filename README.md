@@ -78,7 +78,20 @@ npm run build
 npm run preview
 ```
 
-Vite 開發與正式建置都使用根路徑 `/`。`npm run build` 會輸出到 `dist/`，並在最後自動確認 `dist/index.html` 的 JavaScript 與 CSS 都使用 `/assets/...`，避免 SPA fallback 把缺少的模組請求誤回傳成 HTML。
+## 兩個部署目標
+
+同一份原始碼出兩種產物，差別只在 base path：
+
+| 目標 | 指令 | base | 網址 |
+| --- | --- | --- | --- |
+| Cloudflare Workers | `npm run build` | `/` | `https://fateverse.donald5043.workers.dev/` |
+| GitHub Pages | `npm run build:pages` | `/FateVerse/` | `https://donald5043.github.io/FateVerse/` |
+
+base 由 `FATEVERSE_BASE` 環境變數決定，預設 `/`。`index.html` 用的是 `%BASE_URL%`，兩邊共用同一份。
+
+兩個指令最後都會跑 `scripts/verify-build.mjs`，確認 `dist/index.html` 的 JavaScript 與 CSS 前綴確實對得上該次建置的 base。base 設錯不會讓建置失敗，只會在瀏覽器上 404 成一片白畫面，所以在 CI 就擋下來。
+
+自動部署：push 到 `main` 會觸發 `.github/workflows/deploy-pages.yml`（GitHub Pages）與 `.github/workflows/deploy-cloudflare.yml`（Cloudflare Workers）。後者需要 repo secrets `CLOUDFLARE_API_TOKEN` 與 `CLOUDFLARE_ACCOUNT_ID`，沒設定時該 job 會自動跳過，不影響 Pages 部署。
 
 ## Cloudflare Workers 部署
 
