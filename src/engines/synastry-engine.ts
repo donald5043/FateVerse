@@ -1,4 +1,5 @@
-import type { ElementName, FateReportInput } from '../types/fate';
+import type { AspectResult, ElementName, FateReportInput, PlanetPosition } from '../types/fate';
+import { matchAspect } from './astrology-engine';
 import { numerologyElement } from './fusion-engine';
 import { buildUnifiedElementProfile } from './integration-engine';
 import { ELEMENT_LABELS } from '../utils/constants';
@@ -24,11 +25,28 @@ export interface SynastryHighlight {
   text: string;
 }
 
+/** 跨盤相位：A 的某顆行星，對上 B 的某顆行星。 */
+export interface SynastryAspect {
+  /** 甲方的行星名。 */
+  planetA: string;
+  /** 乙方的行星名。 */
+  planetB: string;
+  type: string;
+  quality: AspectResult['quality'];
+  closeness: AspectResult['closeness'];
+  orb: number;
+  /** 這組相位在關係裡通常怎麼運作。 */
+  reading: string;
+}
+
 export interface SynastryReading {
   nameA: string;
   nameB: string;
   intro: string;
   sections: SynastrySection[];
+  aspects: SynastryAspect[];
+  /** 沒有可用的行星資料或沒有成相時，說明為什麼這一段是空的。 */
+  aspectNote: string;
   highlights: SynastryHighlight[];
   cautions: string[];
 }
@@ -102,6 +120,65 @@ function sunSignRelation(elementA: string, elementB: string, signA: string, sign
   return { id: 'sun-sign', title: '太陽星座相性（西洋）', verdict, reading };
 }
 
+/**
+ * 只比對個人行星。木星以外的外行星走得慢，同齡人幾乎人人都成相，
+ * 放進來會讓每一份合盤看起來都一樣。
+ */
+const PERSONAL_PLANETS = ['太陽', '月亮', '水星', '金星', '火星'];
+
+/** 每顆行星在關係裡代表什麼。用來組出相位的解讀。 */
+const PLANET_DOMAIN: Record<string, string> = {
+  太陽: '想成為的樣子',
+  月亮: '情緒反應與安全感',
+  水星: '講話與思考的方式',
+  金星: '喜歡什麼、怎麼表達喜歡',
+  火星: '行動節奏與生氣的方式',
+};
+
+const QUALITY_SHAPE: Record<AspectResult['quality'], (nameA: string, nameB: string, domainA: string, domainB: string) => string> = {
+  fusion: (nameA, nameB, domainA, domainB) => `${nameA}的${domainA}和${nameB}的${domainB}疊在同一個位置。這一塊你們幾乎不用解釋就懂，但也因為太靠近，很難退開來看對方。`,
+  flow: (nameA, nameB, domainA, domainB) => `${nameA}的${domainA}和${nameB}的${domainB}走得順。這是相處裡不太費力的部分，順到你們可能都沒注意到它存在。`,
+  tension: (nameA, nameB, domainA, domainB) => `${nameA}的${domainA}和${nameB}的${domainB}會互相卡住。摩擦多半出現在這裡，也是這段關係最有可能長出東西的地方。`,
+  polarity: (nameA, nameB, domainA, domainB) => `${nameA}的${domainA}和${nameB}的${domainB}站在正對面。你們在這一塊的做法幾乎相反，看得見對方，也最容易在這裡拉扯。`,
+};
+
+/**
+ * 兩張盤之間的相位。用的是本命盤那組角度與容許度（`matchAspect`），
+ * 差別只在於配對的是兩個人的行星而不是同一張盤裡的。
+ */
+export function computeCrossAspects(
+  planetsA: PlanetPosition[] | undefined,
+  planetsB: PlanetPosition[] | undefined,
+  nameA: string,
+  nameB: string,
+  limit = 6,
+): SynastryAspect[] {
+  if (!planetsA?.length || !planetsB?.length) return [];
+  const pick = (planets: PlanetPosition[]) => planets.filter((planet) => PERSONAL_PLANETS.includes(planet.name));
+
+  const found: SynastryAspect[] = [];
+  pick(planetsA).forEach((first) => {
+    pick(planetsB).forEach((second) => {
+      const match = matchAspect(first.longitude, second.longitude);
+      if (!match) return;
+      found.push({
+        planetA: first.name,
+        planetB: second.name,
+        type: match.type,
+        quality: match.quality,
+        closeness: match.closeness,
+        orb: match.orb,
+        reading: QUALITY_SHAPE[match.quality](
+          nameA, nameB, PLANET_DOMAIN[first.name] ?? first.name, PLANET_DOMAIN[second.name] ?? second.name,
+        ),
+      });
+    });
+  });
+
+  // 容許度越小，這組相位越明確。只留最緊的幾組，其餘是雜訊。
+  return found.sort((left, right) => left.orb - right.orb).slice(0, limit);
+}
+
 export function generateSynastry(inputA: FateReportInput, inputB: FateReportInput, nameA = '甲方', nameB = '乙方'): SynastryReading {
   const profileA = buildUnifiedElementProfile(inputA);
   const profileB = buildUnifiedElementProfile(inputB);
@@ -133,18 +210,33 @@ export function generateSynastry(inputA: FateReportInput, inputB: FateReportInpu
     ? `你們的生命靈數都是 ${inputA.numerology.lifePathNumber}（${inputA.numerology.title}），人生課題高度相似——很懂彼此，但也可能一起卡在同一種功課上。`
     : `${nameA} 是生命靈數 ${inputA.numerology.lifePathNumber}「${inputA.numerology.title}」，${nameB} 是 ${inputB.numerology.lifePathNumber}「${inputB.numerology.title}」。${numA === numB ? '換算五行後其實同屬一類，內在動力接近。' : '兩種課題不同，正好可以互相帶對方看見自己忽略的面向。'}`;
 
+  const aspects = computeCrossAspects(inputA.astrology.planets, inputB.astrology.planets, nameA, nameB);
+  const aspectNote = !inputA.astrology.planets?.length || !inputB.astrology.planets?.length
+    ? '這一段需要兩邊的行星位置才算得出來，目前其中一方的資料只夠推太陽星座。'
+    : aspects.length === 0
+      ? `${nameA}與${nameB}的個人行星之間沒有落在容許度內的主要相位。這代表西洋占星在你們身上沒有特別強的話要說，不是關係有問題。`
+      : `以下是${nameA}與${nameB}兩張盤之間，容許度最緊的幾組相位。角度差越小，這一組在相處裡越明顯。`;
+
   const highlights: SynastryHighlight[] = [];
   if (complements.length >= 2) highlights.push({ kind: 'harmony', title: '天生互補', text: `你們在多個五行上一高一低，${nameA}與${nameB}很能補位彼此，是「1＋1＞2」型的組合。` });
   if (zodiac.verdict === '生肖六合' || zodiac.verdict === '生肖三合') highlights.push({ kind: 'harmony', title: zodiac.verdict, text: zodiac.reading });
   if (zodiac.verdict === '生肖六沖' || zodiac.verdict === '生肖相害') highlights.push({ kind: 'friction', title: zodiac.verdict, text: '生肖上有張力：差異大不代表不合，而是更需要溝通與空間。' });
   if (sun.verdict === '需要磨合') highlights.push({ kind: 'friction', title: '星座元素張力', text: sun.reading });
   if (dm.verdict.includes('剋')) highlights.push({ kind: 'friction', title: '日主有推力', text: '八字日主之間有「剋」的推動關係，用得溫柔是助力，用不好會變壓力。' });
+  const tightest = aspects[0];
+  if (tightest && tightest.closeness === 'tight') {
+    highlights.push({
+      kind: tightest.quality === 'tension' || tightest.quality === 'polarity' ? 'friction' : 'harmony',
+      title: `${tightest.planetA} ${tightest.type} ${tightest.planetB}`,
+      text: tightest.reading,
+    });
+  }
   if (highlights.length === 0) highlights.push({ kind: 'harmony', title: '溫和平順', text: '你們之間沒有特別強烈的合或沖，關係調性溫和——品質更取決於你們怎麼相處，而不是命盤。' });
 
   return {
     nameA,
     nameB,
-    intro: `這份合盤把 ${nameA} 與 ${nameB} 的命盤，從五行、八字日主、生肖、西洋星座與生命靈數五個角度並排比較。重點不是給你們一個「合不合」的分數，而是看見你們天然的互補與張力在哪裡——關係好不好，最終還是你們一起經營出來的。`,
+    intro: `這份合盤把 ${nameA} 與 ${nameB} 的命盤，從五行、八字日主、生肖、西洋星座、跨盤相位與生命靈數並排比較。重點不是給你們一個「合不合」的分數，而是看見你們天然的互補與張力在哪裡——關係好不好，最終還是你們一起經營出來的。`,
     sections: [
       { id: 'element', title: '五行互補與共鳴', verdict: complements.length ? '有互補' : '偏同類', reading: elementReading },
       dm,
@@ -152,6 +244,8 @@ export function generateSynastry(inputA: FateReportInput, inputB: FateReportInpu
       sun,
       { id: 'numerology', title: '生命靈數配對', verdict: inputA.numerology.lifePathNumber === inputB.numerology.lifePathNumber ? '同號' : '不同號', reading: numeroReading },
     ],
+    aspects,
+    aspectNote,
     highlights,
     cautions: [
       '合盤是把兩份文化模型並排觀察，不是關係的判決書，也不能預測結果。',

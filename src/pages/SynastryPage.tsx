@@ -1,12 +1,13 @@
-import { ArrowRight, GitCompareArrows, Heart, Sparkles, Split } from 'lucide-react';
-import { FormEvent, useState } from 'react';
+import { AlertTriangle, ArrowRight, GitCompareArrows, Heart, Link2, Sparkles, Split } from 'lucide-react';
+import { FormEvent, useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import BackToReportLink from '../components/common/BackToReportLink';
 import Disclaimer from '../components/common/Disclaimer';
 import { buildReportFromProfile } from '../engines/build-report';
 import { generateSynastry, type SynastryReading } from '../engines/synastry-engine';
 import { useFateStore } from '../store/useFateStore';
 import type { ProfileInput } from '../types/fate';
-import { decodeShareInput } from '../utils/share-link';
+import { buildSynastryShareUrl, decodeShareInput, decodeSynastryInput } from '../utils/share-link';
 
 interface MiniForm {
   name: string;
@@ -40,6 +41,16 @@ function MiniFields({ form, onChange, accent }: { form: MiniForm; onChange: (pat
   );
 }
 
+function toForm(profile: ProfileInput): MiniForm {
+  return {
+    name: profile.name,
+    birthDate: profile.birthDate,
+    birthTime: profile.birthTime,
+    timezone: profile.timezone,
+    gender: profile.gender,
+  };
+}
+
 export default function SynastryPage() {
   const savedProfile = useFateStore((state) => state.profileInput);
   const [useMine, setUseMine] = useState(Boolean(savedProfile));
@@ -48,6 +59,18 @@ export default function SynastryPage() {
   const [partnerLink, setPartnerLink] = useState('');
   const [reading, setReading] = useState<SynastryReading>();
   const [error, setError] = useState('');
+  const [pair, setPair] = useState<[ProfileInput, ProfileInput]>();
+  const [shareUrl, setShareUrl] = useState('');
+  const search = useLocation().search;
+
+  // 有人把合盤連結傳給你：兩邊都直接帶入，讓對方按一下就看到同一份結果。
+  useEffect(() => {
+    const decoded = decodeSynastryInput(search);
+    if (!decoded) return;
+    setUseMine(false);
+    setFormA(toForm(decoded[0]));
+    setFormB(toForm(decoded[1]));
+  }, [search]);
 
   const applyPartnerLink = () => {
     // 接受純代碼或整段分享網址（手機常直接貼整條）。
@@ -68,6 +91,8 @@ export default function SynastryPage() {
       const inputA = buildReportFromProfile(profileA).reportInput;
       const inputB = buildReportFromProfile(profileB).reportInput;
       setReading(generateSynastry(inputA, inputB, profileA.name.trim() || '甲方', profileB.name.trim() || '乙方'));
+      setPair([profileA, profileB]);
+      setShareUrl('');
       window.setTimeout(() => document.getElementById('synastry-result')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : '合盤計算失敗，請確認兩人的出生資料。');
@@ -127,6 +152,26 @@ export default function SynastryPage() {
             ))}
           </div>
 
+          <article className="glass-card mt-4 p-5 sm:p-6">
+            <h3 className="font-serif text-lg font-bold text-cream">跨盤相位（西洋占星）</h3>
+            <p className="mt-3 text-sm leading-7 text-mist">{reading.aspectNote}</p>
+            {reading.aspects.length > 0 && (
+              <ul className="mt-4 space-y-3">
+                {reading.aspects.map((aspect) => (
+                  <li className="rounded-2xl border border-white/10 bg-ink/40 p-4" key={`${aspect.planetA}-${aspect.planetB}-${aspect.type}`}>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-serif text-cream">{reading.nameA} {aspect.planetA}</span>
+                      <span className="rounded-full border border-gold/25 bg-gold/[0.08] px-2.5 py-0.5 text-xs text-gold">{aspect.type}</span>
+                      <span className="font-serif text-cream">{reading.nameB} {aspect.planetB}</span>
+                      <span className="text-[11px] text-mist/60">角度差 {aspect.orb}°</span>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-mist">{aspect.reading}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </article>
+
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             {reading.highlights.map((highlight) => (
               <article className={`rounded-2xl border p-5 ${highlight.kind === 'harmony' ? 'border-emerald-200/20 bg-emerald-300/[0.05]' : 'border-vermilion/25 bg-vermilion/[0.05]'}`} key={highlight.title}>
@@ -138,6 +183,30 @@ export default function SynastryPage() {
               </article>
             ))}
           </div>
+
+          {pair && (
+            <section className="mt-6 rounded-2xl border border-amber-200/25 bg-amber-200/[0.06] p-5">
+              <div className="flex items-center gap-2 text-amber-100"><AlertTriangle size={17} /><h3 className="font-serif text-base font-bold">分享這份合盤之前</h3></div>
+              <p className="mt-2.5 text-sm leading-7 text-mist">
+                連結裡會帶上<strong className="text-cream">兩個人</strong>的出生日期與出生時間（不含姓名）。
+                拿到連結的人就看得到這些資料，轉傳給誰你就管不到了。
+                另一個人的生日不是你的，先問過對方再送出。
+              </p>
+              <button
+                className="btn-secondary mt-3"
+                type="button"
+                onClick={() => setShareUrl(buildSynastryShareUrl(pair[0], pair[1]))}
+              >
+                <Link2 size={16} />{shareUrl ? '重新產生連結' : '我了解，產生分享連結'}
+              </button>
+              {shareUrl && (
+                <div className="mt-3">
+                  <input className="input-field text-xs" readOnly value={shareUrl} onFocus={(event) => event.target.select()} aria-label="合盤分享連結" />
+                  <p className="mt-1.5 text-[11px] text-mist/70">連結不會上傳到任何伺服器；資料就編在網址本身，對方打開時在他的裝置上重算。</p>
+                </div>
+              )}
+            </section>
+          )}
 
           <section className="mt-6 rounded-2xl border border-gold/[0.16] bg-white/[0.03] p-5">
             <ul className="space-y-2 text-sm leading-6 text-mist">{reading.cautions.map((item) => <li className="flex gap-2" key={item}><span className="text-gold">·</span>{item}</li>)}</ul>

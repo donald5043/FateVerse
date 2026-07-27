@@ -52,28 +52,37 @@ const aspectDefinitions = [
   { type: '對分相', angle: 180, orb: 7, quality: 'polarity' as const },
 ] as const;
 
+/**
+ * 兩個黃道經度之間落在哪個主要相位。合盤要比對「兩張盤之間」的相位，
+ * 用的是同一組角度與容許度，所以定義只留這一份。
+ */
+export function matchAspect(
+  longitudeA: number,
+  longitudeB: number,
+): Pick<AspectResult, 'type' | 'orb' | 'angle' | 'quality' | 'closeness'> | undefined {
+  const separation = Math.abs(((longitudeA - longitudeB + 540) % 360) - 180);
+  const match = aspectDefinitions
+    .map((definition) => ({ ...definition, actualOrb: Math.abs(separation - definition.angle) }))
+    .filter((definition) => definition.actualOrb <= definition.orb)
+    .sort((left, right) => left.actualOrb - right.actualOrb)[0];
+  if (!match) return undefined;
+  return {
+    type: match.type,
+    orb: Number(match.actualOrb.toFixed(2)),
+    angle: Number(separation.toFixed(2)),
+    quality: match.quality,
+    closeness: match.actualOrb <= 2 ? 'tight' : match.actualOrb <= 4 ? 'moderate' : 'wide',
+  };
+}
+
 export function calculateMajorAspects(planets: PlanetPosition[]): AspectResult[] {
   const aspects: AspectResult[] = [];
   for (let firstIndex = 0; firstIndex < planets.length; firstIndex += 1) {
     for (let secondIndex = firstIndex + 1; secondIndex < planets.length; secondIndex += 1) {
       const first = planets[firstIndex];
       const second = planets[secondIndex];
-      const separation = Math.abs(((first.longitude - second.longitude + 540) % 360) - 180);
-      const match = aspectDefinitions
-        .map((definition) => ({ ...definition, actualOrb: Math.abs(separation - definition.angle) }))
-        .filter((definition) => definition.actualOrb <= definition.orb)
-        .sort((left, right) => left.actualOrb - right.actualOrb)[0];
-      if (match) {
-        aspects.push({
-          first: first.name,
-          second: second.name,
-          type: match.type,
-          orb: Number(match.actualOrb.toFixed(2)),
-          angle: Number(separation.toFixed(2)),
-          quality: match.quality,
-          closeness: match.actualOrb <= 2 ? 'tight' : match.actualOrb <= 4 ? 'moderate' : 'wide',
-        });
-      }
+      const match = matchAspect(first.longitude, second.longitude);
+      if (match) aspects.push({ first: first.name, second: second.name, ...match });
     }
   }
   return aspects.sort((left, right) => left.orb - right.orb);

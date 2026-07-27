@@ -94,3 +94,37 @@ export function buildShareUrl(profile: ProfileInput, options: EncodeOptions = {}
   const origin = typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}` : '';
   return `${origin}#/shared?d=${code}`;
 }
+
+// 兩份代碼用 `~` 串起來。lz-string 的 URI 安全字母表不含 `~`，切得乾淨。
+const PAIR_SEPARATOR = '~';
+
+/**
+ * 合盤連結：把兩個人的出生資料都編進 hash，對方打開就能看到同一份合盤。
+ *
+ * 這條連結裡有「兩個人」的出生日期與時間。預設不含姓名，但生日本身已經
+ * 夠敏感——拿到連結的人就看得到，所以呼叫端必須先講清楚再給使用者複製。
+ */
+export function buildSynastryShareUrl(
+  profileA: ProfileInput,
+  profileB: ProfileInput,
+  options: EncodeOptions = {},
+): string {
+  const codeA = encodeProfileToShareCode(profileA, options);
+  const codeB = encodeProfileToShareCode(profileB, options);
+  const origin = typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}` : '';
+  return `${origin}#/synastry?p=${codeA}${PAIR_SEPARATOR}${codeB}`;
+}
+
+/** 從合盤代碼或整段合盤網址還原兩份 ProfileInput；任一份壞掉就整體回 undefined。 */
+export function decodeSynastryInput(input: string): [ProfileInput, ProfileInput] | undefined {
+  const raw = input.trim();
+  if (!raw) return undefined;
+  const match = raw.match(/[?&]p=([^&\s]+)/);
+  const pair = match ? decodeURIComponent(match[1]) : raw;
+  const parts = pair.split(PAIR_SEPARATOR);
+  if (parts.length !== 2) return undefined;
+  const profileA = decodeShareCodeToProfile(parts[0]);
+  const profileB = decodeShareCodeToProfile(parts[1]);
+  if (!profileA || !profileB) return undefined;
+  return [profileA, profileB];
+}
