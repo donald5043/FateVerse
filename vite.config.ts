@@ -9,12 +9,16 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt',
+      // 舊 SW 若停在 waiting 直到所有分頁關閉才接手，手機上等同永遠不接手：
+      // 舊 index.html 會繼續指向已被刪掉的 hashed chunk，回訪就是白畫面。
+      registerType: 'autoUpdate',
       injectRegister: false,
       manifest: false,
       includeAssets: ['favicon.svg', 'og.png', 'manifest.webmanifest'],
       workbox: {
         cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
         globPatterns: ['**/*.{js,css,html,svg,png,json,webmanifest}'],
         // 應用主程式包含完整命理計算資料，仍屬單一 chunk，放寬上限讓它進入預快取。
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
