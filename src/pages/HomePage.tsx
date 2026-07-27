@@ -24,6 +24,7 @@ const playful = [
   { to: '/imprint', watermark: '印', title: '宇宙印記', text: '一張只屬於你的命之圖騰與出生那天的天空。', tone: 'text-celeste' },
   { to: '/capsule', watermark: '封', title: '時間膠囊', text: '寫給未來的自己，到期再回來驗證。', tone: 'text-celeste' },
   { to: '/synastry', watermark: '合', title: '兩人合盤', text: '兩個人的命盤並排，看互補與張力。', tone: 'text-vermilion' },
+  { to: '/timeline', watermark: '歷', title: '回顧日誌', text: '把過去每一年，和當年的大運流年並排回看。', tone: 'text-gold' },
   { to: '/palm', watermark: '掌', title: '拍手相', text: '拍下手掌，自動分析手型與掌紋。', tone: 'text-celeste' },
   { to: '/daily', watermark: '日', title: '今日指引', text: '給今天一個小小的反思與行動。', tone: 'text-violet-400' },
 ] as const;

@@ -1,6 +1,7 @@
 import { clear, del, get, set } from 'idb-keyval';
 import type { CapsuleRecord } from '../engines/time-capsule-engine';
 import { upsertFeedback, type FeedbackRecord } from '../engines/fortune-feedback-engine';
+import type { TimelineNote } from '../engines/life-timeline-engine';
 import type { FateReportInput, ProfileInput } from '../types/fate';
 
 export interface LocalPreferences {
@@ -138,6 +139,59 @@ export async function saveFeedback(record: FeedbackRecord): Promise<FeedbackStor
 export async function clearFeedback(): Promise<void> {
   if (!hasIndexedDb()) return;
   await del(FEEDBACK_KEY);
+}
+
+const TIMELINE_KEY = 'fateverse:life-timeline';
+
+/**
+ * 命運回顧日誌。與今日回饋同樣的形狀：同意狀態與內容在同一個 key，
+ * 沒同意過這個 key 就不存在。
+ */
+export interface TimelineStore {
+  consented: boolean;
+  notes: TimelineNote[];
+}
+
+const emptyTimeline: TimelineStore = { consented: false, notes: [] };
+
+export async function loadTimelineNotes(): Promise<TimelineStore> {
+  if (!hasIndexedDb()) return emptyTimeline;
+  try {
+    const stored = await get<Partial<TimelineStore>>(TIMELINE_KEY);
+    if (!stored) return emptyTimeline;
+    return { consented: stored.consented === true, notes: stored.notes ?? [] };
+  } catch {
+    return emptyTimeline;
+  }
+}
+
+export async function grantTimelineConsent(): Promise<TimelineStore> {
+  if (!hasIndexedDb()) throw new Error('這個瀏覽器環境無法保存紀錄。');
+  const existing = await loadTimelineNotes();
+  const next: TimelineStore = { ...existing, consented: true };
+  await set(TIMELINE_KEY, next);
+  return next;
+}
+
+/** 寫入一年的回顧。未同意時不寫入任何東西。內容留空等同刪除那一年。 */
+export async function saveTimelineNote(note: TimelineNote): Promise<TimelineStore> {
+  if (!hasIndexedDb()) throw new Error('這個瀏覽器環境無法保存紀錄。');
+  const existing = await loadTimelineNotes();
+  if (!existing.consented) return existing;
+  const rest = existing.notes.filter((item) => item.year !== note.year);
+  const keep = note.text.trim() || note.tone;
+  const next: TimelineStore = {
+    consented: true,
+    notes: (keep ? [{ ...note, text: note.text.trim() }, ...rest] : rest)
+      .sort((left, right) => right.year - left.year),
+  };
+  await set(TIMELINE_KEY, next);
+  return next;
+}
+
+export async function clearTimelineNotes(): Promise<void> {
+  if (!hasIndexedDb()) return;
+  await del(TIMELINE_KEY);
 }
 
 export const defaultPreferences: LocalPreferences = {

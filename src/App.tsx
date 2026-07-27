@@ -21,6 +21,7 @@ const SharedProfilePage = lazy(() => import('./pages/SharedProfilePage'));
 const NarrativePage = lazy(() => import('./pages/NarrativePage'));
 const TimeCapsulePage = lazy(() => import('./pages/TimeCapsulePage'));
 const SynastryPage = lazy(() => import('./pages/SynastryPage'));
+const TimelinePage = lazy(() => import('./pages/TimelinePage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="narrative" element={<NarrativePage />} />
           <Route path="capsule" element={<TimeCapsulePage />} />
           <Route path="synastry" element={<SynastryPage />} />
+          <Route path="timeline" element={<TimelinePage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="privacy" element={<PrivacyPage />} />
           <Route path="settings" element={<SettingsPage />} />

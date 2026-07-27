@@ -15,6 +15,7 @@ const links = [
   ['/narrative', '人生劇本'],
   ['/capsule', '時間膠囊'],
   ['/synastry', '兩人合盤'],
+  ['/timeline', '回顧日誌'],
   ['/daily', '今日指引'],
   ['/tarot', '塔羅牌'],
   ['/palm', '拍手相'],

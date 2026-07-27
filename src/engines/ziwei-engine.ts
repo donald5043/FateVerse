@@ -31,6 +31,13 @@ function mapStar(star: { name: string; type: string; brightness?: string; mutage
   };
 }
 
+/**
+ * @param natalPalaceNames 本命十二宮的名稱，依宮位索引排列。
+ *
+ * `item.palaceNames` 是「以這一層的命宮為起點重新排過」的宮名，因此
+ * `palaceNames[index]` 恆等於「命宮」，講不出任何資訊。有意義的是這一層的
+ * 命宮落在本命的哪一宮，所以改查本命宮名。
+ */
 function mapHoroscopeLayer(item: {
   name: string;
   heavenlyStem: string;
@@ -38,12 +45,12 @@ function mapHoroscopeLayer(item: {
   index: number;
   palaceNames: readonly string[];
   mutagen: readonly string[];
-}): ZiweiHoroscopeLayer {
+}, natalPalaceNames: readonly string[]): ZiweiHoroscopeLayer {
   return {
     name: item.name,
     heavenlyStem: item.heavenlyStem,
     earthlyBranch: item.earthlyBranch,
-    palaceName: item.palaceNames[item.index] ?? '未標示',
+    palaceName: natalPalaceNames[item.index] ?? '未標示',
     mutagens: MUTAGEN_TYPES.flatMap((type, index) => item.mutagen[index] ? [{ type, star: item.mutagen[index] }] : []),
   };
 }
@@ -58,6 +65,7 @@ export function calculateZiwei(
     astro.config(settings);
     const chart = astro.bySolar(input.birthDate, birthHourToZiweiIndex(input.birthTime), input.gender, true, 'zh-TW');
     const horoscope = chart.horoscope(targetDate);
+    const natalPalaceNames = chart.palaces.map((palace) => palace.name);
     const surrounded = chart.surroundedPalaces('命宮');
     const soulPalaceSurround = ([
       ['本宮', surrounded.target],
@@ -86,10 +94,10 @@ export function calculateZiwei(
         targetDate: horoscope.solarDate,
         lunarDate: horoscope.lunarDate,
         nominalAge: horoscope.age.nominalAge,
-        decadal: mapHoroscopeLayer(horoscope.decadal),
-        yearly: mapHoroscopeLayer(horoscope.yearly),
-        monthly: mapHoroscopeLayer(horoscope.monthly),
-        daily: mapHoroscopeLayer(horoscope.daily),
+        decadal: mapHoroscopeLayer(horoscope.decadal, natalPalaceNames),
+        yearly: mapHoroscopeLayer(horoscope.yearly, natalPalaceNames),
+        monthly: mapHoroscopeLayer(horoscope.monthly, natalPalaceNames),
+        daily: mapHoroscopeLayer(horoscope.daily, natalPalaceNames),
       },
       settings: { ...settings },
       palaces: chart.palaces.map((palace) => ({

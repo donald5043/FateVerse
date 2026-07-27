@@ -131,7 +131,9 @@ describe('紫微斗數排盤', () => {
     expect(result?.fiveElementsClass).toBe('金四局');
     expect(result?.soulPalaceSurround.map((palace) => palace.role)).toEqual(['本宮', '對宮', '財帛位', '官祿位']);
     expect(result?.currentHoroscope.targetDate).toBe('2026-7-22');
-    expect(result?.currentHoroscope.decadal.palaceName).toBe('命宮');
+    // 大限命宮落在本命的哪一宮。這裡以前斷言「命宮」，但那是取到重排後的宮名
+    // 造成的恆真值——每一層、每一年都會是命宮，等於沒有資訊。
+    expect(result?.currentHoroscope.decadal.palaceName).toBe('子女');
     expect(result?.currentHoroscope.yearly.mutagens.map((item) => item.type)).toEqual(['祿', '權', '科', '忌']);
     expect(result?.currentHoroscope.monthly.name).toBe('流月');
     expect(result?.currentHoroscope.daily.name).toBe('流日');
