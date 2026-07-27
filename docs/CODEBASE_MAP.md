@@ -116,7 +116,7 @@ export interface AiFateReport {
 
 ---
 
-## 4. 路由表（HashRouter，base `/FateVerse/`）
+## 4. 路由表（HashRouter，base `/`）
 
 | 路徑 | 頁面元件 |
 | --- | --- |

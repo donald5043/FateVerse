@@ -205,7 +205,7 @@ export function renderShareCard(data: ShareCardData, canvas: HTMLCanvasElement):
   // 頁尾
   context.font = `400 28px ${SANS}`;
   context.fillStyle = '#d4af6e';
-  context.fillText('donald5043.github.io/FateVerse', width / 2, height - 130);
+  context.fillText('fateverse.donald5043.workers.dev', width / 2, height - 130);
 
   context.font = `400 24px ${SANS}`;
   context.fillStyle = 'rgba(226, 232, 240, 0.5)';

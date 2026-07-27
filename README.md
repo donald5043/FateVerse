@@ -78,25 +78,34 @@ npm run build
 npm run preview
 ```
 
-Vite 開發環境使用 `/`；正式建置的 base path 是 `/FateVerse/`，對應 `donald5043/FateVerse`。
+Vite 開發與正式建置都使用根路徑 `/`。`npm run build` 會輸出到 `dist/`，並在最後自動確認 `dist/index.html` 的 JavaScript 與 CSS 都使用 `/assets/...`，避免 SPA fallback 把缺少的模組請求誤回傳成 HTML。
 
-## GitHub Pages 部署
+## Cloudflare Workers 部署
 
-`.github/workflows/deploy.yml` 會在 `main` 更新時依序執行：
+Cloudflare 設定位於 `wrangler.jsonc`：
 
-1. checkout 與 Node.js 22 設定。
-2. `npm ci`。
-3. `npm run lint`、`npm run test`、`npm run build`。
-4. 上傳 `dist` Pages artifact。
-5. 透過 GitHub Pages 官方 Action 部署。
-
-在 repository 的 **Settings → Pages → Build and deployment → Source** 選擇 **GitHub Actions**。合併至 `main` 後，正式網址預期為：
-
-```text
-https://donald5043.github.io/FateVerse/
+```jsonc
+{
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}
 ```
 
-網站採 HashRouter，所以功能頁網址為 `https://donald5043.github.io/FateVerse/#/profile`，重新整理不會 404。
+正式部署：
+
+```bash
+npm run deploy
+```
+
+正式網址為：
+
+```text
+https://fateverse.donald5043.workers.dev/
+```
+
+網站採 HashRouter，所以功能頁網址為 `https://fateverse.donald5043.workers.dev/#/profile`；Cloudflare 另外以 SPA fallback 處理未命中靜態檔案的瀏覽請求。
 
 ## 報告產生方式
 

@@ -35,7 +35,7 @@ function writeFlag(): void {
   }
 }
 
-/** 解除這個 origin 底下所有 registration，含 `/FateVerse/` scope。 */
+/** 解除這個 origin 底下所有 registration，包含舊部署留下的非根路徑 scope。 */
 async function unregisterServiceWorkers(): Promise<void> {
   if (typeof navigator === 'undefined' || !navigator.serviceWorker) return;
   try {

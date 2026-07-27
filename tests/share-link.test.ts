@@ -64,7 +64,7 @@ describe('分享連結編解碼', () => {
   it('decodeShareInput 同時接受純代碼與整段分享網址', () => {
     const code = encodeProfileToShareCode(profile, { includeName: true });
     const fromCode = decodeShareInput(code);
-    const fromUrl = decodeShareInput(`https://donald5043.github.io/FateVerse/#/shared?d=${code}`);
+    const fromUrl = decodeShareInput(`https://fateverse.donald5043.workers.dev/#/shared?d=${code}`);
     expect(fromCode?.birthDate).toBe('1990-01-02');
     expect(fromUrl?.birthDate).toBe('1990-01-02');
     expect(fromUrl?.name).toBe('林安晨');

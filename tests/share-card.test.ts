@@ -87,7 +87,7 @@ describe('分享圖', () => {
     const { canvas, drawn } = fakeCanvas();
     renderShareCard(baseData, canvas);
     expect(drawn).toContain('萬象命書 FateVerse');
-    expect(drawn.some((line) => line.includes('donald5043.github.io/FateVerse'))).toBe(true);
+    expect(drawn.some((line) => line.includes('fateverse.donald5043.workers.dev'))).toBe(true);
   });
 
   it('畫上五行標籤與命盤標籤', () => {
