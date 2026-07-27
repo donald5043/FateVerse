@@ -91,7 +91,12 @@ base 由 `FATEVERSE_BASE` 環境變數決定，預設 `/`。`index.html` 用的�
 
 兩個指令最後都會跑 `scripts/verify-build.mjs`，確認 `dist/index.html` 的 JavaScript 與 CSS 前綴確實對得上該次建置的 base。base 設錯不會讓建置失敗，只會在瀏覽器上 404 成一片白畫面，所以在 CI 就擋下來。
 
-自動部署：push 到 `main` 會觸發 `.github/workflows/deploy-pages.yml`（GitHub Pages）與 `.github/workflows/deploy-cloudflare.yml`（Cloudflare Workers）。後者需要 repo secrets `CLOUDFLARE_API_TOKEN` 與 `CLOUDFLARE_ACCOUNT_ID`，沒設定時該 job 會自動跳過，不影響 Pages 部署。
+自動部署走兩條各自獨立的線，push 到 `main` 兩邊都會更新：
+
+- **GitHub Pages**：`.github/workflows/deploy-pages.yml`，跑 `npm run build:pages`
+- **Cloudflare Workers**：Cloudflare 後台的 Git 連動，由 Cloudflare 自己拉程式碼建置，建置指令需設為 `npm run build`（根路徑那份）
+
+Cloudflare 這邊不經過 GitHub Actions，所以 repo 不需要任何 Cloudflare 憑證。
 
 ## Cloudflare Workers 部署
 
