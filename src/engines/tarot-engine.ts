@@ -1,5 +1,6 @@
 import { MAJOR_ARCANA, TAROT_ELEMENTS, type TarotCard } from '../data/tarot-cards';
 import type { ElementName } from '../types/fate';
+import { seededRandom } from '../utils/seeded-random';
 
 export interface TarotBirthCards {
   sum: number;
@@ -56,6 +57,40 @@ export function buildSpread(cardIds: [number, number, number], reversals: [boole
       reading: reversed ? card.reversed : card.upright,
     };
   });
+}
+
+export interface DailyCard {
+  /** YYYY-MM-DD */
+  date: string;
+  card: TarotCard;
+  reversed: boolean;
+  /** 牌義：正位或逆位。 */
+  reading: string;
+  /** 這張牌今天建議做的一件事。 */
+  advice: string;
+}
+
+/**
+ * 今日一張牌。
+ *
+ * 決定論：同一個人在同一天，重新整理幾次都是同一張牌。這很重要——
+ * 如果一刷新就換一張，抽牌這件事就沒有份量了，變成在挑自己喜歡的答案。
+ *
+ * @param date     哪一天
+ * @param personId 命盤識別字串。不同人同一天會抽到不同的牌；留空則全站同一張。
+ */
+export function drawDailyCard(date: Date, personId = ''): DailyCard {
+  const dateKey = `${date.getFullYear()}-${`${date.getMonth() + 1}`.padStart(2, '0')}-${`${date.getDate()}`.padStart(2, '0')}`;
+  const random = seededRandom(`fateverse:daily-tarot:${dateKey}:${personId}`);
+  const card = MAJOR_ARCANA[Math.floor(random() * MAJOR_ARCANA.length)];
+  const reversed = random() < 0.3; // 逆位偏少，和實體洗牌的體感接近
+  return {
+    date: dateKey,
+    card,
+    reversed,
+    reading: reversed ? card.reversed : card.upright,
+    advice: card.advice,
+  };
 }
 
 export function drawSpread(): TarotSpreadCard[] {
