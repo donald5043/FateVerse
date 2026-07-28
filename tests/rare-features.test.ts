@@ -228,3 +228,53 @@ describe('星盤相位圖形', () => {
     expect(detectFeatures(input)).toEqual(detectFeatures(input));
   });
 });
+
+describe('逆行：分開個人行星與世代行星', () => {
+  const PERSONAL = ['水星', '金星', '火星'];
+  const SLOW = ['木星', '土星', '天王星', '海王星', '冥王星'];
+
+  it('多顆逆行時，說清楚哪幾顆是一整代共有的', () => {
+    // 1946-11-23 10:00 實測：水星、金星、土星、天王星、冥王星逆行。
+    const many = detectFeatures(inputFor('1946-11-23', '10:00'))
+      .find((feature) => feature.id === 'many-retrograde');
+    expect(many).toBeDefined();
+    expect(many!.meaning).toContain('走得慢');
+    expect(many!.meaning).toContain('同一段時期出生的人多半也是逆行');
+    // 有個人行星時要點名它們才是屬於這個人的部分
+    expect(many!.meaning).toContain('真正屬於你的是');
+  });
+
+  it('全是外行星逆行時，不會謊稱那是你的特色', () => {
+    SAMPLES.concat(['1946-11-23', '1948-02-23']).forEach((date) => {
+      const many = detectFeatures(inputFor(date)).find((feature) => feature.id === 'many-retrograde');
+      if (!many) return;
+      const listed = many.detail.replace('都逆行', '').split('、');
+      if (listed.every((name) => SLOW.includes(name))) {
+        expect(many.meaning).toContain('一整代');
+        expect(many.meaning).not.toContain('真正屬於你的是');
+      }
+    });
+  });
+
+  it('個人行星逆行比多顆逆行罕見得多', () => {
+    expect(RARE_FEATURE_RATES['personal-retrograde'])
+      .toBeLessThan(RARE_FEATURE_RATES['many-retrograde']);
+  });
+
+  it('每顆個人行星有自己的說法，不共用同一句結尾', () => {
+    const readings = new Map<string, string>();
+    for (const date of ['1946-11-23', '1948-02-23', '1990-01-02', '1985-07-19', '1968-09-23', '1977-04-05']) {
+      const feature = detectFeatures(inputFor(date)).find((item) => item.id === 'personal-retrograde');
+      if (feature) readings.set(feature.detail, feature.meaning);
+    }
+    expect(readings.size).toBeGreaterThan(0);
+    readings.forEach((meaning, detail) => {
+      const listed = detail.replace('同時逆行', '').split('、');
+      listed.forEach((name) => expect(PERSONAL).toContain(name));
+      // 沒被列到的行星，它的說法不該出現在文字裡
+      if (!listed.includes('金星')) expect(meaning).not.toContain('喜歡一個人不太表現在外面');
+      if (!listed.includes('火星')) expect(meaning).not.toContain('要動手之前會先反覆演練');
+      if (!listed.includes('水星')) expect(meaning).not.toContain('想講的話要先在腦子裡繞一圈');
+    });
+  });
+});

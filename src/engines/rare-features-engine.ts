@@ -46,7 +46,8 @@ export type RareFeatureId =
   | 'grand-trine'
   | 't-square'
   | 'grand-cross'
-  | 'unaspected-planet';
+  | 'unaspected-planet'
+  | 'personal-retrograde';
 
 /** 偵測結果本身不含稀有度——稀有度是事後由實測資料貼上去的。 */
 export interface DetectedFeature {
@@ -230,13 +231,37 @@ function astrologyFeatures(input: FateReportInput): DetectedFeature[] {
     });
   }
 
-  const retrograde = planets.filter((planet) => planet.retrograde);
+  // 外行星本來就有四成左右的時間在逆行（實測冥王星 44%、海王星 42%、
+  // 天王星 41%、土星 37%），所以「逆行很多顆」多半是它們湊出來的。
+  // 個人行星就少得多：水星 18%、火星 9%、金星 8%。
+  // 兩者要分開講，否則會把一整代人共有的東西說成這個人的特色。
+  const SLOW_RETRO = ['木星', '土星', '天王星', '海王星', '冥王星'];
+  const PERSONAL_RETRO = ['水星', '金星', '火星'];
+  const retrograde = planets.filter((planet) => planet.retrograde).map((planet) => planet.name);
+  const slowRetro = retrograde.filter((name) => SLOW_RETRO.includes(name));
+  const personalRetro = retrograde.filter((name) => PERSONAL_RETRO.includes(name));
+
   if (retrograde.length >= 4) {
+    const split = personalRetro.length > 0
+      ? `其中${slowRetro.join('、')}走得慢，同一段時期出生的人多半也是逆行；真正屬於你的是${personalRetro.join('、')}。`
+      : `這幾顆都是走得慢的外行星，同一段時期出生的人多半也是逆行——它描述的是一整代，不是只有你。`;
     found.push({
       id: 'many-retrograde',
       label: '多顆逆行',
-      detail: `${retrograde.map((planet) => planet.name).join('、')}都逆行`,
-      meaning: `出生時有 ${retrograde.length} 顆行星在逆行。占星上讀成「這些領域你得自己繞一圈才學得會」——別人照著做就行的事，你偏偏要先弄懂為什麼。`,
+      detail: `${retrograde.join('、')}都逆行`,
+      meaning: `出生時有 ${retrograde.length} 顆行星在逆行。占星上讀成「這些領域你得自己繞一圈才學得會」——別人照著做就行的事，你偏偏要先弄懂為什麼。${split}`,
+    });
+  }
+
+  // 個人行星逆行才真正因人而異。實測水星＋金星同時逆行只有 1%。
+  if (personalRetro.length >= 2) {
+    found.push({
+      id: 'personal-retrograde',
+      label: '個人行星多顆逆行',
+      detail: `${personalRetro.join('、')}同時逆行`,
+      meaning: `${personalRetro.join('、')}是走得快的個人行星，它們同時逆行的機會比外行星低得多。`
+        + `占星上讀成「這幾塊你的處理方式和多數人反過來」：${personalRetro.map((name) => RETRO_PERSONAL_READING[name]).join('；')}。`
+        + '別人常覺得你慢半拍，其實只是路徑不一樣。',
     });
   }
 
@@ -449,6 +474,13 @@ function aspectPatternFeatures(input: FateReportInput): DetectedFeature[] {
 
   return found;
 }
+
+/** 個人行星逆行各自對應的白話。每顆講自己的，不共用同一句結尾。 */
+const RETRO_PERSONAL_READING: Record<string, string> = {
+  水星: '想講的話要先在腦子裡繞一圈才出得了口',
+  金星: '喜歡一個人不太表現在外面，靠得近才看得出來',
+  火星: '要動手之前會先反覆演練，不是不積極',
+};
 
 /** 找出第一組滿足條件的三顆行星。順序固定，同一張盤每次結果一樣。 */
 function findTriple(names: string[], matches: (a: string, b: string, c: string) => boolean): string[] | undefined {

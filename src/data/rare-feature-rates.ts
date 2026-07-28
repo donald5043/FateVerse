@@ -36,4 +36,5 @@ export const RARE_FEATURE_RATES: Record<RareFeatureId, number> = {
   't-square': 0.3120, // 156/500
   'grand-cross': 0.0060, // 3/500
   'unaspected-planet': 0.3760, // 188/500
+  'personal-retrograde': 0.0340, // 17/500
 };
