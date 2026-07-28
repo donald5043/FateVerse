@@ -173,3 +173,58 @@ describe('紫微與大運的罕見特徵', () => {
     });
   });
 });
+
+describe('星盤相位圖形', () => {
+  it('大十字抓到的是真的兩組對分加四組四分', () => {
+    // 1931-08-31 07:00 實測有大十字：火星對天王星、土星對冥王星。
+    const input = inputFor('1931-08-31', '07:00');
+    const cross = detectFeatures(input).find((feature) => feature.id === 'grand-cross');
+    expect(cross).toBeDefined();
+
+    const members = cross!.detail.split('構成')[0].split('、');
+    expect(members).toHaveLength(4);
+    const between = (input.astrology.aspects ?? []).filter(
+      (aspect) => members.includes(aspect.first) && members.includes(aspect.second),
+    );
+    expect(between.filter((aspect) => aspect.type === '對分相')).toHaveLength(2);
+    expect(between.filter((aspect) => aspect.type === '四分相')).toHaveLength(4);
+  });
+
+  it('全由外行星構成的圖形，必須說明那是一整代人共有的', () => {
+    const cross = detectFeatures(inputFor('1931-08-31', '07:00'))
+      .find((feature) => feature.id === 'grand-cross');
+    // 火星不是外行星，所以這一組不該加世代註記。
+    expect(cross!.detail).toContain('火星');
+    expect(cross!.meaning).not.toContain('一整代');
+  });
+
+  it('太常見的圖形不會顯示', () => {
+    // T 三角 31.2%、無相位行星 37.6%——都被講得像很戲劇性，其實三成以上的人有。
+    (['t-square', 'unaspected-planet'] as const).forEach((id) => {
+      expect(RARE_FEATURE_RATES[id]).toBeGreaterThan(RARE_THRESHOLD);
+    });
+    SAMPLES.forEach((date) => {
+      const ids = detectRareFeatures(inputFor(date)).map((feature) => feature.id);
+      expect(ids).not.toContain('t-square');
+      expect(ids).not.toContain('unaspected-planet');
+    });
+  });
+
+  it('沒有行星資料時安靜略過', () => {
+    const sunOnly = buildReportFromProfile({
+      name: '示範', birthDate: '1990-01-02', birthTime: '10:30', gender: 'female',
+      region: '未提供', timezone: 'Asia/Taipei', focus: ['all'],
+    }).reportInput;
+    const stripped = { ...sunOnly, astrology: { ...sunOnly.astrology, planets: undefined, aspects: undefined } };
+    expect(() => detectFeatures(stripped)).not.toThrow();
+    const ids = detectFeatures(stripped).map((feature) => feature.id);
+    ['grand-trine', 't-square', 'grand-cross', 'unaspected-planet'].forEach((id) => {
+      expect(ids).not.toContain(id);
+    });
+  });
+
+  it('同一張盤重算結果一致，不會因為搜尋順序而跳動', () => {
+    const input = inputFor('1931-08-31', '07:00');
+    expect(detectFeatures(input)).toEqual(detectFeatures(input));
+  });
+});

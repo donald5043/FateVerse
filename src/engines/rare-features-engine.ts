@@ -42,7 +42,11 @@ export type RareFeatureId =
   | 'early-luck-start'
   | 'late-luck-start'
   | 'luck-clashes-day'
-  | 'luck-completes-harmony';
+  | 'luck-completes-harmony'
+  | 'grand-trine'
+  | 't-square'
+  | 'grand-cross'
+  | 'unaspected-planet';
 
 /** 偵測結果本身不含稀有度——稀有度是事後由實測資料貼上去的。 */
 export interface DetectedFeature {
@@ -359,6 +363,123 @@ function luckCycleFeatures(input: FateReportInput): DetectedFeature[] {
   return found;
 }
 
+
+/**
+ * 星盤的相位圖形：三顆以上行星互相成相，構成一個幾何形狀。
+ *
+ * 占星把這些形狀看得比單一相位重，因為它們是「一整組」在運作。
+ * 這裡只用本命盤已經算好的 aspects，不重算角度。
+ */
+function aspectPatternFeatures(input: FateReportInput): DetectedFeature[] {
+  const aspects = input.astrology.aspects ?? [];
+  const planets = input.astrology.planets ?? [];
+  if (aspects.length === 0 || planets.length === 0) return [];
+  const found: DetectedFeature[] = [];
+
+  /** 兩顆行星之間是不是某一種相位。相位表沒有方向性，兩邊都要查。 */
+  const hasAspect = (first: string, second: string, type: string): boolean =>
+    aspects.some((aspect) => aspect.type === type
+      && ((aspect.first === first && aspect.second === second)
+        || (aspect.first === second && aspect.second === first)));
+
+  const names = planets.map((planet) => planet.name);
+
+  /**
+   * 慢速行星走一圈要幾十年，所以由它們構成的圖形是「整代人共有」的。
+   * 出現率算出來很低沒錯，但那是因為樣本橫跨七十年——同一個月出生的人多半都有。
+   * 不講清楚的話，「每 167 個人有 1 個」會被讀成「你很特別」，那就是話術。
+   */
+  const SLOW_PLANETS = ['木星', '土星', '天王星', '海王星', '冥王星'];
+  const generationalNote = (members: string[]): string => (
+    members.every((name) => SLOW_PLANETS.includes(name))
+      ? '這個圖形由走得慢的外行星構成，和你同一個月出生的人多半也有——它描述的是一整代，不是只有你。'
+      : ''
+  );
+
+  // 大三角：三顆行星兩兩三分相。
+  const trine = findTriple(names, (a, b, c) =>
+    hasAspect(a, b, '三分相') && hasAspect(b, c, '三分相') && hasAspect(a, c, '三分相'));
+  if (trine) {
+    found.push({
+      id: 'grand-trine',
+      label: '大三角',
+      detail: `${trine.join('、')}互成三分相`,
+      meaning: `三顆行星兩兩成 120 度，圍成一個正三角形。占星上讀成「這三塊天生協調」——順到你不太會去鍛鍊它，因為它從來沒讓你吃過苦頭。${generationalNote(trine)}`,
+    });
+  }
+
+  // T 三角：兩顆對分，第三顆同時四分這兩顆。
+  const tSquare = findTriple(names, (a, b, c) =>
+    hasAspect(a, b, '對分相') && hasAspect(a, c, '四分相') && hasAspect(b, c, '四分相'));
+  if (tSquare) {
+    found.push({
+      id: 't-square',
+      label: 'T 三角',
+      detail: `${tSquare[0]}與${tSquare[1]}對分，${tSquare[2]}同時四分兩邊`,
+      meaning: `兩顆行星正面對立，第三顆卡在中間跟兩邊都不對盤。占星上把它讀成「持續的推力」——這組張力不會自己消失，但也正因為它一直在推，這一塊通常是你最練得出來的地方。${generationalNote(tSquare)}`,
+    });
+  }
+
+  // 大十字：四顆行星構成兩組對分，彼此又互成四分。
+  const cross = findQuad(names, (a, b, c, d) =>
+    hasAspect(a, c, '對分相') && hasAspect(b, d, '對分相')
+    && hasAspect(a, b, '四分相') && hasAspect(b, c, '四分相')
+    && hasAspect(c, d, '四分相') && hasAspect(a, d, '四分相'));
+  if (cross) {
+    found.push({
+      id: 'grand-cross',
+      label: '大十字',
+      detail: `${cross.join('、')}構成兩組對分與四組四分`,
+      meaning: `四顆行星圍成一個正方形，兩兩對立。占星上算是張力最滿的圖形——四個方向同時在拉，好處是動力足，代價是很難同時讓四邊都滿意。${generationalNote(cross)}`,
+    });
+  }
+
+  // 無相位的個人行星：那顆星自己運作，不受其他行星調節。
+  const personal = ['太陽', '月亮', '水星', '金星', '火星'];
+  const unaspected = personal.find((name) => names.includes(name)
+    && !aspects.some((aspect) => aspect.first === name || aspect.second === name));
+  if (unaspected) {
+    found.push({
+      id: 'unaspected-planet',
+      label: '無相位行星',
+      detail: `${unaspected}沒有和任何行星成相`,
+      meaning: `這顆星在你的盤上自己運作，沒有別的行星拉住它或幫它。占星上讀成「這一塊很純粹」——要嘛全開要嘛沒開，中間的調節檔位比較少。`,
+    });
+  }
+
+  return found;
+}
+
+/** 找出第一組滿足條件的三顆行星。順序固定，同一張盤每次結果一樣。 */
+function findTriple(names: string[], matches: (a: string, b: string, c: string) => boolean): string[] | undefined {
+  for (let i = 0; i < names.length; i += 1) {
+    for (let j = i + 1; j < names.length; j += 1) {
+      for (let k = j + 1; k < names.length; k += 1) {
+        if (matches(names[i], names[j], names[k])) return [names[i], names[j], names[k]];
+        // T 三角的第三顆角色不同，三種排法都要試。
+        if (matches(names[i], names[k], names[j])) return [names[i], names[k], names[j]];
+        if (matches(names[j], names[k], names[i])) return [names[j], names[k], names[i]];
+      }
+    }
+  }
+  return undefined;
+}
+
+/** 找出第一組滿足條件的四顆行星。 */
+function findQuad(names: string[], matches: (a: string, b: string, c: string, d: string) => boolean): string[] | undefined {
+  for (let i = 0; i < names.length; i += 1) {
+    for (let j = i + 1; j < names.length; j += 1) {
+      for (let k = j + 1; k < names.length; k += 1) {
+        for (let l = k + 1; l < names.length; l += 1) {
+          const quad = [names[i], names[j], names[k], names[l]];
+          if (matches(quad[0], quad[1], quad[2], quad[3])) return quad;
+        }
+      }
+    }
+  }
+  return undefined;
+}
+
 /** 跑過所有偵測器。量測腳本用這個，它不需要（產生它的時候也還沒有）稀有度。 */
 export function detectFeatures(input: FateReportInput): DetectedFeature[] {
   return [
@@ -372,6 +493,7 @@ export function detectFeatures(input: FateReportInput): DetectedFeature[] {
     ...ziweiPalaceFeatures(input),
     ...luckCycleFeatures(input),
     ...astrologyFeatures(input),
+    ...aspectPatternFeatures(input),
   ];
 }
 

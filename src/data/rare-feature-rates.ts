@@ -32,4 +32,8 @@ export const RARE_FEATURE_RATES: Record<RareFeatureId, number> = {
   'late-luck-start': 0.0300, // 15/500
   'luck-clashes-day': 0.4420, // 221/500
   'luck-completes-harmony': 0.4120, // 206/500
+  'grand-trine': 0.0880, // 44/500
+  't-square': 0.3120, // 156/500
+  'grand-cross': 0.0060, // 3/500
+  'unaspected-planet': 0.3760, // 188/500
 };

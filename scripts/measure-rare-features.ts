@@ -22,6 +22,7 @@ const ALL_IDS: RareFeatureId[] = [
   'all-yang', 'all-yin', 'many-retrograde',
   'twin-major-stars', 'mutagen-in-soul-palace', 'body-equals-soul',
   'early-luck-start', 'late-luck-start', 'luck-clashes-day', 'luck-completes-harmony',
+  'grand-trine', 't-square', 'grand-cross', 'unaspected-planet',
 ];
 
 const charts = buildSyntheticCharts();
