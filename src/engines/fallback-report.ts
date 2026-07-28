@@ -126,7 +126,11 @@ export function generateFallbackReport(input: FateReportInput): AiFateReport {
   const moonDescription = input.astrology.moonSign ? `、月亮${input.astrology.moonSign}` : '';
   const ziweiDescription = input.ziwei ? `、紫微${input.ziwei.fiveElementsClass}` : '';
   const soulPalace = input.ziwei?.palaces.find((palace) => palace.name === '命宮');
-  const soulPalaceStars = soulPalace?.majorStars.map((star) => star.name).join('、') || '命宮無十四主星，需連同對宮與三方四正閱讀';
+  const soulPalaceStarNames = soulPalace?.majorStars.map((star) => star.name).join('、') ?? '';
+  // 空宮要換句型，不能把「沒有主星」當成星名塞進「命宮裡坐的是…」。
+  const soulPalaceSentence = soulPalaceStarNames
+    ? `命宮裡坐的是${soulPalaceStarNames}`
+    : '命宮裡沒有主星，紫微的做法是借對面那一宮來看';
   const ziweiHoroscopeDescription = input.ziwei?.currentHoroscope
     ? `；${input.ziwei.currentHoroscope.targetDate} 的大限命宮落在${input.ziwei.currentHoroscope.decadal.palaceName}、流年命宮落在${input.ziwei.currentHoroscope.yearly.palaceName}`
     : '';
@@ -137,12 +141,12 @@ export function generateFallbackReport(input: FateReportInput): AiFateReport {
     ? `另外有 ${input.bazi.relations.length} 組刑沖合害`
     : '這次沒有找到明顯的合、沖、刑、害組合';
   const astrologyDistributionDescription = input.astrology.distribution
-    ? `十星分布以${input.astrology.distribution.dominantElements.join('、')}元素及${input.astrology.distribution.dominantModalities.join('、')}模式較多`
-    : '本次沒有完整十星分布資料';
+    ? `十顆星裡${input.astrology.distribution.dominantElements.join('、')}元素和${input.astrology.distribution.dominantModalities.join('、')}模式的比較多`
+    : '這次沒有完整的十星分布資料';
   const equalHouseEmphasis = input.astrology.houseComparisons?.find((item) => item.system === 'equal')?.emphasis?.occupiedHouses[0];
   const astrologyHouseDescription = equalHouseEmphasis
     ? `等宮制中第 ${equalHouseEmphasis.house} 宮聚集${equalHouseEmphasis.planets.join('、')}`
-    : '未提供完整經緯度，因此上升與宮位不以猜測補齊';
+    : '你沒有填出生地座標，所以上升和十二宮這裡不猜，直接留空';
   const sharedPatterns = [
     `「${input.zodiac.positiveTraits[0]}」和「${input.astrology.strengths[0]}」是兩套系統各自算出來、卻都點到的地方——這兩件事你大概最不用懷疑。`,
     `日主${ELEMENT_LABELS[input.bazi.dayMasterElement]}和${input.astrology.element}講的都是你做事的節奏，只是用了不同的詞。`,
@@ -165,8 +169,8 @@ export function generateFallbackReport(input: FateReportInput): AiFateReport {
       // 欄位呈現，這裡只留解讀；但計分規則與各流派差異屬透明度聲明，必須保留。
       bazi: `你的日主是${input.bazi.dayMaster}${ELEMENT_LABELS[input.bazi.dayMasterElement]}，四柱為${input.bazi.pillars.map((pillar) => pillar.value).join('、')}。${baziSeasonDescription}，${baziRelationDescription}。日主強弱與喜用神的完整判讀在八字分頁，用的是公開計分規則，和各流派手工論命的結論不一定一樣。`,
       zodiac: `${input.zodiac.animal}對應${input.zodiac.branch}支，傳統上說的是「${input.zodiac.symbol}」。你的強項在${input.zodiac.positiveTraits.join('、')}；要留意的是${input.zodiac.blindSpots.join('、')}。`,
-      astrology: `太陽位於${input.astrology.sunSign}${input.astrology.moonSign ? `，月亮位於${input.astrology.moonSign}` : ''}${input.astrology.risingSign ? `，上升位於${input.astrology.risingSign}` : ''}，太陽星座屬${input.astrology.element}元素、${input.astrology.modality}模式。${input.astrology.planets?.length ? `已計算 ${input.astrology.planets.length} 個星體與 ${input.astrology.aspects?.length ?? 0} 組主要相位；${astrologyDistributionDescription}，${astrologyHouseDescription}。` : ''}${input.astrology.houseComparisons?.length ? '報告同時保留等宮制與整宮制的落宮差異，不把任何一種當成唯一答案。' : ''}`,
-      ...(input.ziwei ? { ziwei: `紫微排盤為${input.ziwei.fiveElementsClass}，命主${input.ziwei.soul}、身主${input.ziwei.body}，命宮在${input.ziwei.soulPalaceBranch}、身宮在${input.ziwei.bodyPalaceBranch}。命宮主星欄為「${soulPalaceStars}」${ziweiHoroscopeDescription}。星曜與運限需連同三方四正及流派設定閱讀，本版只呈現文化結構，不由單星預言事件。` } : {}),
+      astrology: `太陽在${input.astrology.sunSign}，講的是你想成為什麼樣的人${input.astrology.moonSign ? `；月亮在${input.astrology.moonSign}，講的是你不舒服的時候會怎麼安撫自己` : ''}${input.astrology.risingSign ? `；上升${input.astrology.risingSign}，是別人第一眼看到的你` : ''}。${input.astrology.planets?.length ? `這張盤算了 ${input.astrology.planets.length} 顆星和 ${input.astrology.aspects?.length ?? 0} 組主要角度，${astrologyDistributionDescription}；${astrologyHouseDescription}${input.astrology.houseComparisons?.length ? '。宮位有等宮制和整宮制兩種常見算法，報告兩種都留著，不挑一種當標準答案' : ''}。` : ''}`,
+      ...(input.ziwei ? { ziwei: `紫微把你的盤排成${input.ziwei.fiveElementsClass}，命宮落在${input.ziwei.soulPalaceBranch}、身宮在${input.ziwei.bodyPalaceBranch}——命宮是你本來的樣子，身宮是後天長成的樣子。${soulPalaceSentence}${ziweiHoroscopeDescription}。單看一顆星講不準，要連著對面那一宮和三方一起看；不同流派的排法也不一樣，這裡只呈現結構，不由單星預言事件。` } : {}),
       numerology: `${input.numerology.description} 你的生命靈數是 ${input.numerology.lifePathNumber}${input.numerology.isMasterNumber ? '（大師數）' : ''}，擅長${input.numerology.strengths.join('、')}，要練的是${input.numerology.challenges.join('、')}。`,
       ...(input.nameAnalysis ? { name: `${input.nameAnalysis.overallImpression}${input.nameAnalysis.elementComparison}${input.nameAnalysis.characters.some((item) => item.strokeSource === 'insufficient') ? '部分文字尚無正式字典資料，因此不延伸筆畫吉凶。' : ''}` } : {}),
     },

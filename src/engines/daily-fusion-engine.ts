@@ -4,6 +4,7 @@ import { computeDailyFortune } from './daily-fortune-engine';
 import { computeDailyHoroscope } from './daily-horoscope-engine';
 import { drawDailyCard } from './tarot-engine';
 import { calculateZiwei } from './ziwei-engine';
+import { ZIWEI_PALACE_PLAIN } from '../data/interpretation-library';
 import type { FateReportInput, ProfileInput } from '../types/fate';
 
 /**
@@ -112,32 +113,13 @@ function astrologySignal(input: FateReportInput, today: Date): DailySignal | und
   };
 }
 
-/**
- * 宮位講成白話。直接把「命宮」去掉「宮」字會變成「命」，讀不通；
- * 而且宮名本身就是術語，對沒學過紫微的人等於沒說。
- */
-const PALACE_TOPIC: Record<string, string> = {
-  命宮: '你自己的狀態',
-  兄弟: '同輩與手足',
-  夫妻: '伴侶關係',
-  子女: '晚輩，或你正在生出來的東西',
-  財帛: '錢和資源',
-  疾厄: '身體與精神狀態',
-  遷移: '外出、換環境',
-  僕役: '人際往來',
-  交友: '人際往來',
-  官祿: '工作',
-  田宅: '住的地方與家人',
-  福德: '心情與怎麼享受',
-  父母: '長輩',
-};
-
 /** 紫微：流日命宮。 */
 function ziweiSignal(profile: Pick<ProfileInput, 'birthDate' | 'birthTime' | 'gender'>, today: Date): DailySignal | undefined {
   const chart = calculateZiwei(profile, today);
   const daily = chart?.currentHoroscope.daily;
   if (!daily) return undefined;
-  const topic = PALACE_TOPIC[daily.palaceName] ?? daily.palaceName;
+  // 宮位白話對照和報告分頁共用一份，避免兩邊各自維護。
+  const topic = ZIWEI_PALACE_PLAIN[daily.palaceName] ?? daily.palaceName;
   return {
     system: '紫微斗數',
     tone: 'neutral',

@@ -20,7 +20,9 @@ describe('報告', () => {
   it('完整星盤時將元素模式與宮位集中寫入 fallback', () => {
     const astrology = calculateAstrology({ birthDate: '1990-01-02', birthTime: '10:30', timezone: 'Asia/Taipei', longitude: 121.5654, latitude: 25.033 });
     const report = generateFallbackReport({ ...input, astrology });
-    expect(report.sections.astrology).toContain('十星分布');
+    // 原本斷言術語「十星分布」，那個詞已刻意換成白話；改成驗資訊還在。
+    expect(report.sections.astrology).toContain('十顆星裡');
+    expect(report.sections.astrology).toMatch(/[木火土金水風]元素/);
     expect(report.sections.astrology).toContain('等宮制中第');
     expect(report.sections.astrology).toContain('整宮制');
   });
