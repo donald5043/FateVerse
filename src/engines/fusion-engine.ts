@@ -320,11 +320,61 @@ export function buildSystemMatrix(input: FateReportInput, options: FusionOptions
   return { systems, rows };
 }
 
-function buildDomains(input: FateReportInput, leading: ElementName): FusionDomain[] {
+/**
+ * 票數分歧的具體樣貌：哪些系統指向主元素，哪些系統指向別的。
+ *
+ * 這是融合單元裡最個人化、也最沒被用到的一份資訊。原本的解讀直接拿
+ * `ELEMENT_PLAIN[主元素]` 的罐頭段落，結果是主元素相同的人會拿到一模一樣的文字；
+ * 但「誰同意誰、誰唱反調」每張盤都不一樣，那才是值得講的東西。
+ */
+interface VoteSplit {
+  lead: ElementName;
+  leadSystems: string[];
+  /** 票數第二多的元素。全體一致時為 undefined。 */
+  other?: ElementName;
+  otherSystems: string[];
+}
+
+function describeSplit(votes: FusionElementVote[], lead: ElementName): VoteSplit {
+  const leadVote = votes.find((vote) => vote.element === lead);
+  const runnerUp = votes.find((vote) => vote.element !== lead && vote.votes > 0);
+  return {
+    lead,
+    leadSystems: leadVote?.systems ?? [],
+    other: runnerUp?.element,
+    otherSystems: runnerUp?.systems ?? [],
+  };
+}
+
+/** 把分歧講成一句話。一致與分歧講法不同，不是同一句換字。 */
+function splitSentence(split: VoteSplit): string {
+  const leadLabel = ELEMENT_LABELS[split.lead];
+  const leadVibe = ELEMENT_PLAIN[split.lead].vibe;
+  if (!split.other || split.otherSystems.length === 0) {
+    return `換算成五行之後，${split.leadSystems.join('、')}全都指向${leadLabel}：${leadVibe}。這麼多套系統沒有分歧，其實少見。`;
+  }
+  const otherLabel = ELEMENT_LABELS[split.other];
+  return `換算成五行之後，${split.leadSystems.join('、')}指向${leadLabel}（${leadVibe}），`
+    + `${split.otherSystems.join('、')}指向${otherLabel}（${ELEMENT_PLAIN[split.other].vibe}）。`
+    + `這兩塊在你身上同時存在，看場合輪流出來。`;
+}
+
+function buildDomains(input: FateReportInput, leading: ElementName, votes: FusionElementVote[]): FusionDomain[] {
   const dayLabel = ELEMENT_LABELS[input.bazi.dayMasterElement];
   const strongestLabel = ELEMENT_LABELS[input.fiveElements.strongest[0]];
   const weakestLabel = ELEMENT_LABELS[input.fiveElements.weakest[0]];
   const plain = ELEMENT_PLAIN[leading];
+  const split = describeSplit(votes, leading);
+  const splitLine = splitSentence(split);
+  const leadingLabel = ELEMENT_LABELS[leading];
+  const viewFrom = split.other && split.otherSystems.length
+    ? `照最多系統指向的${leadingLabel}來看`
+    : `這幾套系統都指向${leadingLabel}，照它來看`;
+  // 四柱最多的元素和綜合票數最多的不一定同一個。這個落差是這張盤特有的，
+  // 而且是使用者讀得出來的矛盾——與其讓他自己發現，不如直接講。
+  const leadDiffersFromPillars = strongestLabel !== leadingLabel;
+  // 系統數會依有沒有紫微、姓名、手相而變，不能寫死。
+  const systemCount = votes.reduce((total, vote) => total + vote.votes, 0);
   const zodiacTrait = input.zodiac.positiveTraits[0];
   const zodiacBlind = input.zodiac.blindSpots[0];
   const starTrait = input.astrology.strengths[0];
@@ -337,7 +387,7 @@ function buildDomains(input: FateReportInput, leading: ElementName): FusionDomai
   const personality: FusionDomain = {
     id: 'personality',
     title: '個性：合起來是什麼樣的人',
-    plainReading: `講白話：八字說你的核心是${input.bazi.dayMaster}（${dayLabel}）日主，生肖${input.zodiac.animal}補了一筆「${zodiacTrait}」，${input.astrology.sunSign}又加上「${starTrait}」，生命靈數 ${input.numerology.lifePathNumber} 給你「${numberTitle}」的課題${soulStars ? `，紫微命宮還坐著${soulStars}` : ''}。全部疊起來，比較像在說：你${plain.vibe}。這幾套系統各自用不同語言，卻在描述同一個人不同角度的側臉。`,
+    plainReading: `講白話：八字說你的核心是${input.bazi.dayMaster}（${dayLabel}）日主，生肖${input.zodiac.animal}補一筆「${zodiacTrait}」，${input.astrology.sunSign}再加「${starTrait}」，生命靈數 ${input.numerology.lifePathNumber} 給你「${numberTitle}」的課題${soulStars ? `，紫微命宮還坐著${soulStars}` : ''}。${splitLine}`,
     evidence: [
       { system: '八字', point: `日主${input.bazi.dayMaster}屬${dayLabel}` },
       { system: '生肖', point: `${input.zodiac.animal}：${zodiacTrait}` },
@@ -351,7 +401,7 @@ function buildDomains(input: FateReportInput, leading: ElementName): FusionDomai
   const career: FusionDomain = {
     id: 'career',
     title: '工作：幾套系統一起給的方向感',
-    plainReading: `講白話：綜合起來，你${plain.work}。四柱裡${strongestLabel}最多，代表你自然而然就會用${strongestLabel}的方式做事；${weakestLabel}比例少，不是缺陷，而是提醒你這類任務要嘛刻意練、要嘛找隊友補位。生肖的「${zodiacTrait}」和星座的「${starTrait}」是你在職場上最容易被看見的招牌，可以大方拿出來用。`,
+    plainReading: `講白話：四柱裡${strongestLabel}最多、${weakestLabel}最少，你自然會用${strongestLabel}的方式做事，${weakestLabel}那類的活要嘛刻意練、要嘛找人補位${leadDiffersFromPillars ? `——不過綜合 ${systemCount} 套系統之後，票數最多的其實是${leadingLabel}，「做起來順手的方式」和「別人看到的你」不是同一個` : ''}。${viewFrom}，你${plain.work}。生肖的「${zodiacTrait}」和星座的「${starTrait}」是你在職場上最容易被看見的招牌，大方拿出來用。`,
     evidence: [
       { system: '四柱五行', point: `${strongestLabel}相對突出、${weakestLabel}較少` },
       { system: '生肖', point: `職場招牌：${zodiacTrait}` },
@@ -364,7 +414,7 @@ function buildDomains(input: FateReportInput, leading: ElementName): FusionDomai
   const love: FusionDomain = {
     id: 'love',
     title: '感情：不同系統對你相處模式的觀察',
-    plainReading: `講白話：在關係裡，你${plain.love}。不過生肖也提醒「${zodiacBlind}」，星座則點名「${starBlind}」——這兩個盲點在感情裡最容易同時出現，通常長這樣：狀態好的時候是體貼，壓力大的時候就變內耗。生命靈數的功課「${numberChallenge}」剛好可以拿來當感情裡的練習題。`,
+    plainReading: `講白話：${viewFrom}，在關係裡你${plain.love}。生肖提醒「${zodiacBlind}」，星座點名「${starBlind}」——這兩個盲點在感情裡最容易一起出現，通常長這樣：狀態好的時候是體貼，壓力大的時候變內耗。生命靈數的功課「${numberChallenge}」拿來當感情裡的練習題剛好。`,
     evidence: [
       { system: '五行共識', point: plain.love },
       { system: '生肖', point: `留意：${zodiacBlind}` },
@@ -377,7 +427,7 @@ function buildDomains(input: FateReportInput, leading: ElementName): FusionDomai
   const wellbeing: FusionDomain = {
     id: 'wellbeing',
     title: '身心節奏：怎麼休息最有效',
-    plainReading: `講白話：照這幾套系統的共識，你${plain.rest}。四柱${weakestLabel}偏少這件事，傳統上會被解讀成「${weakestLabel}類的節奏比較不是你的預設值」，換成現代語言就是：與其模仿別人的作息，不如觀察自己什麼時候最有電、什麼事最耗電，照著自己的電量表過日子。`,
+    plainReading: `講白話：${viewFrom}，你${plain.rest}。四柱${weakestLabel}偏少，傳統上會說「${weakestLabel}類的節奏不是你的預設值」——換成白話就是：與其模仿別人的作息，不如觀察自己什麼時候最有電、什麼事最耗電，照自己的電量表過日子。`,
     evidence: [
       { system: '五行共識', point: plain.rest },
       { system: '四柱五行', point: `${weakestLabel}比例較少，休息方式可多實驗` },
@@ -648,7 +698,7 @@ export function generateFusionReading(input: FateReportInput, options: FusionOpt
   const leading = consensus.leading[0];
   const leadingLabels = consensus.leading.map((element) => ELEMENT_LABELS[element]).join('、');
   const axes = buildAxes(input, options);
-  const domains = buildDomains(input, leading);
+  const domains = buildDomains(input, leading, consensus.votes);
   const highlights = buildHighlights(input, consensus.votes);
   const timing = buildTiming(input);
 
