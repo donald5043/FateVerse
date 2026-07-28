@@ -20,6 +20,15 @@ const OVER_GENERIC_BUDGET = 40;
 /** 靜態語料（塔羅、籤詩解讀、今日指引等）的 voice 規則違規上限。 */
 const STATIC_VIOLATION_BUDGET = 0;
 
+/**
+ * 口語度（R7–R9）有問題的解讀模板數上限。
+ *
+ * 現況為 0，所以直接釘在 0。這一軸的標記表刻意只收高信心的詞
+ * （見 plainness.ts 末段「刻意不列入的詞」），誤報低才守得住 0；
+ * 真的有正當理由要用，請加進 EXEMPTIONS 並寫明原因，不要調高這個數字。
+ */
+const PLAINNESS_BUDGET = 0;
+
 const BASELINE_PATH = resolve(__dirname, '../../docs/specificity-baseline.md');
 
 /**
@@ -52,6 +61,13 @@ describe('具體性量測', () => {
       `  FRAMING       ${result.counts.FRAMING} 條（方法說明／免責／標籤，不計分）`,
       `  每份報告平均模糊限定詞 ${result.averageHedgesPerReport.toFixed(1)} 個（上限 1）`,
       `  R3 過長段落   ${result.voiceRuleTotals['R3-paragraph-length']} 個模板`,
+      `  口語度問題    ${result.plainnessTemplates} 個模板`
+        + `（對沖語 ${result.plainnessRuleTotals['R7-hedged-assertion']}`
+        + `／自我說明 ${result.plainnessRuleTotals['R8-meta-commentary']}`
+        + `／書面語 ${result.plainnessRuleTotals['R9-bookish']}）`,
+      '',
+      '  最常出現的口語度問題：',
+      ...result.plainnessMarkers.slice(0, 8).map((m, i) => `   ${String(i + 1).padStart(2)}. ${String(m.templates).padStart(3)} 個模板  「${m.marker}」→ ${m.suggestion}`),
       '',
       '  靜態泛用句中出現率最高的 10 條：',
       ...overStatic.slice(0, 10).map((s, i) => `   ${String(i + 1).padStart(2)}. ${(s.rate * 100).toFixed(1).padStart(5)}%  ${s.template.slice(0, 52)}`),
@@ -75,6 +91,12 @@ describe('具體性量測', () => {
         + '新增文案請依 docs/voice.md 撰寫；若確為結構性句框，請一併調整預算並說明理由。',
       ).toBeLessThanOrEqual(OVER_GENERIC_BUDGET);
     }
+
+    expect(
+      result.plainnessTemplates,
+      `口語度有問題的模板為 ${result.plainnessTemplates} 個，超過目前預算 ${PLAINNESS_BUDGET}。`
+      + '請見上方「最常出現的口語度問題」，或 docs/voice.md 的 R7–R9。',
+    ).toBeLessThanOrEqual(PLAINNESS_BUDGET);
   });
 
   it('報告以外的靜態文案符合 voice 規則', () => {

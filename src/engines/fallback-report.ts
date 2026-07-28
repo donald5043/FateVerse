@@ -108,14 +108,14 @@ function focusNarrative(topic: string, input: FateReportInput, strongest: string
   const starTrait = input.astrology.strengths[0];
   const numberTrait = input.numerology.strengths[0];
   const narratives: Record<string, string> = {
-    personality: `從日主${ELEMENT_LABELS[input.bazi.dayMasterElement]}、${input.astrology.sunSign}的「${starTrait}」與生命靈數的「${numberTrait}」來看，可以觀察自己在有把握與承受壓力時，是否會展現不同的節奏。`,
-    career: `工作上可先運用「${zodiacTrait}」與「${numberTrait}」建立可見成果；五行以${strongest}相對突出、${weakest}較少，適合拿來檢查目前是否只使用熟悉能力，而忽略協作或調整。`,
-    love: `關係中可把${input.zodiac.animal}生肖的「${input.zodiac.positiveTraits[1]}」和${input.astrology.sunSign}的表達方式並看；重點不是替彼此貼標籤，而是說清楚需求、界線與期待。`,
-    finance: `財務主題可借用生命靈數「${input.numerology.title}」的課題，檢查資源安排是否同時兼顧目標與風險；命理象徵不構成投資判斷。`,
-    family: `家庭互動可觀察「${zodiacTrait}」什麼時候是支持、什麼時候變成替別人扛責任；先分清界線，再討論你能提供的協助。`,
-    relationships: `人際上可運用${input.astrology.sunSign}的「${starTrait}」，同時留意「${input.astrology.blindSpots[0]}」是否在壓力下出現，以具體回饋取代猜測。`,
-    direction: `人生方向不需要由任何單一系統決定。可把日主${input.bazi.dayMaster}、生命靈數 ${input.numerology.lifePathNumber} 與你真正重視的價值並列，透過小型實驗找出有持續感的方向。`,
-    all: `目前可先從${strongest}較突出的做事模式、${input.zodiac.animal}生肖的「${zodiacTrait}」與生命靈數的「${numberTrait}」選一項最有共鳴的線索，再回到現實情境驗證。`,
+    personality: `日主${ELEMENT_LABELS[input.bazi.dayMasterElement]}、${input.astrology.sunSign}的「${starTrait}」、生命靈數的「${numberTrait}」，講的是同一件事的三個面向。這禮拜留意一下：你有把握的時候和被逼的時候，做事節奏差多少。`,
+    career: `工作上先用「${zodiacTrait}」和「${numberTrait}」做出看得見的成果。你的五行${strongest}多、${weakest}少，拿這件事檢查一個問題：最近是不是只用了自己順手的那幾招。`,
+    love: `把${input.zodiac.animal}的「${input.zodiac.positiveTraits[1]}」和${input.astrology.sunSign}的表達方式擺在一起看。重點不是替誰貼標籤，是把需求、界線和期待講清楚。`,
+    finance: `拿生命靈數「${input.numerology.title}」的課題來檢查你的錢：目標和風險有沒有同時顧到。這裡不給投資建議，錢的決定請看實際數字。`,
+    family: `注意「${zodiacTrait}」在家裡什麼時候是支持，什麼時候變成替別人扛。先把界線畫出來，再談你要幫到哪裡。`,
+    relationships: `人際上你用得上${input.astrology.sunSign}的「${starTrait}」。壓力大的時候留意「${input.astrology.blindSpots[0]}」會不會冒出來——與其猜對方在想什麼，不如直接問。`,
+    direction: `方向不是哪一套系統能替你決定的——把日主${input.bazi.dayMaster}、生命靈數 ${input.numerology.lifePathNumber} 和你真正在乎的東西放在一起，用小實驗去試哪一個撐得久。`,
+    all: `從${strongest}偏多的做事方式、${input.zodiac.animal}的「${zodiacTrait}」、生命靈數的「${numberTrait}」裡，挑一個你最有感覺的，回到生活裡驗證看看。`,
   };
   return narratives[topic] ?? narratives.all;
 }
@@ -134,7 +134,7 @@ export function generateFallbackReport(input: FateReportInput): AiFateReport {
     ? `月支${input.bazi.seasonStrength.monthBranch}屬${input.bazi.seasonStrength.season}令，以季節來看你的日主五行屬「${({ prosperous: '旺', supportive: '相', resting: '休', imprisoned: '囚', declining: '死' } as const)[input.bazi.seasonStrength.states[input.bazi.dayMasterElement]]}」`
     : '本次沒有月令旺相資料';
   const baziRelationDescription = input.bazi.relations?.length
-    ? `另外找到 ${input.bazi.relations.length} 組合、沖、刑、害等干支關係`
+    ? `另外有 ${input.bazi.relations.length} 組刑沖合害`
     : '這次沒有找到明顯的合、沖、刑、害組合';
   const astrologyDistributionDescription = input.astrology.distribution
     ? `十星分布以${input.astrology.distribution.dominantElements.join('、')}元素及${input.astrology.distribution.dominantModalities.join('、')}模式較多`
@@ -144,30 +144,30 @@ export function generateFallbackReport(input: FateReportInput): AiFateReport {
     ? `等宮制中第 ${equalHouseEmphasis.house} 宮聚集${equalHouseEmphasis.planets.join('、')}`
     : '未提供完整經緯度，因此上升與宮位不以猜測補齊';
   const sharedPatterns = [
-    `${input.zodiac.positiveTraits[0]}與${input.astrology.strengths[0]}都指向你能主動運用既有優勢。`,
-    `日主${ELEMENT_LABELS[input.bazi.dayMasterElement]}與${input.astrology.element}象徵的特質，都可作為觀察做事節奏的文化線索。`,
-    `${input.numerology.title}所強調的「${input.numerology.strengths[0]}」，可和生肖的「${input.zodiac.positiveTraits[1]}」交叉參照。`,
-    ...(input.ziwei ? [`紫微命主${input.ziwei.soul}、身主${input.ziwei.body}提供另一組傳統象徵，可和八字日主並列觀察，但不互相取代。`] : []),
+    `「${input.zodiac.positiveTraits[0]}」和「${input.astrology.strengths[0]}」是兩套系統各自算出來、卻都點到的地方——這兩件事你大概最不用懷疑。`,
+    `日主${ELEMENT_LABELS[input.bazi.dayMasterElement]}和${input.astrology.element}講的都是你做事的節奏，只是用了不同的詞。`,
+    `生命靈數說你「${input.numerology.strengths[0]}」，生肖說你「${input.zodiac.positiveTraits[1]}」——兩邊在講同一種能力。`,
+    ...(input.ziwei ? [`紫微用命主${input.ziwei.soul}、身主${input.ziwei.body}描述你，八字用日主。兩套說法不衝突，也不能互相取代。`] : []),
   ];
   const differences = [
-    `八字五行較著重出生時間形成的結構與平衡；太陽星座則以季節區間描述自我表達，兩者回答的問題不同。`,
-    `生命靈數偏向以數字象徵整理人生課題，生肖則以年支文化意象描述群體熟悉的特質。`,
+    `八字看的是出生時間排出來的結構和平衡，太陽星座看的是季節怎麼影響你的表達方式。兩套在回答不同的問題。`,
+    `生命靈數用數字整理人生課題，生肖用年支講一種大家都熟悉的性格側寫。`,
     ...(input.ziwei ? ['紫微斗數以十二宮與星曜組合觀察人生領域；八字則以干支、節氣與五行關係為核心，兩者採用不同座標系統。'] : []),
   ];
   const requestedFocus = input.userFocus.length ? input.userFocus : ['all'];
   const focus = requestedFocus.includes('all') ? ['personality', 'career', 'love', 'direction'] : requestedFocus;
   return {
-    summary: `四柱資料顯示五行以${strongest}較突出、${weakest}相對較少；搭配${input.zodiac.animal}生肖、太陽${input.astrology.sunSign}${moonDescription}${ziweiDescription}與生命靈數 ${input.numerology.lifePathNumber}，可觀察到「${input.zodiac.positiveTraits[0]}」與「${input.astrology.strengths[0]}」並存的傾向。這些是文化模型的自我反思線索，不是固定命運。`,
+    summary: `你的四柱裡${strongest}最多、${weakest}最少；${input.zodiac.animal}、太陽${input.astrology.sunSign}${moonDescription}${ziweiDescription}和生命靈數 ${input.numerology.lifePathNumber} 各算各的，但都指向同一件事：「${input.zodiac.positiveTraits[0]}」和「${input.astrology.strengths[0]}」在你身上會一起出現。這是看自己的一個角度，不是命定的結論。`,
     sharedPatterns,
     differences,
     sections: {
       // voice.md R3：段落至多 3 句。胎元、命宮、身宮、節氣等結構資料改由八字分頁的
       // 欄位呈現，這裡只留解讀；但計分規則與各流派差異屬透明度聲明，必須保留。
       bazi: `你的日主是${input.bazi.dayMaster}${ELEMENT_LABELS[input.bazi.dayMasterElement]}，四柱為${input.bazi.pillars.map((pillar) => pillar.value).join('、')}。${baziSeasonDescription}，${baziRelationDescription}。日主強弱與喜用神的完整判讀在八字分頁，用的是公開計分規則，和各流派手工論命的結論不一定一樣。`,
-      zodiac: `${input.zodiac.animal}對應${input.zodiac.branch}支，傳統象徵為「${input.zodiac.symbol}」。正向面可參考${input.zodiac.positiveTraits.join('、')}，同時留意${input.zodiac.blindSpots.join('、')}。`,
+      zodiac: `${input.zodiac.animal}對應${input.zodiac.branch}支，傳統上說的是「${input.zodiac.symbol}」。你的強項在${input.zodiac.positiveTraits.join('、')}；要留意的是${input.zodiac.blindSpots.join('、')}。`,
       astrology: `太陽位於${input.astrology.sunSign}${input.astrology.moonSign ? `，月亮位於${input.astrology.moonSign}` : ''}${input.astrology.risingSign ? `，上升位於${input.astrology.risingSign}` : ''}，太陽星座屬${input.astrology.element}元素、${input.astrology.modality}模式。${input.astrology.planets?.length ? `已計算 ${input.astrology.planets.length} 個星體與 ${input.astrology.aspects?.length ?? 0} 組主要相位；${astrologyDistributionDescription}，${astrologyHouseDescription}。` : ''}${input.astrology.houseComparisons?.length ? '報告同時保留等宮制與整宮制的落宮差異，不把任何一種當成唯一答案。' : ''}`,
       ...(input.ziwei ? { ziwei: `紫微排盤為${input.ziwei.fiveElementsClass}，命主${input.ziwei.soul}、身主${input.ziwei.body}，命宮在${input.ziwei.soulPalaceBranch}、身宮在${input.ziwei.bodyPalaceBranch}。命宮主星欄為「${soulPalaceStars}」${ziweiHoroscopeDescription}。星曜與運限需連同三方四正及流派設定閱讀，本版只呈現文化結構，不由單星預言事件。` } : {}),
-      numerology: `${input.numerology.description} 本次計算結果為 ${input.numerology.lifePathNumber}${input.numerology.isMasterNumber ? '（大師數）' : ''}，可發揮${input.numerology.strengths.join('、')}，並練習${input.numerology.challenges.join('、')}。`,
+      numerology: `${input.numerology.description} 你的生命靈數是 ${input.numerology.lifePathNumber}${input.numerology.isMasterNumber ? '（大師數）' : ''}，擅長${input.numerology.strengths.join('、')}，要練的是${input.numerology.challenges.join('、')}。`,
       ...(input.nameAnalysis ? { name: `${input.nameAnalysis.overallImpression}${input.nameAnalysis.elementComparison}${input.nameAnalysis.characters.some((item) => item.strokeSource === 'insufficient') ? '部分文字尚無正式字典資料，因此不延伸筆畫吉凶。' : ''}` } : {}),
     },
     focusAnalysis: focus.map((topic) => ({

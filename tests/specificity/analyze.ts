@@ -1,6 +1,7 @@
 import { buildSyntheticCharts, CHART_COUNT, CHART_SEED, type SyntheticChart } from './synthetic-charts';
 import { extractReportSentences, splitSentences, type ExtractionResult, type TextKind } from './extract-sentences';
 import { checkFieldRules, countHedges, HEDGE_LIMIT, type VoiceRuleId } from './voice-rules';
+import { checkPlainness, type PlainnessRuleId } from './plainness';
 
 /** 判定門檻：出現率 > 30% 為過度泛用，15–30% 需觀察。 */
 export const OVER_GENERIC_THRESHOLD = 0.3;
@@ -40,6 +41,12 @@ export interface AnalysisResult {
   voiceRuleTotals: Record<VoiceRuleId, number>;
   /** 違反 R3（段落 > 3 句）的欄位，格式為 `來源::欄位::句數`。 */
   longParagraphs: { source: string; field: string; sentenceCount: number; example: string }[];
+  /** 口語度（R7–R9）：以「句子模板」為單位計數，同一句不因 500 份報告重複累加。 */
+  plainnessRuleTotals: Record<PlainnessRuleId, number>;
+  /** 出現最頻繁的口語度問題，供撰稿時優先處理。 */
+  plainnessMarkers: { rule: PlainnessRuleId; marker: string; templates: number; source: string; suggestion: string }[];
+  /** 有口語度問題的解讀類模板數。 */
+  plainnessTemplates: number;
   elapsedMs: number;
 }
 
@@ -73,6 +80,12 @@ export function analyze(charts: SyntheticChart[] = buildSyntheticCharts()): Anal
     charts: Set<number>;
     voiceRules: Set<VoiceRuleId>;
   }>();
+
+  const plainnessRuleTotals: Record<PlainnessRuleId, number> = {
+    'R7-hedged-assertion': 0, 'R8-meta-commentary': 0, 'R9-bookish': 0,
+  };
+  // marker → { 命中的模板數, 來源, 建議 }
+  const plainnessByMarker = new Map<string, { rule: PlainnessRuleId; templates: number; source: string; suggestion: string }>();
 
   const voiceRuleTotals: Record<VoiceRuleId, number> = {
     'R1-formal-pronoun': 0,
@@ -143,6 +156,26 @@ export function analyze(charts: SyntheticChart[] = buildSyntheticCharts()): Anal
       if (rule !== 'R4-hedges' && rule !== 'R3-paragraph-length') voiceRuleTotals[rule] += 1;
     }
   }
+
+  // R7–R9 同樣以模板為單位。免責與方法說明（framing）本來就該這樣寫，不計。
+  let plainnessTemplates = 0;
+  for (const [template, entry] of byTemplate) {
+    if (entry.kind === 'framing') continue;
+    const hits = checkPlainness(entry.example);
+    if (hits.length === 0) continue;
+    plainnessTemplates += 1;
+    const seenRules = new Set<PlainnessRuleId>();
+    for (const hit of hits) {
+      if (!seenRules.has(hit.rule)) {
+        plainnessRuleTotals[hit.rule] += 1;
+        seenRules.add(hit.rule);
+      }
+      const record = plainnessByMarker.get(hit.marker);
+      if (record) record.templates += 1;
+      else plainnessByMarker.set(hit.marker, { rule: hit.rule, templates: 1, source: entry.source, suggestion: hit.suggestion ?? '' });
+    }
+    void template;
+  }
   // R3 來自欄位層級的獨立統計。
   voiceRuleTotals['R3-paragraph-length'] = longParagraphTemplates.size;
 
@@ -177,6 +210,11 @@ export function analyze(charts: SyntheticChart[] = buildSyntheticCharts()): Anal
     hedgeOverLimitRate: charts.length ? hedgeOverLimitCharts / charts.length : 0,
     averageHedgesPerReport: charts.length ? hedgeSum / charts.length : 0,
     voiceRuleTotals,
+    plainnessRuleTotals,
+    plainnessTemplates,
+    plainnessMarkers: [...plainnessByMarker.entries()]
+      .map(([marker, record]) => ({ marker, ...record }))
+      .sort((a, b) => b.templates - a.templates),
     longParagraphs: [...longParagraphTemplates.values()].sort((a, b) => b.sentenceCount - a.sentenceCount),
     elapsedMs: Date.now() - startedAt,
   };
