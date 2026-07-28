@@ -14,6 +14,7 @@ import BaziStrengthPanel from '../components/report/BaziStrengthPanel';
 import AstrologyStructurePanel from '../components/report/AstrologyStructurePanel';
 import { AstrologyPositionInsights, BaziTenGodInsights, ZiweiKeyPalaceInsights } from '../components/report/CulturalInsights';
 import FateSnapshotCard from '../components/report/FateSnapshotCard';
+import RareFeaturesCard from '../components/report/RareFeaturesCard';
 import FusionInsights from '../components/report/FusionInsights';
 import UnifiedIntegrationPanel from '../components/report/UnifiedIntegrationPanel';
 import NatalChart from '../components/report/NatalChart';
@@ -303,6 +304,7 @@ export default function ReportPage() {
 
       {tab === 'fusion' && <div key="fusion" className="reveal mt-7">
         <FateSnapshotCard snapshot={snapshot} />
+        <div className="mt-5"><RareFeaturesCard input={input} /></div>
         <div className="mt-5">
           <ShareCardButton data={{
             percentages: unifiedProfile.percentages,
