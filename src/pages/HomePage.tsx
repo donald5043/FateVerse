@@ -1,12 +1,13 @@
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import BarnumChallengeEntry from '../components/common/BarnumChallengeEntry';
 import DailyFortuneCard from '../components/common/DailyFortuneCard';
+import DailyFusionStrip from '../components/common/DailyFusionStrip';
 import DailyHoroscopeCard from '../components/common/DailyHoroscopeCard';
 import DailyTarotCard from '../components/common/DailyTarotCard';
 import Disclaimer from '../components/common/Disclaimer';
 import StarChartWheel from '../components/common/StarChartWheel';
 import { useFateStore } from '../store/useFateStore';
+import { preferredScrollBehavior } from '../utils/scroll';
 
 /**
  * 首頁只回答三個問題，照這個順序：
@@ -41,6 +42,16 @@ const CHART_TABS = [
 
 const todayLabel = new Intl.DateTimeFormat('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date());
 
+/**
+ * 捲到「今天」那一段。
+ *
+ * 不能用 <a href="#today">：這站是 HashRouter，網址本來就是 `/#/`，
+ * 再設一次 hash 會把路由整個換成 `today`，比對不到就被導回首頁。
+ */
+function scrollToToday(): void {
+  document.getElementById('today')?.scrollIntoView({ behavior: preferredScrollBehavior(), block: 'start' });
+}
+
 export default function HomePage() {
   const hasChart = useFateStore((state) => Boolean(state.reportInput));
 
@@ -71,9 +82,9 @@ export default function HomePage() {
             <Link to={hasChart ? '/report' : '/profile'} className="btn-primary whitespace-nowrap" style={{ flex: 'none' }}>
               {hasChart ? '回到我的命盤' : '開始探索命盤'} <ArrowRight size={18} />
             </Link>
-            <a href="#today" className="btn-secondary whitespace-nowrap" style={{ flex: 'none' }}>先看今天</a>
+            <button type="button" onClick={scrollToToday} className="btn-secondary whitespace-nowrap" style={{ flex: 'none' }}>先看今天</button>
           </div>
-          <div className="mt-5"><BarnumChallengeEntry /></div>
+          <div className="mt-6"><DailyFusionStrip /></div>
           <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-mist">
             {['全程瀏覽器運算', '不用登入', '免費看完整報告'].map((tag) => (
               <span className="flex items-center gap-2" key={tag}><span className="text-gold">◦</span>{tag}</span>

@@ -3,23 +3,11 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import BackToReportLink from '../components/common/BackToReportLink';
 import Disclaimer from '../components/common/Disclaimer';
+import TarotFlipCard from '../components/common/TarotFlipCard';
 import { getBirthCards, drawSpread, type TarotSpreadCard } from '../engines/tarot-engine';
 import { useFateStore } from '../store/useFateStore';
 
 const POSITION_ICONS = { 過去: Moon, 現在: Sun, 未來: Star } as const;
-const ROMAN = ['0', 'Ⅰ', 'Ⅱ', 'Ⅲ', 'Ⅳ', 'Ⅴ', 'Ⅵ', 'Ⅶ', 'Ⅷ', 'Ⅸ', 'Ⅹ', 'Ⅺ', 'Ⅻ', 'ⅩⅢ', 'ⅩⅣ', 'ⅩⅤ', 'ⅩⅥ', 'ⅩⅦ', 'ⅩⅧ', 'ⅩⅨ', 'ⅩⅩ', 'ⅩⅪ'];
-
-function CardBack() {
-  return (
-    <div className="grid size-full place-items-center rounded-[20px] border border-gold/30 bg-gradient-to-b from-[#12183a] to-[#0b1020]">
-      <svg viewBox="0 0 60 60" className="size-16" fill="none" aria-hidden="true">
-        <circle cx="30" cy="30" r="26" stroke="rgba(216,184,117,.35)" strokeWidth="1" />
-        <circle cx="30" cy="30" r="21" stroke="rgba(216,184,117,.2)" strokeWidth=".7" strokeDasharray="1.5 3" />
-        <path d="M30 14 l4 12 12 4 -12 4 -4 12 -4 -12 -12 -4 12 -4 Z" fill="#d8b875" />
-      </svg>
-    </div>
-  );
-}
 
 export default function TarotPage() {
   const profile = useFateStore((state) => state.profileInput);
@@ -69,28 +57,16 @@ export default function TarotPage() {
             return (
               <div key={position}>
                 <div className="flex items-center justify-center gap-2 text-sm font-bold text-[#c9a0f0]"><Icon size={15} />{position}</div>
-                <button type="button" onClick={() => flipOne(index)} className="mt-3 block w-full [perspective:1200px]" aria-label={`翻開${position}的牌`}>
-                  <div className={`card3d relative mx-auto aspect-[2/3] w-full max-w-[220px] ${flipped[index] ? 'flipped' : ''}`} style={{ transitionDelay: `${index * 120}ms` }}>
-                    <div className="card-face"><CardBack /></div>
-                    <div className={`card-face card-back tarot-card-front rounded-[20px] border ${reversed ? 'border-vermilion/45' : 'border-[#c9a0f0]/40'}`}>
-                      <img
-                        className={`tarot-card-image ${reversed ? 'tarot-card-image-reversed' : ''}`}
-                        src={`${import.meta.env.BASE_URL}art/tarot/${String(card.id).padStart(2, '0')}.webp`}
-                        alt={`${card.name}（${card.en}）塔羅牌插畫`}
-                        decoding="async"
-                      />
-                      <span className="tarot-card-sheen" aria-hidden="true" />
-                      <div className="tarot-card-label">
-                        <p className="font-display text-2xl italic text-gold">{ROMAN[card.id]}</p>
-                        <div>
-                          <p className="font-display text-[9px] italic tracking-[0.14em] text-mist">{card.en}</p>
-                          <h2 className="font-serif text-lg font-black text-cream">{card.name}</h2>
-                        </div>
-                        <span className={`ml-auto shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold ${reversed ? 'bg-vermilion/20 text-[#f1a08d]' : 'bg-emerald-300/15 text-emerald-100'}`}>{reversed ? '逆位' : '正位'}</span>
-                      </div>
-                    </div>
-                  </div>
-                </button>
+                <div className="mt-3">
+                  <TarotFlipCard
+                    card={card}
+                    reversed={reversed}
+                    flipped={flipped[index]}
+                    onFlip={() => flipOne(index)}
+                    label={`翻開${position}的牌`}
+                    delayMs={index * 120}
+                  />
+                </div>
               </div>
             );
           })}

@@ -71,3 +71,17 @@ export function calculateBaziRelations(pillars: BaziPillar[]): BaziRelation[] {
 
   return relations;
 }
+
+/**
+ * 兩個地支之間的關係（六合、六沖、六害、六破、相刑）。
+ *
+ * 和四柱內部的關係判定共用同一份 BRANCH_RULES，避免兩處各自維護一份對照表。
+ * 只看兩兩成立的規則；三合、三會需要三個字，不在這裡處理。
+ */
+export function branchRelation(first: string, second: string): { label: string; kind: BaziRelation['kind'] } | undefined {
+  if (first === second) return undefined;
+  const match = BRANCH_RULES.find(
+    (rule) => rule.members.length === 2 && rule.members.includes(first) && rule.members.includes(second),
+  );
+  return match ? { label: match.label, kind: match.kind } : undefined;
+}
