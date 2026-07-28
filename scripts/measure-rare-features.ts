@@ -20,6 +20,8 @@ const ALL_IDS: RareFeatureId[] = [
   'master-number', 'same-birth-cards', 'empty-soul-palace',
   'stellium', 'sun-moon-same-sign',
   'all-yang', 'all-yin', 'many-retrograde',
+  'twin-major-stars', 'mutagen-in-soul-palace', 'body-equals-soul',
+  'early-luck-start', 'late-luck-start', 'luck-clashes-day', 'luck-completes-harmony',
 ];
 
 const charts = buildSyntheticCharts();

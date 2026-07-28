@@ -25,8 +25,8 @@ export default function RareFeaturesCard({ input }: { input: FateReportInput }) 
         <>
           <h3 className="mt-3 font-serif text-xl font-bold text-cream">你的盤沒有特別誇張的地方</h3>
           <p className="mt-2.5 leading-7 text-mist">
-            我們檢查了三合、三會、純陽純陰、五行缺角、命宮無主星等十幾種傳統上會被特別點出來的配置，你這張盤都沒踩到。
-            大約一半的人也是這樣。
+            我們檢查了三合、三會、純陽純陰、命宮無主星、雙主星同宮、起運早晚等二十種傳統上會被特別點出來的配置，你這張盤都沒踩到。
+            大約四分之一的人也是這樣。
           </p>
           <p className="mt-2.5 leading-7 text-mist">
             這件事本身值得說一下：算命最常見的結果就是「你很普通」，只是很少有人這樣告訴你。

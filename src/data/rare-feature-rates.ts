@@ -25,4 +25,11 @@ export const RARE_FEATURE_RATES: Record<RareFeatureId, number> = {
   'all-yang': 0.0500, // 25/500
   'all-yin': 0.0460, // 23/500
   'many-retrograde': 0.1860, // 93/500
+  'twin-major-stars': 0.2160, // 108/500
+  'mutagen-in-soul-palace': 0.2000, // 100/500
+  'body-equals-soul': 0.0680, // 34/500
+  'early-luck-start': 0.1540, // 77/500
+  'late-luck-start': 0.0300, // 15/500
+  'luck-clashes-day': 0.4420, // 221/500
+  'luck-completes-harmony': 0.4120, // 206/500
 };

@@ -85,3 +85,13 @@ export function branchRelation(first: string, second: string): { label: string; 
   );
   return match ? { label: match.label, kind: match.kind } : undefined;
 }
+
+/**
+ * 三合的四組地支。大運、流年要判斷「有沒有補齊一個局」時會用到，
+ * 和四柱內部的判定共用同一份 BRANCH_RULES，不另外抄一份。
+ */
+export function threeHarmonyGroups(): string[][] {
+  return BRANCH_RULES
+    .filter((rule) => rule.kind === 'branch-three-harmony')
+    .map((rule) => [...rule.members]);
+}

@@ -1,4 +1,5 @@
 import { analyzeDayMaster } from './bazi-analysis-engine';
+import { branchRelation, threeHarmonyGroups } from './bazi-relations-engine';
 import { getBirthCards } from './tarot-engine';
 import { RARE_FEATURE_RATES } from '../data/rare-feature-rates';
 import { ELEMENT_LABELS } from '../utils/constants';
@@ -34,7 +35,14 @@ export type RareFeatureId =
   | 'sun-moon-same-sign'
   | 'all-yang'
   | 'all-yin'
-  | 'many-retrograde';
+  | 'many-retrograde'
+  | 'twin-major-stars'
+  | 'mutagen-in-soul-palace'
+  | 'body-equals-soul'
+  | 'early-luck-start'
+  | 'late-luck-start'
+  | 'luck-clashes-day'
+  | 'luck-completes-harmony';
 
 /** 偵測結果本身不含稀有度——稀有度是事後由實測資料貼上去的。 */
 export interface DetectedFeature {
@@ -242,6 +250,115 @@ function astrologyFeatures(input: FateReportInput): DetectedFeature[] {
   return found;
 }
 
+
+/**
+ * 紫微命宮的結構。
+ *
+ * 命宮空著（無主星）已經另外處理；這裡看的是「有」的時候長什麼樣：
+ * 幾顆主星、有沒有帶生年四化、身宮是不是也落在命宮。
+ */
+function ziweiPalaceFeatures(input: FateReportInput): DetectedFeature[] {
+  const soulPalace = input.ziwei?.palaces.find((palace) => palace.name === '命宮');
+  if (!soulPalace || soulPalace.majorStars.length === 0) return [];
+  const found: DetectedFeature[] = [];
+
+  if (soulPalace.majorStars.length >= 2) {
+    found.push({
+      id: 'twin-major-stars',
+      label: '雙主星同宮',
+      detail: `命宮坐${soulPalace.majorStars.map((star) => star.name).join('、')}`,
+      meaning: '命宮同時坐了兩顆主星。傳統上會說這種人身上有兩套不同的行為模式，看情況換——別人覺得你前後不一致，你自己知道兩邊都是真的。',
+    });
+  }
+
+  const mutagenStar = soulPalace.majorStars.find((star) => star.mutagen);
+  if (mutagenStar) {
+    found.push({
+      id: 'mutagen-in-soul-palace',
+      label: '生年四化入命',
+      detail: `${mutagenStar.name}化${mutagenStar.mutagen}坐命宮`,
+      meaning: `出生那年的四化剛好落在命宮。紫微把四化看成「把某顆星的力量放大或扭轉」，落在命宮就是直接作用在你身上，而不是繞過某個生活領域。`,
+    });
+  }
+
+  if (soulPalace.isBodyPalace) {
+    found.push({
+      id: 'body-equals-soul',
+      label: '身宮同命宮',
+      detail: '身宮和命宮落在同一格',
+      meaning: '紫微把命宮看成「你本來的樣子」、身宮看成「後天長成的樣子」，你這兩個重疊了。傳統上讀成「活得比較一致」——沒有那種前半生跟後半生像兩個人的落差。',
+    });
+  }
+
+  return found;
+}
+
+/**
+ * 大運：起運時間與大運跟本命的關係。
+ *
+ * 起運歲數由節氣距離決定，每個人不同；大運地支會不會沖到日支、
+ * 會不會補齊一個三合局，也都是這張盤特有的。
+ * 性別未指定時排不出大運，這一段就整個略過。
+ */
+function luckCycleFeatures(input: FateReportInput): DetectedFeature[] {
+  const cycles = input.bazi.luckCycles ?? [];
+  const start = input.bazi.luckStart;
+  if (cycles.length === 0) return [];
+  const found: DetectedFeature[] = [];
+
+  if (start) {
+    if (start.years <= 1) {
+      found.push({
+        id: 'early-luck-start',
+        label: '起運極早',
+        detail: `${start.years} 歲${start.months} 個月就起運`,
+        meaning: '起運的歲數由出生到節氣的距離決定，你落在最早的一端。傳統上會說這種人很早就開始「照自己的運走」——講白一點，就是比同齡人早幾年遇到那些要自己扛的事。',
+      });
+    } else if (start.years >= 9) {
+      found.push({
+        id: 'late-luck-start',
+        label: '起運極晚',
+        detail: `${start.years} 歲${start.months} 個月才起運`,
+        meaning: '起運的歲數由出生到節氣的距離決定，你落在最晚的一端。傳統上會說童年那段特別長——好處是慢熟，代價是同輩已經在跑了，你還在暖身。',
+      });
+    }
+  }
+
+  // 以下兩項掃的是「一輩子八步大運」，所以命中率天生就高：
+  // 實測沖日支 44.2%、補齊三合 41.2%，都被門檻擋在外面，不會顯示。
+  // 留著是因為這個數字本身值得記住——「你這步大運沖日支」聽起來很像在講你，
+  // 其實接近丟銅板。真要講得準，得限定在「現在或下一步」那一步，不是整輩子。
+  const dayBranch = input.bazi.pillars[2]?.branch;
+  if (dayBranch) {
+    const clashing = cycles.find((cycle) => branchRelation(cycle.ganZhi[1], dayBranch)?.kind === 'branch-clash');
+    if (clashing) {
+      found.push({
+        id: 'luck-clashes-day',
+        label: '大運沖日支',
+        detail: `${clashing.ganZhi}大運（${clashing.startYear}–${clashing.endYear}）沖日支${dayBranch}`,
+        meaning: `八字把日支看成「你自己和最親近的關係」，這十年的大運正好沖到它。傳統上讀成「這段時間變動大」——搬家、換工作、關係重組都算。當成一個提醒：那幾年做的決定，值得多留一份紀錄給以後的自己看。`,
+      });
+    }
+
+    const natalBranches = input.bazi.pillars.map((pillar) => pillar.branch);
+    const completing = cycles.find((cycle) => threeHarmonyGroups().some((group) => {
+      if (!group.includes(cycle.ganZhi[1])) return false;
+      const others = group.filter((branch) => branch !== cycle.ganZhi[1]);
+      return others.every((branch) => natalBranches.includes(branch));
+    }));
+    if (completing) {
+      found.push({
+        id: 'luck-completes-harmony',
+        label: '大運補齊三合',
+        detail: `${completing.ganZhi}大運（${completing.startYear}–${completing.endYear}）補齊三合局`,
+        meaning: '本命四柱裡有三合的兩個字，剛好被某一步大運補上第三個。傳統上會把那十年講成「本來散著的東西湊起來了」——比較實際的用法是：回頭看那段時間，你是不是真的在某件事上比較成形。',
+      });
+    }
+  }
+
+  return found;
+}
+
 /** 跑過所有偵測器。量測腳本用這個，它不需要（產生它的時候也還沒有）稀有度。 */
 export function detectFeatures(input: FateReportInput): DetectedFeature[] {
   return [
@@ -252,6 +369,8 @@ export function detectFeatures(input: FateReportInput): DetectedFeature[] {
     ...numerologyFeature(input),
     ...tarotFeature(input),
     ...ziweiFeature(input),
+    ...ziweiPalaceFeatures(input),
+    ...luckCycleFeatures(input),
     ...astrologyFeatures(input),
   ];
 }
