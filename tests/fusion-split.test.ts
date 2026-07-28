@@ -99,3 +99,36 @@ describe('融合解讀依票數分歧而變', () => {
     });
   });
 });
+
+describe('並列元素不硬挑一個', () => {
+  it('四柱最強並列時，兩個都列出來', () => {
+    const withTie = SAMPLES.map((date) => ({ date, reading: readingFor(date) }))
+      .filter(({ reading }) => reading.domains[1].plainReading.includes('一樣多'));
+    withTie.forEach(({ reading }) => {
+      // 「一樣多」的句子後面必須接兩個以上的元素名
+      expect(reading.domains[1].plainReading).toMatch(/四柱裡[木火土金水](和|、)[木火土金水].*一樣多/);
+    });
+  });
+
+  it('四柱最弱並列時，說「都偏少」而不是挑一個「最少」', () => {
+    SAMPLES.forEach((date) => {
+      const career = readingFor(date).domains[1].plainReading;
+      if (!career.includes('都偏少')) return;
+      expect(career).not.toMatch(/[木火土金水]最少/);
+    });
+  });
+
+  it('沒有並列時仍然講單一元素，不會無故改口', () => {
+    const singular = SAMPLES.map((date) => readingFor(date).domains[1].plainReading)
+      .filter((text) => !text.includes('一樣多') && !text.includes('都偏少'));
+    expect(singular.length).toBeGreaterThan(0);
+    singular.forEach((text) => expect(text).toMatch(/四柱裡[木火土金水]最多、[木火土金水]最少/));
+  });
+
+  it('三個以上並列時用頓號，不會寫成「木和土和水」', () => {
+    SAMPLES.forEach((date) => {
+      const text = readingFor(date).domains.map((domain) => domain.plainReading).join('');
+      expect(text, `${date} 中文列舉應該用頓號`).not.toMatch(/[木火土金水]和[木火土金水]和[木火土金水]/);
+    });
+  });
+});

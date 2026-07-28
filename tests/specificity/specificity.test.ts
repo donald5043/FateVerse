@@ -15,7 +15,7 @@ import { collectStaticCorpus, scanStaticCorpus, summariseByCorpus } from './stat
  * 又不會被既有結構句卡住。改善後請同步調低門檻。
  */
 const FAIL_ON_OVER_GENERIC = true;
-const OVER_GENERIC_BUDGET = 40;
+const OVER_GENERIC_BUDGET = 36;
 
 /** 靜態語料（塔羅、籤詩解讀、今日指引等）的 voice 規則違規上限。 */
 const STATIC_VIOLATION_BUDGET = 0;

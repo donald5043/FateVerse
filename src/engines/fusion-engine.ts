@@ -15,7 +15,7 @@ import type {
   TimelinePhase,
 } from '../types/fate';
 import { analyzeDayMaster } from './bazi-analysis-engine';
-import { branchToElement, stemToElement } from './five-elements-engine';
+import { branchToElement, describeElementSpread, stemToElement } from './five-elements-engine';
 import { birthCardElements, getBirthCards } from './tarot-engine';
 import { ELEMENT_LABELS } from '../utils/constants';
 
@@ -375,6 +375,23 @@ function buildDomains(input: FateReportInput, leading: ElementName, votes: Fusio
   const leadDiffersFromPillars = strongestLabel !== leadingLabel;
   // 系統數會依有沒有紫微、姓名、手相而變，不能寫死。
   const systemCount = votes.reduce((total, vote) => total + vote.votes, 0);
+
+  // 最強／最弱不一定拉得開。差距在 3 分以內時只挑一個講，是在主張資料不支持的區別。
+  const spread = describeElementSpread(input.fiveElements.percentages);
+  // 中文列舉：兩個用「和」，三個以上用頓號，最後一個才用「和」。
+  const labelsOf = (elements: ElementName[]): string => {
+    const labels = elements.map((element) => ELEMENT_LABELS[element]);
+    if (labels.length <= 2) return labels.join('和');
+    return `${labels.slice(0, -1).join('、')}和${labels.at(-1)}`;
+  };
+  // 四柱百分比量化在 12.5 的倍數上，全距最小 12.5，所以 spread.flat 在這裡
+  // 不可能成立，不留那個分支的文案。並列則常見得多（最高 31%、最低 49%）。
+  const pillarShape = spread.topTied
+    ? `四柱裡${labelsOf(spread.top)}一樣多`
+    : `四柱裡${strongestLabel}最多`;
+  const weakShape = spread.bottomTied
+    ? `${labelsOf(spread.bottom)}都偏少`
+    : `${weakestLabel}最少`;
   const zodiacTrait = input.zodiac.positiveTraits[0];
   const zodiacBlind = input.zodiac.blindSpots[0];
   const starTrait = input.astrology.strengths[0];
@@ -401,7 +418,7 @@ function buildDomains(input: FateReportInput, leading: ElementName, votes: Fusio
   const career: FusionDomain = {
     id: 'career',
     title: '工作：幾套系統一起給的方向感',
-    plainReading: `講白話：四柱裡${strongestLabel}最多、${weakestLabel}最少，你自然會用${strongestLabel}的方式做事，${weakestLabel}那類的活要嘛刻意練、要嘛找人補位${leadDiffersFromPillars ? `——不過綜合 ${systemCount} 套系統之後，票數最多的其實是${leadingLabel}，「做起來順手的方式」和「別人看到的你」不是同一個` : ''}。${viewFrom}，你${plain.work}。生肖的「${zodiacTrait}」和星座的「${starTrait}」是你在職場上最容易被看見的招牌，大方拿出來用。`,
+    plainReading: `講白話：${pillarShape}、${weakShape}，你自然會用${labelsOf(spread.top)}的方式做事，${labelsOf(spread.bottom)}那類的活要嘛刻意練、要嘛找人補位${leadDiffersFromPillars ? `——不過綜合 ${systemCount} 套系統之後，票數最多的其實是${leadingLabel}，「做起來順手的方式」和「別人看到的你」不是同一個` : ''}。${viewFrom}，你${plain.work}。生肖的「${zodiacTrait}」和星座的「${starTrait}」是你在職場上最容易被看見的招牌，大方拿出來用。`,
     evidence: [
       { system: '四柱五行', point: `${strongestLabel}相對突出、${weakestLabel}較少` },
       { system: '生肖', point: `職場招牌：${zodiacTrait}` },
@@ -427,7 +444,7 @@ function buildDomains(input: FateReportInput, leading: ElementName, votes: Fusio
   const wellbeing: FusionDomain = {
     id: 'wellbeing',
     title: '身心節奏：怎麼休息最有效',
-    plainReading: `講白話：${viewFrom}，你${plain.rest}。四柱${weakestLabel}偏少，傳統上會說「${weakestLabel}類的節奏不是你的預設值」——換成白話就是：與其模仿別人的作息，不如觀察自己什麼時候最有電、什麼事最耗電，照自己的電量表過日子。`,
+    plainReading: `講白話：${viewFrom}，你${plain.rest}。四柱${labelsOf(spread.bottom)}偏少，傳統上會說「這類的節奏不是你的預設值」——與其模仿別人的作息，不如觀察自己什麼時候最有電、什麼事最耗電，照自己的電量表過日子。`,
     evidence: [
       { system: '五行共識', point: plain.rest },
       { system: '四柱五行', point: `${weakestLabel}比例較少，休息方式可多實驗` },
