@@ -124,7 +124,7 @@ describe('回顧摘要', () => {
     });
     expect(spread).toHaveLength(MIN_NOTES_FOR_SUMMARY);
     const summary = summarizeTimeline(years, spread);
-    expect(summary.lines.join('')).toContain('沒有集中');
+    expect(summary.lines.join('')).toContain('沒有偏向哪一類');
   });
 
   it('永遠附上「這不是因果」的提醒', () => {

@@ -18,6 +18,7 @@ import { analyzeDayMaster } from './bazi-analysis-engine';
 import { branchToElement, describeElementSpread, stemToElement } from './five-elements-engine';
 import { birthCardElements, getBirthCards } from './tarot-engine';
 import { ELEMENT_LABELS } from '../utils/constants';
+import { joinChinese } from '../utils/join-chinese';
 
 const ELEMENT_ORDER: ElementName[] = ['wood', 'fire', 'earth', 'metal', 'water'];
 
@@ -378,12 +379,7 @@ function buildDomains(input: FateReportInput, leading: ElementName, votes: Fusio
 
   // 最強／最弱不一定拉得開。差距在 3 分以內時只挑一個講，是在主張資料不支持的區別。
   const spread = describeElementSpread(input.fiveElements.percentages);
-  // 中文列舉：兩個用「和」，三個以上用頓號，最後一個才用「和」。
-  const labelsOf = (elements: ElementName[]): string => {
-    const labels = elements.map((element) => ELEMENT_LABELS[element]);
-    if (labels.length <= 2) return labels.join('和');
-    return `${labels.slice(0, -1).join('、')}和${labels.at(-1)}`;
-  };
+  const labelsOf = (elements: ElementName[]): string => joinChinese(elements.map((element) => ELEMENT_LABELS[element]));
   // 四柱百分比量化在 12.5 的倍數上，全距最小 12.5，所以 spread.flat 在這裡
   // 不可能成立，不留那個分支的文案。並列則常見得多（最高 31%、最低 49%）。
   const pillarShape = spread.topTied

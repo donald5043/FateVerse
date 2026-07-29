@@ -59,6 +59,24 @@ describe('跨盤相位', () => {
     expect(aspects[0]).toMatchObject({ planetA: '太陽', planetB: '太陽', type: '合相' });
   });
 
+  it('行星在關係裡代表的那幾個詞不含頓號，接進句型才不會斷錯句', () => {
+    // 「小明的喜歡什麼、怎麼表達喜歡和小華的行動節奏…」讀起來會斷在錯的地方。
+    const different = computeCrossAspects([planet('金星', 0)], [planet('火星', 90)], '小明', '小華');
+    expect(different[0].reading.split('。')[0]).not.toContain('、');
+  });
+
+  it('同一顆行星換句型，不會把同一個詞講兩遍', () => {
+    // 通用句會寫成「A 的行動節奏和 B 的行動節奏會互相卡住」，讀起來像沒寫完。
+    const same = computeCrossAspects([planet('火星', 0)], [planet('火星', 90)], '小明', '小華');
+    expect(same[0].reading).not.toMatch(/行動節奏與生氣的方式.*行動節奏與生氣的方式/);
+    expect(same[0].reading).toContain('你們');
+
+    // 不同行星仍然要指名是誰的哪一塊，否則就分不出方向。
+    const different = computeCrossAspects([planet('火星', 0)], [planet('月亮', 90)], '小明', '小華');
+    expect(different[0].reading).toContain('小明');
+    expect(different[0].reading).toContain('小華');
+  });
+
   it('只比對個人行星，外行星不列入', () => {
     const aspects = computeCrossAspects(
       [planet('冥王星', 0), planet('海王星', 0), planet('太陽', 0)],
@@ -102,7 +120,9 @@ describe('跨盤相位', () => {
 
     const reading = generateSynastry(inputA, inputB, '小明', '小華');
     expect(reading.aspects.length).toBeGreaterThan(0);
-    expect(reading.aspectNote).toContain('容許度');
+    // 這段刻意不用「容許度」這個術語了，但資訊要在：只比對個人行星、依角度差排序。
+    expect(reading.aspectNote).toContain('太陽、月亮、水星、金星、火星');
+    expect(reading.aspectNote).toContain('角度差');
     reading.aspects.forEach((aspect) => {
       expect(aspect.reading.length).toBeGreaterThan(10);
       expect(aspect.orb).toBeGreaterThanOrEqual(0);
@@ -124,7 +144,15 @@ describe('跨盤相位', () => {
     const text = JSON.stringify(reading);
     // 「不是給你們一個合不合的分數」這種否定句是要留的，所以查的是實際的計分痕跡。
     expect(text).not.toMatch(/\d+\s*分(?!鐘)/); // 例如「85 分」
-    expect(text).not.toMatch(/\d+\s*%/);
+    // 百分比本身不是禁忌——禁的是「幫這一對打分數」。實測出現率講的是
+    // 「隨機兩個人有多少對也這樣」，那是拿來降溫的，不是拿來評價他們的。
+    // 所以規則是：出現 % 的地方，必須是在講配對的出現頻率。
+    const percentSentences = JSON.stringify(reading)
+      .split(/[。，\\n]/)
+      .filter((part) => /\d+\s*%/.test(part));
+    percentSentences.forEach((part) => {
+      expect(part, `百分比只能用來講出現率：${part}`).toMatch(/配對|對出現/);
+    });
     ['評分', '滿分', '星等', '契合指數'].forEach((banned) => {
       expect(text, `不應出現「${banned}」`).not.toContain(banned);
     });

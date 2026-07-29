@@ -1,7 +1,8 @@
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { analyze, OVER_GENERIC_THRESHOLD, STATIC_PLACEHOLDER_MAX } from './analyze';
-import { buildSyntheticCharts } from './synthetic-charts';
+import { buildSyntheticCharts, CHART_COUNT } from './synthetic-charts';
+import { partnerIndex } from './pairing';
 import { normalizeSentence } from './extract-sentences';
 import { writeBaseline } from './write-baseline';
 import { collectStaticCorpus, scanStaticCorpus, summariseByCorpus } from './static-corpus';
@@ -29,7 +30,27 @@ const FAIL_ON_OVER_GENERIC = true;
  * 這是可讀性與出現率之間的真實張力：要讓術語看得懂，就得重複定義。
  * 調高預算是有意識的取捨，不是為了讓測試變綠。
  */
-const OVER_GENERIC_BUDGET = 37;
+/*
+ * 2026-07-29 把預算從 37 調高到 52，理由要寫清楚：
+ *
+ * 這一輪把合盤與命運回顧日誌納入量測——它們從來沒被量過。納進來之後，
+ * 報告本身的 37 條一條沒變，多出來的全部來自這兩頁。
+ *
+ * 多出來的項目有一個共同點：它們是「分支頻率」，不是寫得爛。實測（npm run
+ * measure:pairs）顯示個人行星兩兩比對有 25 組，所以四種相位型態幾乎每一對
+ * 都會湊齊（順 93%、卡 76%）；九成的配對至少有一項五行落差；一半的配對生肖
+ * 沒有特殊刑合。文字再怎麼改寫也降不下來，除非乾脆不呈現那些段落。
+ *
+ * 所以處理方式不是藏起來，而是把出現率直接寫給使用者看：每個結論旁邊都附上
+ * 「隨機兩個人大約每 N 對出現 1 對」，常見的那些會明說「這是常態，不是你們的
+ * 特色」，亮點區也只收實測少見的項目。回顧日誌同理，頁面直接講明流年十神
+ * 十年一輪、每個人都會輪過五種。
+ *
+ * 一句對所有人都成立、而且明白告訴使用者它對所有人都成立的話，不是巴納姆句。
+ * 調高預算是為了把這兩頁納入監控（以後它們再退步就會被擋下來），
+ * 不是為了讓測試變綠。
+ */
+const OVER_GENERIC_BUDGET = 52;
 
 /** 靜態語料（塔羅、籤詩解讀、今日指引等）的 voice 規則違規上限。 */
 const STATIC_VIOLATION_BUDGET = 0;
@@ -130,6 +151,25 @@ describe('具體性量測', () => {
       violations.length,
       `${violations.length} 條靜態文案違反 voice.md（塔羅牌義、籤詩解讀、今日指引等）`,
     ).toBeLessThanOrEqual(STATIC_VIOLATION_BUDGET);
+  });
+
+  it('合盤配對是一個排列，而且不會配到自己', () => {
+    // 第一版用「第 i 組配第 i+251 組」，而合成命盤的出生年份照索引遞增，
+    // 等於年份差固定 50 年、年支永遠只差兩格——生肖六沖在 500 組配對裡
+    // 一次都沒出現，量出來的 0% 是配對方式造成的假象。
+    const count = CHART_COUNT;
+    const partners = Array.from({ length: count }, (_, index) => partnerIndex(index, count));
+    expect(new Set(partners).size, '配對不是排列，有人被配到兩次').toBe(count);
+    partners.forEach((partner, index) => expect(partner, `第 ${index} 組配到自己`).not.toBe(index));
+
+    // 年支差要鋪滿十二種，否則某些生肖關係永遠量不到。
+    const charts = buildSyntheticCharts();
+    const branchGaps = new Set(partners.map((partner, index) => {
+      const yearA = Number(charts[index].profile.birthDate.slice(0, 4));
+      const yearB = Number(charts[partner].profile.birthDate.slice(0, 4));
+      return ((yearB - yearA) % 12 + 12) % 12;
+    }));
+    expect(branchGaps.size, `年支差只涵蓋 ${branchGaps.size} 種，生肖關係會量不準`).toBe(12);
   });
 
   it('模板正規化把插值變數歸一，讓同一模板可被合併', () => {

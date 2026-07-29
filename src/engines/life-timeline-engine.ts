@@ -56,11 +56,20 @@ export const TONE_LABELS: Record<NonNullable<TimelineNote['tone']>, string> = {
 
 const TEN_GOD_FRAMING: Record<TenGodCategory, string> = {
   比劫: '傳統上把這種年份看成「同輩的年」——人際、合作與競爭的比重會被放大。',
-  印星: '傳統上把這種年份看成「學習與依靠的年」——進修、長輩、後盾這類題目容易浮上來。',
-  食傷: '傳統上把這種年份看成「表達與產出的年」——想做的事、想講的話比較容易往外跑。',
+  印星: '傳統上把這種年份看成「學習與依靠的年」——進修、長輩、後盾這類題目會浮上來。',
+  食傷: '傳統上把這種年份看成「表達與產出的年」——想做的事、想講的話比較會往外跑。',
   財星: '傳統上把這種年份看成「務實的年」——錢、資源與具體成果會被放到台面上。',
   官殺: '傳統上把這種年份看成「責任與壓力的年」——規則、職位、被要求的事情變多。',
 };
+
+/**
+ * 這一頁最重要的一句話，放在年份表前面。
+ *
+ * 流年天干十年一輪，所以不管是誰，回顧夠長的區間都會把五種十神輪過好幾遍。
+ * 也就是說「今年是官殺年」對每個人都會發生，單獨看某一年不代表任何事。
+ * 不講清楚這件事，逐年列出來的框就會被當成逐年的預言。
+ */
+export const TIMELINE_BASELINE_NOTE = '流年天干十年一輪，所以每個人回顧下來，五種十神都會輪過好幾遍。單獨一年是哪一種，本身說明不了什麼。真正值得看的是分布：你標成難的那幾年，有沒有偏向其中某一種。';
 
 /** 用當年年中取年柱，避開立春前後的歸年爭議。 */
 function yearPillarOf(year: number): string {
@@ -82,17 +91,18 @@ function buildFraming(
   yearlyPalace: string | undefined,
   mutagens: ZiweiMutagen[],
 ): string {
-  const parts = [`流年天干屬${ELEMENT_LABELS[stemElement]}，對你的日主而言是${tenGod}。${TEN_GOD_FRAMING[tenGod]}`];
-  if (luckCycle) {
-    parts.push(`八字這邊，那時候你走的是${luckCycle.ganZhi}大運（${luckCycle.startYear}–${luckCycle.endYear}）。`);
-  }
+  // 大運與紫微併成一句。分開寫會讓整段變成四句，違反 voice.md R3（段落至多三句），
+  // 而且逐年重複四句，整頁讀起來會非常累。
+  const context: string[] = [];
+  if (luckCycle) context.push(`那時候你走的是${luckCycle.ganZhi}大運（${luckCycle.startYear}–${luckCycle.endYear}）`);
   if (yearlyPalace) {
     const mutagenText = mutagens.length
-      ? `，四化落在${mutagens.map((item) => `${item.star}化${item.type}`).join('、')}`
+      ? `、四化落在${mutagens.map((item) => `${item.star}化${item.type}`).join('、')}`
       : '';
-    parts.push(`紫微那邊，流年命宮在${yearlyPalace}${mutagenText}。`);
+    context.push(`紫微的流年命宮在${yearlyPalace}${mutagenText}`);
   }
-  return parts.join('');
+  return `流年天干屬${ELEMENT_LABELS[stemElement]}，對你的日主而言是${tenGod}。${TEN_GOD_FRAMING[tenGod]}`
+    + (context.length ? `${context.join('，')}。` : '');
 }
 
 /**
@@ -181,6 +191,12 @@ export function summarizeTimeline(years: TimelineYear[], notes: TimelineNote[]):
     tally.set(note.tone, bucket);
   });
 
+  // 對照組：這張盤在回顧區間裡，每一種十神本來就佔幾年。
+  // 沒有這個底數，「五年裡有三年是官殺」聽起來很像回事，但如果官殺本來就佔了
+  // 全部年份的六成，那三年只是照比例出現而已，什麼都沒說明。
+  const baseline = new Map<TenGodCategory, number>();
+  years.forEach((entry) => baseline.set(entry.tenGod, (baseline.get(entry.tenGod) ?? 0) + 1));
+
   const lines: string[] = [];
   (['hard', 'good'] as const).forEach((tone) => {
     const bucket = tally.get(tone);
@@ -189,11 +205,20 @@ export function summarizeTimeline(years: TimelineYear[], notes: TimelineNote[]):
     const [topCategory, topCount] = [...bucket.entries()].sort((left, right) => right[1] - left[1])[0];
     // 沒有集中就不要硬講出一個規律。
     if (topCount < 2 || topCount * 2 <= total) return;
-    lines.push(`你標成「${TONE_LABELS[tone]}」的 ${total} 年裡，有 ${topCount} 年的流年十神是${topCategory}。`);
+
+    const baseCount = baseline.get(topCategory) ?? 0;
+    const baseShare = years.length ? baseCount / years.length : 0;
+    const markedShare = topCount / total;
+    // 集中度沒有超過底數就別當成發現。
+    if (markedShare <= baseShare) return;
+    lines.push(
+      `你標成「${TONE_LABELS[tone]}」的 ${total} 年裡，有 ${topCount} 年的流年十神是${topCategory}，佔了 ${Math.round(markedShare * 100)}%。`
+      + `而${topCategory}在你這 ${years.length} 年裡本來只佔 ${Math.round(baseShare * 100)}%，所以這幾年確實偏向同一類。`,
+    );
   });
 
   if (lines.length === 0) {
-    lines.push('你標記的年份分散在不同的流年十神上，沒有集中到某一類。這也是一種結果——那幾年的差別，可能來自命盤以外的地方。');
+    lines.push('你標記的年份分散在不同的流年十神上，沒有偏向哪一類。這也是一種結果——那幾年的差別來自命盤以外的地方。');
   }
   lines.push('這只是把兩份紀錄疊在一起看到的巧合，不是因果。日子過得順或難，原因在當年的處境、選擇與身邊的人，不在命盤。');
   return { noted: withTone.length, hasEnough: true, lines };

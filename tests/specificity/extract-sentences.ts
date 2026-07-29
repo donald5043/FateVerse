@@ -1,6 +1,9 @@
 import { buildReportFromProfile } from '../../src/engines/build-report';
 import { buildSystemMatrix, generateFusionReading, generateSystemConclusions, generateTimelineReading } from '../../src/engines/fusion-engine';
 import { buildUnifiedElementProfile } from '../../src/engines/integration-engine';
+import { buildLifeTimeline, summarizeTimeline } from '../../src/engines/life-timeline-engine';
+import { generateSynastry } from '../../src/engines/synastry-engine';
+import { hashString, mulberry32 } from '../../src/utils/seeded-random';
 import type { ProfileInput } from '../../src/types/fate';
 
 /**
@@ -97,6 +100,24 @@ const FRAMING_FIELDS = new Set([
   'fusion.timing.evidence[].point',
   'unified.contributions[].detail', // 各系統貢獻的資料標籤
   'unified.caveat', // 免責
+  'synastry.intro', // 說明這份合盤怎麼算、不做什麼
+  'synastry.aspectNote', // 相位那一段為何有／為何空的說明
+  'synastry.cautions[]', // 免責
+  // 實測出現率。它講的是「隨機兩個人裡有多少對也這樣」，本來就對所有人成立——
+  // 那正是它存在的理由：拿來降溫，不是拿來描述這一對。
+  'synastry.sections[].occurrence',
+  'synastry.highlights[].occurrence',
+  /*
+   * 逐年的傳統框架。這個欄位有兩種句子，都不是在講這個人：
+   * 前半是資料標籤（「流年天干屬土，對你的日主而言是官殺」），
+   * 後半的主詞是那套說法本身（「傳統上把這種年份看成…」）。
+   *
+   * 而且它必然對所有人高頻出現：流年天干十年一輪，回顧夠長的區間，
+   * 五種十神每個人都會輪過好幾遍。這不是文案寫得泛，是曆法決定的。
+   * 頁面上直接把這件事講給使用者聽（TIMELINE_BASELINE_NOTE），
+   * 而不是假裝某一年的十神是針對他的。
+   */
+  'timeline.years[].framing',
 ]);
 
 /**
@@ -120,6 +141,9 @@ const FRAMING_SENTENCE_MARKERS = [
   '互相取代',   // 涵蓋「不互相取代」與「不能互相取代」
   '這次的資料沒有',
   '本次沒有',
+  '不是因果',     // 回顧日誌：命盤沒有讓任何事發生
+  '不在命盤',     // 同上，順或難的原因在處境不在命盤
+  '命盤以外',     // 同上
 ];
 
 function kindOf(field: string, text?: string): TextKind {
@@ -149,10 +173,20 @@ const INTEGRATION = 'src/engines/integration-engine.ts';
  * 涵蓋 ReportPage 實際渲染的全部文字來源：綜合報告 + 融合解讀 + 整合剖面
  * + 各系統結論 + 時間軸三段，不含純數值欄位與 UI 靜態說明。
  */
-export function extractReportSentences(profile: ProfileInput): ExtractionResult {
+export type BuiltReport = ReturnType<typeof buildReportFromProfile>;
+
+/**
+ * 建報告是整個量測最貴的一步。合盤需要兩份、回顧日誌需要一份，
+ * 全部各自重建的話同一個人會被建三次。呼叫端傳入已建好的結果即可共用。
+ */
+export function buildOnce(profile: ProfileInput): BuiltReport {
+  return buildReportFromProfile(profile);
+}
+
+export function extractReportSentences(profile: ProfileInput, prebuilt?: BuiltReport): ExtractionResult {
   const out: ExtractionResult = { sentences: [], fields: [] };
   const push = makePush(out);
-  const { reportInput, report } = buildReportFromProfile(profile);
+  const { reportInput, report } = prebuilt ?? buildReportFromProfile(profile);
 
   // ── 綜合報告 ──────────────────────────────────────────────
   push(FALLBACK, 'summary', report.summary);
@@ -215,5 +249,67 @@ export function extractReportSentences(profile: ProfileInput): ExtractionResult 
   // 系統矩陣只有數值與標籤，無解讀句子，僅確認其可被呼叫。
   buildSystemMatrix(reportInput);
 
+  return out;
+}
+
+const SYNASTRY = 'src/engines/synastry-engine.ts';
+const LIFE_TIMELINE = 'src/engines/life-timeline-engine.ts';
+
+/**
+ * 合盤的名字一律代換成「甲方／乙方」再量測。
+ *
+ * 名字是使用者自己填的，不帶任何命盤資訊；若照實代入，每一組配對都會產生
+ * 獨一無二的模板，出現率全部變成 1/500，量測就失去意義。固定成兩個會被
+ * normalizeSentence 收斂成 {天干}方 的字串，才看得出句框本身有多泛用。
+ */
+const MEASURE_NAME_A = '甲方';
+const MEASURE_NAME_B = '乙方';
+
+/** 抽出一組合盤的全部可見文字。 */
+export function extractSynastrySentences(builtA: BuiltReport, builtB: BuiltReport): ExtractionResult {
+  const out: ExtractionResult = { sentences: [], fields: [] };
+  const push = makePush(out);
+  const reading = generateSynastry(builtA.reportInput, builtB.reportInput, MEASURE_NAME_A, MEASURE_NAME_B);
+
+  push(SYNASTRY, 'synastry.intro', reading.intro);
+  reading.sections.forEach((section) => {
+    push(SYNASTRY, `synastry.sections.${section.id}`, section.reading);
+    push(SYNASTRY, 'synastry.sections[].occurrence', section.occurrence);
+  });
+  push(SYNASTRY, 'synastry.aspectNote', reading.aspectNote);
+  reading.aspects.forEach((aspect) => push(SYNASTRY, 'synastry.aspects[].reading', aspect.reading));
+  reading.highlights.forEach((item) => {
+    push(SYNASTRY, 'synastry.highlights[].text', item.text);
+    push(SYNASTRY, 'synastry.highlights[].occurrence', item.occurrence);
+  });
+  reading.cautions.forEach((item) => push(SYNASTRY, 'synastry.cautions[]', item));
+  return out;
+}
+
+/**
+ * 抽出回顧日誌的逐年框架句。
+ *
+ * @param years 回顧幾年。句框的形狀只由十神、大運有無與流年宮位決定，
+ *              不隨年數增加而變化，因此量測時取較短的區間即可——每一年都要
+ *              重排一次紫微流年，全部 40 年跑 500 組要五分鐘。
+ */
+export function extractTimelineSentences(profile: ProfileInput, prebuilt?: BuiltReport, years = 8): ExtractionResult {
+  const out: ExtractionResult = { sentences: [], fields: [] };
+  const push = makePush(out);
+  const { reportInput } = prebuilt ?? buildReportFromProfile(profile);
+  const entries = buildLifeTimeline(reportInput.bazi, profile, new Date('2026-01-01T00:00:00Z'), years);
+  entries.forEach((entry) => push(LIFE_TIMELINE, 'timeline.years[].framing', entry.framing));
+
+  // 摘要句需要使用者自評才產生得出來。用種子亂數而不是固定輪替：
+  // 固定輪替永遠不會集中，「有集中」那個分支就永遠走不到，
+  // 量測出來的 100% 會是量測方式造成的，不是文案真的每份都出現。
+  const random = mulberry32(hashString(`${profile.birthDate}${profile.birthTime}`));
+  const TONES = ['good', 'mixed', 'hard'] as const;
+  const notes = entries.map((entry) => ({
+    year: entry.year,
+    text: '（量測用）',
+    tone: TONES[Math.floor(random() * TONES.length)],
+  }));
+  summarizeTimeline(entries, notes).lines.forEach((line) => push(LIFE_TIMELINE, 'timeline.summary.lines[]', line));
   return out;
 }

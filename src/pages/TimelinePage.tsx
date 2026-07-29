@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import BackToReportLink from '../components/common/BackToReportLink';
 import Disclaimer from '../components/common/Disclaimer';
 import {
-  buildLifeTimeline, summarizeTimeline, TONE_LABELS,
+  buildLifeTimeline, summarizeTimeline, TIMELINE_BASELINE_NOTE, TONE_LABELS,
   type TimelineNote, type TimelineYear,
 } from '../engines/life-timeline-engine';
 import { useFateStore } from '../store/useFateStore';
@@ -168,6 +168,11 @@ export default function TimelinePage() {
       )}
 
       <div className="mx-auto mt-8 max-w-3xl space-y-4">
+        {years.length > 0 && (
+          <p className="rounded-2xl border border-gold/[0.16] bg-white/[0.03] p-5 text-sm leading-7 text-mist">
+            {TIMELINE_BASELINE_NOTE}
+          </p>
+        )}
         {years.length === 0 && <p className="muted text-center">還沒有可以回顧的完整年份。</p>}
         {years.map((entry) => (
           <YearCard

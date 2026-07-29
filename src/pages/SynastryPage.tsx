@@ -148,6 +148,9 @@ export default function SynastryPage() {
                   <span className="rounded-full border border-gold/25 bg-gold/[0.08] px-3 py-1 text-xs text-gold">{section.verdict}</span>
                 </div>
                 <p className="mt-3 leading-7 text-mist">{section.reading}</p>
+                {section.occurrence && (
+                  <p className="mt-2 text-xs leading-6 text-mist/60">{section.occurrence}</p>
+                )}
               </article>
             ))}
           </div>
@@ -172,7 +175,15 @@ export default function SynastryPage() {
             )}
           </article>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <section className="mt-8">
+            <h3 className="font-serif text-lg font-bold text-cream">你們這組比較少見的地方</h3>
+            <p className="mt-2 text-xs leading-6 text-mist/70">
+              我們把五百組隨機配對算過一遍，只有出現率偏低的結論會被放到這裡。
+              上面每一段都還是成立的，只是那些結果大部分的人配起來也會有。
+            </p>
+          </section>
+
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
             {reading.highlights.map((highlight) => (
               <article className={`rounded-2xl border p-5 ${highlight.kind === 'harmony' ? 'border-emerald-200/20 bg-emerald-300/[0.05]' : 'border-vermilion/25 bg-vermilion/[0.05]'}`} key={highlight.title}>
                 <div className={`flex items-center gap-2 text-xs font-bold tracking-wider ${highlight.kind === 'harmony' ? 'text-emerald-200' : 'text-[#e8927f]'}`}>
@@ -180,6 +191,7 @@ export default function SynastryPage() {
                 </div>
                 <h4 className="mt-2 font-serif text-base font-bold text-cream">{highlight.title}</h4>
                 <p className="mt-2 text-sm leading-6 text-mist">{highlight.text}</p>
+                {highlight.occurrence && <p className="mt-2 text-xs leading-5 text-mist/60">{highlight.occurrence}</p>}
               </article>
             ))}
           </div>

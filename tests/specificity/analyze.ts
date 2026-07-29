@@ -1,7 +1,11 @@
 import { buildSyntheticCharts, CHART_COUNT, CHART_SEED, type SyntheticChart } from './synthetic-charts';
-import { extractReportSentences, splitSentences, type ExtractionResult, type TextKind } from './extract-sentences';
+import {
+  buildOnce, extractReportSentences, extractSynastrySentences, extractTimelineSentences,
+  splitSentences, type BuiltReport, type ExtractionResult, type TextKind,
+} from './extract-sentences';
 import { checkFieldRules, countHedges, HEDGE_LIMIT, type VoiceRuleId } from './voice-rules';
 import { checkPlainness, type PlainnessRuleId } from './plainness';
+import { partnerIndex } from './pairing';
 
 /** 判定門檻：出現率 > 30% 為過度泛用，15–30% 需觀察。 */
 export const OVER_GENERIC_THRESHOLD = 0.3;
@@ -48,6 +52,13 @@ export interface AnalysisResult {
   /** 有口語度問題的解讀類模板數。 */
   plainnessTemplates: number;
   elapsedMs: number;
+}
+
+function mergeExtractions(...parts: ExtractionResult[]): ExtractionResult {
+  return {
+    sentences: parts.flatMap((part) => part.sentences),
+    fields: parts.flatMap((part) => part.fields),
+  };
 }
 
 /** 佔位符低於此比例者視為靜態文案，是改寫的優先目標。 */
@@ -101,10 +112,26 @@ export function analyze(charts: SyntheticChart[] = buildSyntheticCharts()): Anal
   // R3 以「欄位模板」為單位記錄，避免同一段落在 500 份報告中重複累加。
   const longParagraphTemplates = new Map<string, { source: string; field: string; sentenceCount: number; example: string }>();
 
+  // 每個人的報告只建一次：自己用一次，當別人的合盤對象時再用一次。
+  const builtCache = new Map<number, BuiltReport>();
+  const buildFor = (chart: SyntheticChart): BuiltReport => {
+    const hit = builtCache.get(chart.index);
+    if (hit) return hit;
+    const built = buildOnce(chart.profile);
+    builtCache.set(chart.index, built);
+    return built;
+  };
+
   for (const chart of charts) {
     let extracted: ExtractionResult;
     try {
-      extracted = extractReportSentences(chart.profile);
+      const partner = charts[partnerIndex(chart.index, charts.length)];
+      const built = buildFor(chart);
+      extracted = mergeExtractions(
+        extractReportSentences(chart.profile, built),
+        extractSynastrySentences(built, buildFor(partner)),
+        extractTimelineSentences(chart.profile, built),
+      );
     } catch {
       // 個別命盤若因曆法邊界計算失敗，跳過但不中斷整體量測。
       continue;
