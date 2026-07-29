@@ -55,6 +55,57 @@ function mapHoroscopeLayer(item: {
   };
 }
 
+
+/**
+ * 已排好的命盤快取。
+ *
+ * `astro.bySolar` 要 24ms（實測），而它只和出生資料與流派設定有關，
+ * 跟「要看哪一天的運限」無關。回顧日誌為了 36 個年份呼叫 36 次，
+ * 等於重排了 36 次同一張盤；首頁的今日綜合每次重繪也重排一次。
+ *
+ * 這裡只快取盤本身，不快取 calculateZiwei 的回傳值——回傳值會流進 React state
+ * 並被渲染，共用同一個物件參考的風險不值得為了那幾毫秒去冒。
+ */
+type ZiweiChartHandle = ReturnType<typeof astro.bySolar>;
+
+const CHART_CACHE_LIMIT = 8;
+const chartCache = new Map<string, ZiweiChartHandle>();
+
+function chartCacheKey(
+  input: Pick<ProfileInput, 'birthDate' | 'birthTime' | 'gender'>,
+  settings: ZiweiCalculationSettings,
+): string {
+  return [
+    input.birthDate, input.birthTime, input.gender,
+    settings.algorithm, settings.yearDivide, settings.horoscopeDivide,
+    settings.ageDivide, settings.dayDivide,
+  ].join('|');
+}
+
+function buildChart(
+  input: Pick<ProfileInput, 'birthDate' | 'birthTime' | 'gender'>,
+  settings: ZiweiCalculationSettings,
+): ZiweiChartHandle {
+  const key = chartCacheKey(input, settings);
+  const cached = chartCache.get(key);
+  if (cached) return cached;
+
+  const chart = astro.bySolar(input.birthDate, birthHourToZiweiIndex(input.birthTime), input.gender as 'male' | 'female', true, 'zh-TW');
+
+  // 先進先出。一次通常只看一個人，合盤兩個，8 筆綽綽有餘。
+  if (chartCache.size >= CHART_CACHE_LIMIT) {
+    const oldest = chartCache.keys().next().value;
+    if (oldest !== undefined) chartCache.delete(oldest);
+  }
+  chartCache.set(key, chart);
+  return chart;
+}
+
+/** 僅供測試：清掉快取，讓計時與命中測試從乾淨狀態開始。 */
+export function clearZiweiChartCache(): void {
+  chartCache.clear();
+}
+
 export function calculateZiwei(
   input: Pick<ProfileInput, 'birthDate' | 'birthTime' | 'gender'>,
   targetDate: string | Date = new Date(),
@@ -62,8 +113,11 @@ export function calculateZiwei(
 ): ZiweiResult | undefined {
   if (input.gender === 'other') return undefined;
   try {
+    // config 是 iztro 的全域狀態，而 horoscopeDivide／ageDivide 會影響運限計算。
+    // 快取命中時如果沒重設，會沿用上一次別人設的流派——所以每次都要設，
+    // 不能只在建盤時設。
     astro.config(settings);
-    const chart = astro.bySolar(input.birthDate, birthHourToZiweiIndex(input.birthTime), input.gender, true, 'zh-TW');
+    const chart = buildChart(input, settings);
     const horoscope = chart.horoscope(targetDate);
     const natalPalaceNames = chart.palaces.map((palace) => palace.name);
     const surrounded = chart.surroundedPalaces('命宮');
