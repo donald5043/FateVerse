@@ -1,14 +1,14 @@
 export const TEN_GOD_LIBRARY: Record<string, { theme: string; reflection: string }> = {
-  比肩: { theme: '自主、同儕與自我定位', reflection: '可觀察自己如何在合作中保留主體性，也留意競爭是否遮住共同目標。' },
-  劫財: { theme: '行動、競合與資源分配', reflection: '可觀察臨場反應與號召力，也留意衝動承諾或資源邊界。' },
-  食神: { theme: '表達、滋養與穩定輸出', reflection: '可把經驗轉成作品或照顧力，同時避免只停留在舒適節奏。' },
-  傷官: { theme: '突破、批判與個人表達', reflection: '適合改善不合理之處；表達前可先區分問題、情緒與可行方案。' },
-  偏財: { theme: '機會、人脈與流動資源', reflection: '可運用對環境的敏銳度，也要替時間、金錢與承諾設定上限。' },
-  正財: { theme: '累積、責任與可衡量成果', reflection: '適合建立穩定流程；也可檢查安全感是否過度綁定單一標準。' },
-  七殺: { theme: '壓力、決斷與承擔挑戰', reflection: '面對高壓時可拆解風險與權責，不必把果斷等同獨自承擔。' },
-  正官: { theme: '規範、角色與公共責任', reflection: '可運用秩序感與可信度，也留意是否因害怕犯錯而延後行動。' },
-  偏印: { theme: '直覺、跨域與非典型學習', reflection: '適合連結冷門知識；可用實作和回饋確認想法是否落地。' },
-  正印: { theme: '學習、支持與知識系統', reflection: '可透過研究與整理建立底氣，也留意準備是否變成不開始。' },
+  比肩: { theme: '你和同輩之間的位置', reflection: '合作時你會先確認哪一塊是你負責的，那塊不太願意讓人插手。' },
+  劫財: { theme: '搶與給之間的拉扯', reflection: '場面熱起來的時候你衝得最前面，事後才發現答應了太多。' },
+  食神: { theme: '把感受變成看得到的東西', reflection: '你喜歡把想法做成成品，做的過程本身就讓你舒服。' },
+  傷官: { theme: '看不下去就會說出口', reflection: '別人覺得可以了，你還看得到哪裡不對——講得很準，也常常刺到人。' },
+  偏財: { theme: '機會來得快、去得也快', reflection: '你對哪裡有機會很敏感，但同時開太多條線，收尾常常來不及。' },
+  正財: { theme: '一步一步累積出來的東西', reflection: '你要看得到進度才安心，臨時起意的事會讓你很不舒服。' },
+  七殺: { theme: '壓力來了就頂上去', reflection: '事情越急你越冷靜，但你也習慣一個人扛，不太會開口求援。' },
+  正官: { theme: '照規矩來的那一面', reflection: '你在意做得對不對、別人怎麼看，寧可慢一點也不想出錯。' },
+  偏印: { theme: '走冷門那條路', reflection: '主流的做法引不起你的興趣，你喜歡繞到別人不看的地方找答案。' },
+  正印: { theme: '先學會再動手', reflection: '你習慣把資料看完才開始，但準備得太久，常常就變成一直沒開始。' },
 };
 
 export const PLANET_LIBRARY: Record<string, string> = {
@@ -24,26 +24,26 @@ export const SIGN_STYLE_LIBRARY: Record<string, string> = {
 };
 
 export const ASTROLOGY_HOUSE_LIBRARY: Record<number, { title: string; theme: string; reflection: string }> = {
-  1: { title: '自我與呈現', theme: '外在風格、主動性與開始事情的方式', reflection: '觀察自己進入新環境時最先展現什麼。' },
-  2: { title: '資源與價值', theme: '金錢、能力、所有物與安全感', reflection: '區分真正重視的價值與習慣性累積。' },
-  3: { title: '學習與溝通', theme: '資訊交換、近距移動、手足與日常學習', reflection: '檢查資訊如何被理解、整理與傳遞。' },
-  4: { title: '根基與家庭', theme: '居所、私人生活、原生經驗與內在根基', reflection: '辨認哪些環境條件能帶來安定感。' },
-  5: { title: '創造與表達', theme: '作品、遊戲、浪漫、興趣與自我展現', reflection: '替不以績效為目的的創造保留空間。' },
-  6: { title: '日常與服務', theme: '工作流程、習慣、技能維護與身心節奏', reflection: '從可重複的小流程改善生活品質。' },
-  7: { title: '關係與合作', theme: '一對一關係、契約、協商與他人回饋', reflection: '把期待、界線與交換條件說清楚。' },
-  8: { title: '共享與轉化', theme: '共同資源、信任、失去與深層調整', reflection: '確認共享責任與風險是否透明。' },
-  9: { title: '視野與信念', theme: '遠行、高等學習、世界觀與意義系統', reflection: '用新的經驗檢驗既有觀點，而非只收集答案。' },
-  10: { title: '角色與方向', theme: '公共角色、職涯、責任與長期成就', reflection: '區分外界期待與自己願意承擔的方向。' },
-  11: { title: '社群與未來', theme: '朋友、團體、共同願景與長期計畫', reflection: '檢查所屬群體是否支持真正重視的未來。' },
-  12: { title: '退隱與整合', theme: '休息、潛意識、結束週期與幕後空間', reflection: '為消化經驗與恢復注意力保留空白。' },
+  1: { title: '別人第一眼看到的你', theme: '你進到新環境時最先拿出來的那一面', reflection: '剛認識的人通常怎麼形容你？' },
+  2: { title: '錢，還有你重視什麼', theme: '你怎麼賺、擁有什麼才覺得安全', reflection: '分清楚「真的重要」和「只是習慣囤著」。' },
+  3: { title: '你怎麼講、怎麼學', theme: '日常對話、短程移動、手足與隨手學到的東西', reflection: '你講出來的版本，和你腦子裡的版本差多少？' },
+  4: { title: '家和你的根', theme: '住的地方、私底下的你、從小長大的經驗', reflection: '什麼樣的環境會讓你真的鬆下來？' },
+  5: { title: '你為了好玩而做的事', theme: '創作、戀愛、興趣，還有想被看見的部分', reflection: '留一件不用有產出的事給自己。' },
+  6: { title: '每天重複在做的那些', theme: '工作流程、習慣、身體狀態', reflection: '哪個小流程改掉，一整天就會不一樣？' },
+  7: { title: '一對一的關係', theme: '伴侶、合夥、合約，還有別人怎麼回應你', reflection: '把期待和界線講出來，別讓對方猜。' },
+  8: { title: '和別人共用的東西', theme: '共同的錢、信任、失去，以及深層的改變', reflection: '共用的責任和風險，兩邊講清楚了嗎？' },
+  9: { title: '你相信什麼', theme: '遠行、進修、世界觀', reflection: '用新的經驗去檢查舊的想法，而不是只收集答案。' },
+  10: { title: '你在外面的角色', theme: '職涯、公開身分、長期想達成的事', reflection: '哪些是別人的期待，哪些是你自己要的？' },
+  11: { title: '你的圈子', theme: '朋友、社群、想一起完成的事', reflection: '你的圈子在推你往前，還是把你留在原地？' },
+  12: { title: '你自己也不太看的那一面', theme: '獨處、潛意識、還沒處理完的事', reflection: '有些事需要安靜下來才浮得出來。' },
 };
 
 export const ASTROLOGY_ASPECT_LIBRARY: Record<string, { mode: string; description: string; reflection: string }> = {
-  合相: { mode: '融合', description: '兩種行星功能集中在同一方向，彼此放大也較難分開。', reflection: '何時兩種需求會同時出現？' },
-  六合: { mode: '協作', description: '兩種功能有合作機會，但通常需要主動運用才會明顯。', reflection: '哪個小行動能把兩項能力接起來？' },
-  四分相: { mode: '摩擦', description: '兩種功能在節奏或目標上形成張力，促使人尋找新的做法。', reflection: '目前的衝突要求調整哪個流程？' },
-  三分相: { mode: '流動', description: '兩種功能容易互相支援，也因為太自然而少被刻意發展。', reflection: '哪項既有優勢值得更有意識地使用？' },
-  對分相: { mode: '拉鋸', description: '兩端需求彼此映照，常透過關係或情境看見需要平衡的兩極。', reflection: '如何讓兩端都有被安排的位置？' },
+  合相: { mode: '疊在一起', description: '兩顆星擠在同一個位置，力量疊起來，也很難拆開。', reflection: '這兩件事在你身上常常同時發生，想只做一邊很難。' },
+  六合: { mode: '搭得上', description: '兩顆星搭得上線，但要你主動去用才會有感覺。', reflection: '這一組不會自己啟動，得你先做點什麼。' },
+  四分相: { mode: '互相卡住', description: '兩顆星在節奏或目標上互相卡住，逼你想新的做法。', reflection: '卡住的地方，通常也是你練得最多的地方。' },
+  三分相: { mode: '走得順', description: '兩顆星互相幫忙，順到你不太會注意到它。', reflection: '太順的東西容易被當成理所當然，其實那是你的本錢。' },
+  對分相: { mode: '兩邊拉扯', description: '兩顆星站在正對面，常常要透過別人才看得見。', reflection: '兩邊都要留位置，選一邊放棄另一邊通常撐不久。' },
 };
 
 export const ZIWEI_STAR_LIBRARY: Record<string, string> = {

@@ -4,17 +4,23 @@ import jiaziSticks from '../../public/data/fortune-sticks/sixty-jiazi.json';
 import { MAJOR_ARCANA } from '../../src/data/tarot-cards';
 import { RITUAL_CARDS } from '../../src/data/ritual-cards';
 import {
-  ASTROLOGY_ASPECT_LIBRARY, ASTROLOGY_HOUSE_LIBRARY, PLANET_LIBRARY,
-  SIGN_STYLE_LIBRARY, TEN_GOD_LIBRARY, ZIWEI_PALACE_LIBRARY, ZIWEI_STAR_LIBRARY,
+  ASTROLOGY_ASPECT_LIBRARY, ASTROLOGY_HOUSE_LIBRARY, PLANET_LIBRARY, PLANET_TOPIC_PLAIN,
+  SIGN_BEHAVIOUR_PLAIN, SIGN_STYLE_LIBRARY, TEN_GOD_LIBRARY, ZIWEI_PALACE_LIBRARY,
+  ZIWEI_PALACE_PLAIN, ZIWEI_STAR_LIBRARY, ZIWEI_STAR_PLAIN,
 } from '../../src/data/interpretation-library';
 import { checkFieldRules, countHedges, type VoiceRuleId } from './voice-rules';
+import { checkPlainness, type PlainnessRuleId } from './plainness';
 
 /**
  * 報告管線以外的靜態文案語料。
  *
  * 這些內容不由命盤驅動（塔羅牌義、儀式卡、解讀庫、今日指引、籤詩解讀），
  * 因此「出現率」判準不適用——它們本來就是固定文本。改以 voice.md 的靜態規則
- * （R1 您、R2 未來斷言、R4 模糊限定詞）檢查。
+ * （R1 您、R2 未來斷言、R4 模糊限定詞）以及口語度（R7–R9）檢查。
+
+ * 口語度原本只掃報告管線，漏掉了這一塊——十神庫裡的「可觀察自己如何…」
+ * 「適合改善不合理之處」正是 R7 對沖語，卻因為它們是元件引用的字典而沒被抓到。
+ * 使用者回報紫微與西洋「不夠好懂」時才發現這個缺口。
  */
 export interface CorpusEntry {
   corpus: string;
@@ -28,7 +34,7 @@ export interface CorpusViolation {
   source: string;
   path: string;
   text: string;
-  rules: VoiceRuleId[];
+  rules: (VoiceRuleId | PlainnessRuleId)[];
   hedges: string[];
 }
 
@@ -76,6 +82,10 @@ export function collectStaticCorpus(): CorpusEntry[] {
   walk(ASTROLOGY_ASPECT_LIBRARY, '相位', 'src/data/interpretation-library.ts', 'ASTROLOGY_ASPECT_LIBRARY', out);
   walk(ZIWEI_STAR_LIBRARY, '紫微星曜', 'src/data/interpretation-library.ts', 'ZIWEI_STAR_LIBRARY', out);
   walk(ZIWEI_PALACE_LIBRARY, '紫微宮位', 'src/data/interpretation-library.ts', 'ZIWEI_PALACE_LIBRARY', out);
+  walk(PLANET_TOPIC_PLAIN, '行星（白話）', 'src/data/interpretation-library.ts', 'PLANET_TOPIC_PLAIN', out);
+  walk(SIGN_BEHAVIOUR_PLAIN, '星座（白話）', 'src/data/interpretation-library.ts', 'SIGN_BEHAVIOUR_PLAIN', out);
+  walk(ZIWEI_STAR_PLAIN, '紫微星曜（白話）', 'src/data/interpretation-library.ts', 'ZIWEI_STAR_PLAIN', out);
+  walk(ZIWEI_PALACE_PLAIN, '紫微宮位（白話）', 'src/data/interpretation-library.ts', 'ZIWEI_PALACE_PLAIN', out);
   walk(dailyGuidance, '今日指引', 'public/data/daily-guidance.json', 'cards', out);
   walk(jiaziSticks, '六十甲子籤解讀', 'public/data/fortune-sticks/sixty-jiazi.json', 'sticks', out);
   walk(guanyinSticks, '觀音一百籤解讀', 'public/data/fortune-sticks/guanyin-100.json', 'sticks', out);
@@ -86,10 +96,11 @@ export function collectStaticCorpus(): CorpusEntry[] {
 export function scanStaticCorpus(entries: CorpusEntry[] = collectStaticCorpus()): CorpusViolation[] {
   const violations: CorpusViolation[] = [];
   for (const entry of entries) {
-    const rules = checkFieldRules(entry.text).map((v) => v.rule);
+    const rules: (VoiceRuleId | PlainnessRuleId)[] = checkFieldRules(entry.text).map((v) => v.rule);
     const { breakdown } = countHedges(entry.text);
     const hedges = Object.keys(breakdown);
     if (hedges.length) rules.push('R4-hedges');
+    checkPlainness(entry.text).forEach((hit) => rules.push(hit.rule));
     if (rules.length) {
       violations.push({ ...entry, rules: [...new Set(rules)].sort(), hedges });
     }
