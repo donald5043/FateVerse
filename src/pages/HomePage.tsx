@@ -10,28 +10,15 @@ import { useFateStore } from '../store/useFateStore';
 import { preferredScrollBehavior } from '../utils/scroll';
 
 /**
- * 首頁只回答三個問題，照這個順序：
- *   1. 今天有什麼？（每天回來的理由）
- *   2. 我是誰？（完整命盤，這站的主體）
- *   3. 還有什麼可以玩？（其餘功能收成一列）
+ * 首頁只有三件事，照這個順序：
+ *   1. 今天（每天回來的理由）
+ *   2. 完整命盤（這站的主體）
+ *   3. 兩人合盤（唯一需要第二個人的功能，也是最會被分享出去的）
  *
- * 之前是五個區塊、十四個入口，照「系統索引／自我覺察／更多玩法」分類——
- * 那是我們的分類法，不是使用者進站想做的事，掃過去只覺得雜。
+ * 其餘十個功能收進 /lab。前一版把它們列成十條文字連結，看起來很節制，
+ * 但使用者要掃十三個入口才知道該點哪個——那還是一份目錄，不是一個首頁。
+ * 收起來不等於砍掉，網址一個都沒動。
  */
-
-// 其餘功能收成文字列。每個都給一張大卡的結果，就是每個都不重要。
-const moreLinks = [
-  { to: '/mirror', title: '巴納姆鏡子', text: '分得出哪句是真的算出來的嗎' },
-  { to: '/ritual', title: '決策儀式', text: '卡關時擲一下，看自己的第一反應' },
-  { to: '/narrative', title: '人生劇本', text: '把命盤寫成一段第一人稱的故事' },
-  { to: '/synastry', title: '兩人合盤', text: '兩張盤並排，看互補與張力' },
-  { to: '/timeline', title: '回顧日誌', text: '過去每一年，和當年的流年並排' },
-  { to: '/imprint', title: '宇宙印記', text: '你的命之圖騰與出生那天的天空' },
-  { to: '/capsule', title: '時間膠囊', text: '寫給未來的自己，到期再回來看' },
-  { to: '/palm', title: '拍手相', text: '拍下手掌，分析手型與掌紋' },
-  { to: '/fortune', title: '拍籤解籤', text: '拍下籤詩，辨識文字並找出解讀' },
-  { to: '/tarot', title: '塔羅三牌陣', text: '過去、現在、未來各抽一張' },
-] as const;
 
 const CHART_TABS = [
   { numeral: 'Ⅰ', title: '八字四柱', text: '天干地支與五行分布', to: '/report?tab=bazi' },
@@ -77,19 +64,16 @@ export default function HomePage() {
             <span className="shimmer-gold">換一種星象</span><br />
             換一個故事
           </h1>
-          <p className="mt-4 max-w-lg text-lg leading-8 text-mist/90">一面鏡子，不是一本預言書。</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link to={hasChart ? '/report' : '/profile'} className="btn-primary whitespace-nowrap" style={{ flex: 'none' }}>
               {hasChart ? '回到我的命盤' : '開始探索命盤'} <ArrowRight size={18} />
             </Link>
             <button type="button" onClick={scrollToToday} className="btn-secondary whitespace-nowrap" style={{ flex: 'none' }}>先看今天</button>
           </div>
-          <div className="mt-6"><DailyFusionStrip /></div>
-          <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-mist">
-            {['全程瀏覽器運算', '不用登入', '免費看完整報告'].map((tag) => (
-              <span className="flex items-center gap-2" key={tag}><span className="text-gold">◦</span>{tag}</span>
-            ))}
-          </div>
+          {/* 沒有命盤時這條只會說「建立命盤之後這裡會有五套系統」，
+              和下面「今天」那一段講的是同一件事，重複一次就變成催促。 */}
+          {hasChart && <div className="mt-6"><DailyFusionStrip /></div>}
+          <p className="mt-5 text-sm text-mist">全程在你的瀏覽器運算，不用登入，報告免費看完。</p>
         </div>
         <StarChartWheel />
       </section>
@@ -104,11 +88,19 @@ export default function HomePage() {
           <span className="h-px flex-1 hairline border-t" />
         </div>
         <p className="mt-3 max-w-xl text-[15px] leading-8 text-mist">
-          東方看日干支，西方看行運，再翻一張牌。三種說法講的是同一天，不一定會同意彼此——不同意的地方最好玩。
+          {hasChart
+            ? '東方看日干支，西方看行運，再翻一張牌。三種說法講的是同一天，不一定會同意彼此——不同意的地方最好玩。'
+            : '先翻一張牌，什麼都不用填。'}
         </p>
 
-        <div className="mt-6 grid items-stretch gap-4 lg:grid-cols-3">
-          <DailyFortuneCard />
+        {/*
+          還沒建命盤時只給塔羅。
+          八字和行運都需要出生資料，硬要放上來只會變成兩張寫著「先建立命盤」的空卡——
+          第一次來的人在同一頁被要求建命盤四次，那是勸退，不是引導。
+          塔羅不需要任何輸入就有結果，先讓人拿到東西，再談要不要留生日。
+        */}
+        <div className={`mt-6 grid items-stretch gap-4 ${hasChart ? 'lg:grid-cols-3' : 'max-w-md'}`}>
+          {hasChart && <DailyFortuneCard />}
           {hasChart && <DailyHoroscopeCard />}
           <DailyTarotCard />
         </div>
@@ -147,24 +139,29 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 三、其他玩法 */}
+      {/* 三、兩人合盤 */}
       <section className="page-container py-8">
         <div className="flex items-baseline gap-4">
           <div>
-            <p className="font-display text-base italic tracking-[0.12em] text-gold">More</p>
-            <h2 className="mt-1.5 font-serif text-2xl font-bold text-cream sm:text-3xl">其他玩法</h2>
+            <p className="font-display text-base italic tracking-[0.12em] text-gold">Two charts</p>
+            <h2 className="mt-1.5 font-serif text-2xl font-bold text-cream sm:text-3xl">兩人合盤</h2>
           </div>
           <span className="h-px flex-1 hairline border-t" />
         </div>
-        <div className="mt-5 grid gap-x-8 gap-y-1 sm:grid-cols-2">
-          {moreLinks.map((item) => (
-            <Link key={item.to} to={item.to} className="group flex items-baseline gap-3 border-b border-white/[0.06] py-3 transition hover:border-gold/40">
-              <span className="shrink-0 font-serif text-base font-bold text-cream transition group-hover:text-gold">{item.title}</span>
-              <span className="min-w-0 flex-1 truncate text-[13px] text-mist">{item.text}</span>
-              <ArrowRight className="shrink-0 text-mist/40 transition group-hover:text-gold" size={14} />
-            </Link>
-          ))}
-        </div>
+        <p className="mt-3 max-w-xl text-[15px] leading-8 text-mist">
+          把兩張盤並排，看你們天然的互補和張力在哪裡。不給「合不合」的分數——
+          少見的組合我們會標出來，常見的也會直說很常見。
+        </p>
+        <Link to="/synastry" className="btn-secondary mt-5" style={{ flex: 'none' }}>
+          開始合盤 <ArrowRight size={16} />
+        </Link>
+      </section>
+
+      <section className="page-container py-4">
+        <Link to="/lab" className="group inline-flex items-baseline gap-2 text-sm text-mist transition hover:text-cream">
+          <span>還有十個實驗性的玩法在實驗室</span>
+          <ArrowRight className="text-mist/40 transition group-hover:text-gold" size={14} />
+        </Link>
       </section>
 
       <section className="page-container pb-16 pt-4"><Disclaimer /></section>

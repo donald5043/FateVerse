@@ -7,20 +7,17 @@ import Starfield from '../components/common/Starfield';
 import { useRouteScrollReset } from '../hooks/useRouteScrollReset';
 import { useFateStore } from '../store/useFateStore';
 
+/*
+ * 導覽只放三件事，加上實驗室和關於。
+ *
+ * 之前是十四個連結，等於沒有導覽——每一項都同等重要，就是沒有一項重要。
+ * 其餘功能收進 /lab，網址沒動，舊的分享連結照樣能開。
+ */
 const links = [
   ['/', '首頁'],
-  ['/profile', '探索命盤'],
-  ['/ritual', '決策儀式'],
-  ['/imprint', '宇宙印記'],
-  ['/narrative', '人生劇本'],
-  ['/capsule', '時間膠囊'],
+  ['/profile', '完整命盤'],
   ['/synastry', '兩人合盤'],
-  ['/timeline', '回顧日誌'],
-  ['/daily', '今日指引'],
-  ['/tarot', '塔羅牌'],
-  ['/palm', '拍手相'],
-  ['/fortune', '拍籤解籤'],
-  ['/mirror', '巴納姆鏡'],
+  ['/lab', '實驗室'],
   ['/about', '關於'],
 ] as const;
 

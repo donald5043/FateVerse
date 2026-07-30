@@ -25,6 +25,7 @@ const TimelinePage = lazy(() => import('./pages/TimelinePage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const LabPage = lazy(() => import('./pages/LabPage'));
 
 export default function App() {
   return (
@@ -49,6 +50,8 @@ export default function App() {
           <Route path="about" element={<AboutPage />} />
           <Route path="privacy" element={<PrivacyPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          {/* 實驗室：收納主動線之外的功能。原有網址一個都沒動，舊連結照樣能開。 */}
+          <Route path="lab" element={<LabPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
