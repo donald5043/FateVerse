@@ -1,9 +1,9 @@
 import {
-  ChevronRight, CircleUserRound, Compass, Hash, ListTree,
-  Orbit, RefreshCw, ShieldCheck, Sparkles, Waypoints,
+  ChevronRight, ListTree, RefreshCw, ShieldCheck, Sparkles, Waypoints,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import Collapsible from '../components/common/Collapsible';
 import { generateFallbackReport } from '../engines/fallback-report';
 import FiveElementChart from '../components/charts/FiveElementChart';
 import Disclaimer from '../components/common/Disclaimer';
@@ -25,6 +25,8 @@ import ZiweiChart from '../components/report/ZiweiChart';
 import { buildSystemMatrix, generateFusionReading, generateSystemConclusions, generateTimelineReading } from '../engines/fusion-engine';
 import { computeFateSnapshot } from '../engines/fate-snapshot-engine';
 import { buildUnifiedElementProfile } from '../engines/integration-engine';
+import { buildReportOpener } from '../engines/report-opener-engine';
+import { leadSentences } from '../utils/lead-sentence';
 import SystemMatrixRadar from '../components/report/SystemMatrixRadar';
 import { useFateStore } from '../store/useFateStore';
 import { ELEMENT_LABELS } from '../utils/constants';
@@ -130,41 +132,11 @@ export default function ReportPage() {
   const unifiedProfile = buildUnifiedElementProfile(input, { palmElement });
   const systemMatrix = buildSystemMatrix(input, { palmElement });
   const conclusions = generateSystemConclusions(input);
+  // 首屏那兩句話。上限與內容規則見 report-opener-engine.ts。
+  const opener = buildReportOpener(input);
   const timeline = generateTimelineReading(input);
   const snapshot = computeFateSnapshot(fusion, systemMatrix);
 
-  const systems = [
-    {
-      id: 'system-bazi', icon: Orbit, title: '八字觀點', caption: `日主 ${input.bazi.dayMaster} · ${ELEMENT_LABELS[input.bazi.dayMasterElement]}`,
-      text: report.sections.bazi,
-      strengths: [`${ELEMENT_LABELS[input.bazi.dayMasterElement]}日主`, `${ELEMENT_LABELS[input.fiveElements.strongest[0]]}相對突出`],
-      blindSpots: [`${ELEMENT_LABELS[input.fiveElements.weakest[0]]}比例較少`, '不以單一元素判吉凶'],
-    },
-    {
-      id: 'system-zodiac', icon: CircleUserRound, title: '生肖觀點', caption: `${input.zodiac.animal} · ${input.zodiac.branch}支 · ${input.zodiac.symbol}`,
-      text: report.sections.zodiac, strengths: input.zodiac.positiveTraits, blindSpots: input.zodiac.blindSpots,
-    },
-    {
-      id: 'system-astrology', icon: Compass, title: '星座觀點', caption: `${input.astrology.sunSign} · ${input.astrology.element}元素 · ${input.astrology.modality}模式`,
-      text: report.sections.astrology, strengths: input.astrology.strengths, blindSpots: input.astrology.blindSpots,
-    },
-    ...(report.sections.ziwei && input.ziwei ? [{
-      id: 'system-ziwei', icon: Waypoints, title: '紫微斗數觀點', caption: `${input.ziwei.fiveElementsClass} · 命主 ${input.ziwei.soul} · 身主 ${input.ziwei.body}`,
-      text: report.sections.ziwei,
-      strengths: input.ziwei.palaces.find((palace) => palace.name === '命宮')?.majorStars.map((star) => star.name) ?? ['命宮需借對宮主星'],
-      blindSpots: ['不同流派設定可能不同', '不以單星直接斷吉凶'],
-    }] : []),
-    {
-      id: 'system-numerology', icon: Hash, title: '生命靈數觀點', caption: `${input.numerology.lifePathNumber} · ${input.numerology.title}`,
-      text: report.sections.numerology, strengths: input.numerology.strengths, blindSpots: input.numerology.challenges,
-    },
-    ...(report.sections.name && input.nameAnalysis ? [{
-      id: 'system-name', icon: Sparkles, title: '姓名觀點', caption: `${input.nameAnalysis.characterCount} 字 · 五格 Beta`,
-      text: report.sections.name,
-      strengths: input.nameAnalysis.characters.flatMap((item) => item.meaning ? [item.meaning] : []).slice(0, 3),
-      blindSpots: input.nameAnalysis.characters.some((item) => item.strokeSource === 'insufficient') ? ['部分字典資料不足', '未使用正式康熙筆畫'] : ['僅作簡化五行對照'],
-    }] : []),
-  ];
 
   const availableTabs = REPORT_TABS.filter(([id]) => {
     if (id === 'ziwei') return Boolean(input.ziwei);
@@ -206,29 +178,38 @@ export default function ReportPage() {
       <SystemArtwork className="mt-6 print:hidden" kind={REPORT_ARTWORK[tab]} priority />
 
       {tab === 'overview' && <div key="overview" className="reveal">
-        <div className="mt-7 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {statCards.map(({ label, value, tone }) => (
-            <div className="rounded-[18px] border border-white/10 bg-white/[0.045] p-[18px]" key={label}>
-              <span className="text-[11px] text-mist">{label}</span>
-              <div className={`mt-2 font-serif text-[22px] font-semibold ${tone}`}>{value}</div>
-            </div>
-          ))}
-        </div>
-
-        <article id="summary" className="relative mt-5 overflow-hidden rounded-[2rem] border border-gold/25 bg-gradient-to-br from-[#182143] via-[#11182f] to-[#0b1020] p-6 shadow-glow sm:p-9">
+        {/*
+          第一屏只有兩句話，總共不到 80 字（上限由 tests/reading-budget.test.ts 守住）。
+          原本這裡是四張數字卡加一段 74 字的核心摘要，數字卡（日主、五行總數……）
+          在讀者還不知道自己是什麼樣的人之前，就是四個看不懂的專有名詞。
+          完整摘要與那些數字沒有消失，收在下面的摺疊區裡。
+        */}
+        <article id="summary" className="relative mt-7 overflow-hidden rounded-[2rem] border border-gold/25 bg-gradient-to-br from-[#182143] via-[#11182f] to-[#0b1020] p-6 shadow-glow sm:p-9">
           <div className="pointer-events-none absolute -right-20 -top-24 size-72 rounded-full border border-gold/10" />
-          <div className="pointer-events-none absolute -right-8 -top-10 size-44 rounded-full border border-dashed border-gold/20" />
-          <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
-            <div><div className="mb-5 flex items-center gap-3 text-gold"><Sparkles /><span className="eyebrow">核心摘要</span></div><p className="max-w-4xl font-serif text-xl leading-9 text-cream sm:text-2xl sm:leading-10">{report.summary}</p></div>
-            <div className="mx-auto grid size-40 shrink-0 place-items-center rounded-full border border-gold/30 bg-gold/[0.08] text-center shadow-[inset_0_0_45px_rgba(216,184,117,0.08)]">
-              <div><span className="text-xs tracking-[0.22em] text-mist">日主</span><p className="mt-1 font-serif text-5xl font-semibold text-gold">{input.bazi.dayMaster}</p><span className="text-sm text-cream">{ELEMENT_LABELS[input.bazi.dayMasterElement]}</span></div>
-            </div>
-          </div>
+          <p className="relative font-serif text-2xl leading-10 text-cream sm:text-3xl sm:leading-[1.5]">{opener.line}</p>
+          <p className="relative mt-5 flex items-start gap-2.5 text-[15px] leading-8 text-gold">
+            <Sparkles className="mt-1.5 shrink-0" size={17} />
+            <span>{opener.evidence}</span>
+          </p>
         </article>
 
+        <Collapsible className="mt-4" title="完整摘要與盤面數字" hint="日主、五行總數、四柱與那段較長的總結都在這裡">
+          <p className="leading-8 text-mist">{report.summary}</p>
+          <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {statCards.map(({ label, value, tone }) => (
+              <div className="rounded-[18px] border border-white/10 bg-white/[0.045] p-[18px]" key={label}>
+                <span className="text-[11px] text-mist">{label}</span>
+                <div className={`mt-2 font-serif text-[22px] font-semibold ${tone}`}>{value}</div>
+              </div>
+            ))}
+          </div>
+        </Collapsible>
+
         <section className="mt-10">
+          {/* 標題已經說了「直接說結論」，卡片下方也就寫著「查看詳細」——
+              再加一句「每套系統先給你一句最重要的話；想看完整脈絡，點卡片下方的查看詳細」
+              是在跟讀者解釋畫面怎麼用（voice.md R8）。刪掉。 */}
           <p className="eyebrow">At a glance</p><h2 className="section-title mt-2">各大系統直接說結論</h2>
-          <p className="mt-2 text-sm leading-6 text-mist">每套系統先給你一句最重要的話；想看完整脈絡，點卡片下方的「查看詳細」。</p>
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {conclusions.map(({ id, system, headline, conclusion }) => {
               const tone = ({ bazi: 'text-gold', zodiac: 'text-emerald-300', ziwei: 'text-violet-400', western: 'text-teal-300', numerology: 'text-rose-400', tarot: 'text-fuchsia-300', name: 'text-amber-200' } as Record<string, string>)[id] ?? 'text-gold';
@@ -237,15 +218,15 @@ export default function ReportPage() {
                 <article className="flex flex-col rounded-[20px] border border-white/10 bg-white/[0.045] p-5" key={id}>
                   <span className={`text-[11px] font-bold tracking-[0.12em] ${tone}`}>{system}</span>
                   <h3 className="mt-1.5 font-serif text-lg font-semibold text-cream">{headline}</h3>
-                  <p className="mt-3 flex-1 text-sm leading-7 text-mist">{conclusion}</p>
+                  {/* 這一段的標題寫著「先給你一句最重要的話」，那就真的只給一句。
+                      剩下的在「查看詳細」裡，七套系統的完整結論加起來有五百多字。 */}
+                  <p className="mt-3 flex-1 text-sm leading-7 text-mist">{leadSentences(conclusion)}</p>
                   <div className="mt-4 border-t border-white/10 pt-3">
                     {id === 'tarot' ? (
                       <Link className="inline-flex items-center gap-1.5 text-sm font-semibold text-cream transition hover:text-gold" to="/tarot">查看詳細 <ChevronRight size={15} /></Link>
                     ) : detailTab ? (
                       <button className="inline-flex items-center gap-1.5 text-sm font-semibold text-cream transition hover:text-gold" type="button" onClick={() => selectTab(detailTab)}>查看詳細 <ChevronRight size={15} /></button>
-                    ) : (
-                      <button className="inline-flex items-center gap-1.5 text-sm font-semibold text-cream transition hover:text-gold" type="button" onClick={() => document.getElementById('systems')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>查看詳細 <ChevronRight size={15} /></button>
-                    )}
+                    ) : null}
                   </div>
                 </article>
               );
@@ -253,10 +234,9 @@ export default function ReportPage() {
           </div>
         </section>
 
-        <section className="mt-12">
-          <p className="eyebrow">Past · Present · Future</p><h2 className="section-title mt-2">過去、現在、未來</h2>
-          <p className="mt-2 text-sm leading-6 text-mist">用八字大運搭配紫微運限，把你的人生分成三段，各給一段解讀和一個建議。這是文化模型的敘事，不是預言。</p>
-          <div className="mt-6 grid gap-4 lg:grid-cols-3">
+        <Collapsible className="mt-6" title="過去、現在、未來" hint="用大運與紫微運限把人生分三段，各給一段解讀和一個建議">
+          <p className="text-sm leading-6 text-mist">這是文化模型的敘事，不是預言。</p>
+          <div className="mt-5 grid gap-4 lg:grid-cols-3">
             {timeline.map(({ id, title, rangeLabel, reading, advice }, index) => (
               <article className={`flex flex-col rounded-[20px] border p-5 ${id === 'present' ? 'border-gold/40 bg-gold/[0.06]' : 'border-white/10 bg-white/[0.045]'}`} key={id}>
                 <div className="flex items-center justify-between">
@@ -272,34 +252,25 @@ export default function ReportPage() {
               </article>
             ))}
           </div>
-        </section>
+        </Collapsible>
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-          <article className="rounded-[20px] border border-white/10 bg-white/[0.045] p-6">
-            <h3 className="font-serif text-lg font-semibold text-cream">綜合解讀摘要</h3>
-            <ul className="mt-4 space-y-4">{report.sharedPatterns.slice(0, 3).map((item) => <li className="flex gap-3 text-[14.5px] leading-8 text-mist" key={item}><ChevronRight className="mt-1.5 shrink-0 text-emerald-200" size={16} /><span>{item}</span></li>)}</ul>
-          </article>
-          <article className="rounded-[20px] border border-white/10 bg-white/[0.045] p-6">
-            <div className="flex items-center justify-between"><h3 className="font-serif text-lg font-semibold text-cream">五行分布</h3><span className="text-xs text-mist">共 {input.fiveElements.total} 個位置</span></div>
-            <div className="mt-5"><FiveElementChart result={input.fiveElements} /></div>
-            <p className="mt-4 text-xs leading-5 text-mist">僅統計四柱主干支；元素較少不代表必須補足，也不作簡化吉凶斷言。</p>
-          </article>
-        </div>
+        {/*
+          原本這裡有「綜合解讀摘要」，內容是 sharedPatterns 的前三條——
+          而下面「多系統共同點」就是同一份資料的完整版。同一頁把同一件事講兩次，
+          讀者不會覺得豐富，只會覺得長。留完整版，刪摘要版。
+        */}
+        <Collapsible className="mt-6" title="五行分布" hint={`四柱共 ${input.fiveElements.total} 個位置的統計圖`}>
+          <FiveElementChart result={input.fiveElements} />
+          <p className="mt-4 text-xs leading-5 text-mist">僅統計四柱主干支；元素較少不代表必須補足，也不作簡化吉凶斷言。</p>
+        </Collapsible>
 
-        <section id="systems" className="mt-12">
-          <p className="eyebrow">Multiple lenses</p><h2 className="section-title mt-2">各系統如何看你</h2>
-          <div className="mt-6 grid gap-5 lg:grid-cols-2">{systems.map(({ id, icon: Icon, title, caption, text, strengths, blindSpots }) => <article className="glass-card p-5 sm:p-6" key={id}><div className="flex items-start gap-4"><span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-gold/10 text-gold"><Icon size={21} /></span><div><h3 className="font-serif text-xl font-semibold text-cream">{title}</h3><p className="mt-1 text-xs text-gold">{caption}</p></div></div><p className="mt-5 leading-7 text-mist">{text}</p><div className="mt-5 grid gap-4 border-t border-white/10 pt-4 sm:grid-cols-2"><div><span className="text-[11px] font-semibold tracking-wider text-emerald-200">可運用的特質</span><div className="mt-2 flex flex-wrap gap-1.5">{strengths.map((item) => <span className="rounded-full bg-emerald-300/[0.08] px-2.5 py-1 text-xs text-emerald-100" key={item}>{item}</span>)}</div></div><div><span className="text-[11px] font-semibold tracking-wider text-amber-100">可留意的面向</span><div className="mt-2 flex flex-wrap gap-1.5">{blindSpots.map((item) => <span className="rounded-full bg-amber-200/[0.08] px-2.5 py-1 text-xs text-amber-100" key={item}>{item}</span>)}</div></div></div></article>)}</div>
-        </section>
+        <Collapsible className="mt-4" id="patterns" title="共同點與不同視角" hint="哪些系統講到同一件事，哪些各說各話">
+          <div className="grid gap-6 md:grid-cols-2"><article className="rounded-3xl border border-emerald-200/15 bg-emerald-300/[0.055] p-5 sm:p-6"><h3 className="font-serif text-xl font-semibold text-cream">多系統共同點</h3><ul className="mt-5 space-y-4">{report.sharedPatterns.map((item) => <li className="flex gap-3 leading-7 text-mist" key={item}><ChevronRight className="mt-1 shrink-0 text-emerald-200" size={17} /><span>{item}</span></li>)}</ul></article><article className="rounded-3xl border border-blue-200/15 bg-blue-300/[0.055] p-5 sm:p-6"><h3 className="font-serif text-xl font-semibold text-cream">不同系統的差異</h3><ul className="mt-5 space-y-4">{report.differences.map((item) => <li className="flex gap-3 leading-7 text-mist" key={item}><ListTree className="mt-1 shrink-0 text-blue-200" size={17} /><span>{item}</span></li>)}</ul></article></div>
+        </Collapsible>
 
-        <section id="patterns" className="mt-12">
-          <p className="eyebrow">Cross-system reading</p><h2 className="section-title mt-2">共同點與不同視角</h2>
-          <div className="mt-6 grid gap-6 md:grid-cols-2"><article className="rounded-3xl border border-emerald-200/15 bg-emerald-300/[0.055] p-5 sm:p-6"><h3 className="font-serif text-xl font-semibold text-cream">多系統共同點</h3><ul className="mt-5 space-y-4">{report.sharedPatterns.map((item) => <li className="flex gap-3 leading-7 text-mist" key={item}><ChevronRight className="mt-1 shrink-0 text-emerald-200" size={17} /><span>{item}</span></li>)}</ul></article><article className="rounded-3xl border border-blue-200/15 bg-blue-300/[0.055] p-5 sm:p-6"><h3 className="font-serif text-xl font-semibold text-cream">不同系統的差異</h3><ul className="mt-5 space-y-4">{report.differences.map((item) => <li className="flex gap-3 leading-7 text-mist" key={item}><ListTree className="mt-1 shrink-0 text-blue-200" size={17} /><span>{item}</span></li>)}</ul></article></div>
-        </section>
-
-        <section id="focus" className="mt-12">
-          <p className="eyebrow">Practical reflection</p><h2 className="section-title mt-2">關注主題與行動建議</h2>
-          <div className="mt-6 grid gap-5 md:grid-cols-2">{report.focusAnalysis.map((focus, index) => <article key={`${focus.topic}-${index}`} className="glass-card overflow-hidden"><div className="flex items-center justify-between border-b border-white/10 px-5 py-4"><span className="font-serif text-lg font-semibold text-cream">{focus.topic}</span><span className="grid size-7 place-items-center rounded-full bg-gold/10 text-xs font-semibold text-gold">{String(index + 1).padStart(2, '0')}</span></div><div className="p-5"><p className="leading-7 text-mist">{focus.analysis}</p><ul className="mt-5 space-y-3 text-sm text-cream">{focus.suggestions.map((suggestion) => <li className="flex gap-2.5" key={suggestion}><ShieldCheck className="mt-0.5 shrink-0 text-gold" size={16} /><span>{suggestion}</span></li>)}</ul></div></article>)}</div>
-        </section>
+        <Collapsible className="mt-4" id="focus" title="關注主題與行動建議" hint="依你選的關注領域，各給一段分析和幾個做法">
+          <div className="grid gap-5 md:grid-cols-2">{report.focusAnalysis.map((focus, index) => <article key={`${focus.topic}-${index}`} className="glass-card overflow-hidden"><div className="flex items-center justify-between border-b border-white/10 px-5 py-4"><span className="font-serif text-lg font-semibold text-cream">{focus.topic}</span><span className="grid size-7 place-items-center rounded-full bg-gold/10 text-xs font-semibold text-gold">{String(index + 1).padStart(2, '0')}</span></div><div className="p-5"><p className="leading-7 text-mist">{focus.analysis}</p><ul className="mt-5 space-y-3 text-sm text-cream">{focus.suggestions.map((suggestion) => <li className="flex gap-2.5" key={suggestion}><ShieldCheck className="mt-0.5 shrink-0 text-gold" size={16} /><span>{suggestion}</span></li>)}</ul></div></article>)}</div>
+        </Collapsible>
       </div>}
 
       {tab === 'fusion' && <div key="fusion" className="reveal mt-7">
@@ -428,7 +399,9 @@ export default function ReportPage() {
         </div>
       </div>}
 
-      <section className="mt-10 rounded-3xl border border-white/10 bg-white/[0.035] p-5"><h2 className="text-sm font-semibold text-cream">閱讀時請保留的界線</h2><ul className="mt-3 space-y-2 text-sm leading-6 text-mist">{report.cautions.map((item) => <li className="flex gap-2" key={item}><ShieldCheck className="mt-1 shrink-0 text-gold" size={15} />{item}</li>)}</ul></section>
+      {/* 原本這裡有「閱讀時請保留的界線」，逐條列 report.cautions——
+          而下面的 <Disclaimer /> 講的是同一件事，連用詞都幾乎一樣
+          （「僅供文化探索、娛樂與自我反思」兩邊都有）。免責要講清楚，但不用講兩次。 */}
       <div className="mt-7"><Disclaimer health /></div>
       <div className="mt-7 flex flex-wrap gap-3 print:hidden"><Link className="btn-secondary" to="/profile"><RefreshCw size={17} />重新建立</Link></div>
     </section>

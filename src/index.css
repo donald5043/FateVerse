@@ -377,6 +377,11 @@ body::after {
   body::before, body::after, header, footer { display: none !important; }
   .report-print { max-width: none !important; padding: 0 !important; }
   .report-print article, .report-print section, .report-print details { break-inside: avoid; box-shadow: none !important; }
+  /* 列印時攤開所有摺疊區：印出來的報告不該有藏起來的內容。
+     收起的 <details> 是靠 UA 樣式表把非 summary 的子元素設成 display:none，
+     所以覆寫 display 就能展開，不需要真的去改 open 屬性。 */
+  details:not([open]) > *:not(summary) { display: block !important; }
+  details > summary { list-style: none; }
   .glass-card { border-color: #d1d5db !important; background: #fff !important; color: #111827 !important; }
   .text-cream { color: #111827 !important; }
   .text-mist { color: #4b5563 !important; }
