@@ -157,6 +157,8 @@ export default function ReportPage() {
           <span className="fv-seal mt-1 hidden shrink-0 px-2.5 py-3 text-base sm:inline-flex vtext" aria-hidden="true">命書</span>
           <div><p className="eyebrow">萬象報告</p><h1 className="display-title mt-3">{profile?.name ? `${profile.name}的萬象命書` : '你的萬象命書'}</h1><p className="mt-3 text-sm text-mist">在你的裝置上產生{profile ? ` · ${profile.birthDate} ${profile.birthTime} 出生 · ${profile.region}` : ''}</p></div>
         </div>
+        {/* 複製／分享／列印是工具，不是內容。手機直式縮成圖示排成一列，
+            才不會擠成兩排把首屏的結論推出螢幕（見 ReportActions）。 */}
         <ReportActions summary={report.summary} profile={profile} />
       </header>
 
@@ -175,7 +177,8 @@ export default function ReportPage() {
         </div>
       </nav>
 
-      <SystemArtwork className="mt-6 print:hidden" kind={REPORT_ARTWORK[tab]} priority />
+      {/* 主視覺約 180px，在手機上剛好把首屏那兩句話推到螢幕外。桌機留著。 */}
+      <SystemArtwork className="mt-6 hidden print:hidden sm:block" kind={REPORT_ARTWORK[tab]} priority />
 
       {tab === 'overview' && <div key="overview" className="reveal">
         {/*

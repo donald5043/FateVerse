@@ -75,7 +75,9 @@ export default function HomePage() {
           {hasChart && <div className="mt-6"><DailyFusionStrip /></div>}
           <p className="mt-5 text-sm text-mist">全程在你的瀏覽器運算，不用登入，報告免費看完。</p>
         </div>
-        <StarChartWheel />
+        {/* 星盤轉盤在手機直式吃掉約 390px，而它是純裝飾——
+            手機的第一屏應該留給「今天」，不是留給一張圖。 */}
+        <div className="hidden lg:block"><StarChartWheel /></div>
       </section>
 
       {/* 一、今天 */}
@@ -99,11 +101,25 @@ export default function HomePage() {
           第一次來的人在同一頁被要求建命盤四次，那是勸退，不是引導。
           塔羅不需要任何輸入就有結果，先讓人拿到東西，再談要不要留生日。
         */}
-        <div className={`mt-6 grid items-stretch gap-4 ${hasChart ? 'lg:grid-cols-3' : 'max-w-md'}`}>
-          {hasChart && <DailyFortuneCard />}
-          {hasChart && <DailyHoroscopeCard />}
-          <DailyTarotCard />
+        {/*
+          手機直式改成水平滑動，桌機維持並排。
+          三張卡直向堆疊在手機上超過 1,600px（約兩個螢幕），要滑很久才知道
+          下面還有「完整命盤」。它們是同一天的三種說法，本來就該並列比較，
+          用滑動比用捲動更貼近這層語意，也是手機的原生手勢。
+
+          -mx-4 px-4 讓卡片邊緣對齊頁面留白，而不是被容器切掉；
+          捲動發生在這個容器裡，不會讓整頁產生橫向捲動。
+        */}
+        <div
+          className={hasChart
+            ? 'mt-6 -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:mx-0 lg:grid lg:snap-none lg:grid-cols-3 lg:items-stretch lg:overflow-visible lg:px-0'
+            : 'mt-6 max-w-md'}
+        >
+          {hasChart && <div className="w-[86%] shrink-0 snap-center [&>*]:h-full lg:w-auto"><DailyFortuneCard /></div>}
+          {hasChart && <div className="w-[86%] shrink-0 snap-center [&>*]:h-full lg:w-auto"><DailyHoroscopeCard /></div>}
+          <div className={hasChart ? 'w-[86%] shrink-0 snap-center [&>*]:h-full lg:w-auto' : ''}><DailyTarotCard /></div>
         </div>
+        {hasChart && <p className="mt-1 text-xs text-mist/60 lg:hidden">← 左右滑動看三種說法</p>}
       </section>
 
       {/* 二、完整命盤 */}

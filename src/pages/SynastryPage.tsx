@@ -28,11 +28,13 @@ function MiniFields({ form, onChange, accent }: { form: MiniForm; onChange: (pat
   return (
     <div className="space-y-3">
       <input className="input-field" placeholder="名字或暱稱" value={form.name} maxLength={20} onChange={(event) => onChange({ name: event.target.value })} />
-      <div className="grid grid-cols-2 gap-3">
+      {/* 手機直式先各佔一行：390px 寬扣掉留白與間距，每欄只剩約 170px，
+          原生日期欄位的 mm/dd/yyyy 加上日曆圖示會被切掉。 */}
+      <div className="grid gap-3 min-[420px]:grid-cols-2">
         <label className="block"><span className="mb-1 block text-xs text-mist">出生日期</span><input className="input-field" type="date" min="1900-01-01" max="2100-12-31" value={form.birthDate} onChange={(event) => onChange({ birthDate: event.target.value })} /></label>
         <label className="block"><span className="mb-1 block text-xs text-mist">出生時間</span><input className="input-field" type="time" value={form.birthTime} onChange={(event) => onChange({ birthTime: event.target.value })} /></label>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-3 min-[420px]:grid-cols-2">
         <label className="block"><span className="mb-1 block text-xs text-mist">時區</span><select className="input-field" value={form.timezone} onChange={(event) => onChange({ timezone: event.target.value })}>{TIMEZONES.map((tz) => <option key={tz} value={tz}>{tz}</option>)}</select></label>
         <label className="block"><span className="mb-1 block text-xs text-mist">排盤性別</span><select className="input-field" value={form.gender} onChange={(event) => onChange({ gender: event.target.value as ProfileInput['gender'] })}><option value="other">不指定</option><option value="female">女性</option><option value="male">男性</option></select></label>
       </div>

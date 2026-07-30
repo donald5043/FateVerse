@@ -55,7 +55,11 @@ export default function ShareLinkButton({ profile }: { profile: ProfileInput }) 
 
   return (
     <>
-      <button className="btn-secondary min-h-10 px-4 py-2 text-sm" type="button" onClick={() => setOpen(true)}><Link2 size={16} />分享連結</button>
+      {/* 手機直式只留圖示，和 ReportActions 的另外兩顆一致，三顆才排得成一列。 */}
+      <button className="btn-secondary min-h-10 px-3 py-2 text-sm sm:px-4" type="button" onClick={() => setOpen(true)} aria-label="分享連結" title="分享連結">
+        <Link2 size={16} />
+        <span className="hidden sm:inline">分享連結</span>
+      </button>
       {open && (
         <div className="fixed inset-0 z-[60] grid place-items-center bg-ink/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="分享連結" onClick={() => setOpen(false)}>
           <div className="w-full max-w-md rounded-3xl border border-white/10 bg-indigo p-6 shadow-glow" onClick={(event) => event.stopPropagation()}>

@@ -1,3 +1,4 @@
+import { ChevronDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   computeFeedbackStats, describeStats, findFeedback, toDateKey, VERDICT_LABELS,
@@ -48,18 +49,30 @@ export default function DailyFeedback({ today = new Date() }: { today?: Date }) 
   });
 
   if (!store.consented) {
+    /*
+     * 還沒同意的時候只佔一行。
+     *
+     * 原本這裡是四行說明加一顆按鈕，在手機直式上吃掉約 250px——
+     * 而它的內容是「要不要開啟一個功能」，不是今天的運勢。
+     * 邀請留在畫面上（一行），細節等有興趣才展開。
+     */
     return (
-      <div className="mt-4 rounded-2xl border border-white/10 bg-ink/40 p-4">
-        <p className="text-sm leading-7 text-cream">想知道這些描述對你到底準不準嗎？</p>
-        <p className="mt-1.5 text-xs leading-6 text-mist">
-          開啟之後，每天可以標記「準／普通／不準」，累積成你自己的紀錄。
-          資料只存在這台裝置，不會上傳，也不會影響隔天算出來的內容。隨時可以刪掉。
-        </p>
-        <button className="btn-secondary mt-3" type="button" disabled={busy} onClick={() => void consent()}>
-          好，開始記錄
-        </button>
-        {error && <p className="mt-2 text-xs text-rose-200" role="alert">{error}</p>}
-      </div>
+      <details className="group mt-4 rounded-2xl border border-white/10 bg-ink/40">
+        <summary className="flex cursor-pointer list-none items-center gap-2 p-4 text-sm leading-6 text-cream [&::-webkit-details-marker]:hidden">
+          <span className="flex-1">想知道這些描述對你到底準不準嗎？</span>
+          <ChevronDown className="shrink-0 text-mist transition group-open:rotate-180" size={16} aria-hidden="true" />
+        </summary>
+        <div className="border-t border-white/10 p-4">
+          <p className="text-xs leading-6 text-mist">
+            開啟之後，每天可以標記「準／普通／不準」，累積成你自己的紀錄。
+            資料只存在這台裝置，不會上傳，也不會影響隔天算出來的內容。隨時可以刪掉。
+          </p>
+          <button className="btn-secondary mt-3" type="button" disabled={busy} onClick={() => void consent()}>
+            好，開始記錄
+          </button>
+          {error && <p className="mt-2 text-xs text-rose-200" role="alert">{error}</p>}
+        </div>
+      </details>
     );
   }
 
