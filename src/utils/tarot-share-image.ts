@@ -1,5 +1,6 @@
 import type { TarotSpreadCard } from '../engines/tarot-engine';
 import { loadImage } from './load-image';
+import { drawShareFooter } from './share-footer';
 
 /**
  * 把抽到的三張牌畫成可分享的 PNG（1080×1350，IG 直式比例）。
@@ -164,9 +165,7 @@ export async function renderTarotShareImage(spread: TarotSpreadCard[]): Promise<
     adviceY += 50;
   });
 
-  context.fillStyle = '#d8b875';
-  context.font = '600 28px "Noto Serif TC", serif';
-  context.fillText('萬象命書 FateVerse', centerX, HEIGHT - 56);
+  drawShareFooter(context, { height: HEIGHT, callToAction: '掃碼抽你自己的三張牌' });
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(

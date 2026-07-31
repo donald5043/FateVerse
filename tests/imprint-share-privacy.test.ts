@@ -54,7 +54,11 @@ function stubCanvas() {
 
 const fingerprint = {
   size: 320, theme: 'wood', coreColor: '#8fd6a0', binaryCode: '101000', hexagramIndex: 40,
-  rings: [], spokes: [], nodes: [], corePolygon: [{ x: 10, y: 10 }, { x: 20, y: 20 }],
+  palette: ['#8fd6a0', '#d8b875', '#7aa6d6'],
+  rings: [{ radius: 60, color: '#8fd6a0', width: 1, dash: false }],
+  spokes: [{ x1: 10, y1: 10, x2: 40, y2: 40, color: '#d8b875', width: 1 }],
+  nodes: [{ x: 30, y: 30, size: 3, color: '#7aa6d6' }],
+  corePolygon: [{ x: 10, y: 10 }, { x: 20, y: 20 }, { x: 15, y: 25 }],
 } as unknown as ChartFingerprint;
 
 const facts: SkyFact[] = [
@@ -98,8 +102,22 @@ describe('宇宙印記分享圖的個資', () => {
   });
 
   it('沒有名字時圖上不出現任何稱謂', async () => {
-    const drawn = stubCanvas();
+    // 不能只查字串包含「的命之圖騰」——頁腳的行動呼籲是「掃碼生成你自己的命之圖騰」，
+    // 那句話跟名字無關。要查的是「某某 的命之圖騰」這個標題句型本身。
+    const titlePattern = /^.+\s的命之圖騰$/;
+
+    const withName = stubCanvas();
+    await renderImprintShareImage({ name: '示範', fingerprint, intro, facts });
+    expect(withName.some((text) => titlePattern.test(text)), '有名字時應該要有標題').toBe(true);
+
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+
+    const withoutName = stubCanvas();
     await renderImprintShareImage({ fingerprint, intro, facts });
-    expect(drawn.join('')).not.toContain('的命之圖騰');
+    expect(
+      withoutName.filter((text) => titlePattern.test(text)),
+      '沒給名字時不該出現任何稱謂',
+    ).toHaveLength(0);
   });
 });

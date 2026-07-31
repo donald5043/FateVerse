@@ -1,6 +1,7 @@
 import type { ChartFingerprint } from '../engines/chart-fingerprint-engine';
 import type { SkyFact } from '../engines/birthday-sky-engine';
 import { loadImage } from './load-image';
+import { drawShareFooter } from './share-footer';
 
 export interface ImprintShareContent {
   name?: string;
@@ -85,55 +86,154 @@ export async function renderImprintShareImage(content: ImprintShareContent): Pro
   const sx = (x: number) => artOffsetX + x * artScale;
   const sy = (y: number) => artOffsetY + y * artScale;
 
-  const glow = context.createRadialGradient(cx, cy, 20, cx, cy, 260);
-  glow.addColorStop(0, `${fp.coreColor}44`);
-  glow.addColorStop(1, 'rgba(0,0,0,0)');
-  context.fillStyle = glow;
-  context.fillRect(artOffsetX, artOffsetY, fp.size * artScale, fp.size * artScale);
+  /*
+   * 圖騰的畫法。
+   *
+   * 第一版是「線框圖」：三到五條細環、十二根等寬輻條、幾個實心小圓點。
+   * 資料本身沒問題，問題是畫法——貼在一張精細的手繪底圖上，它看起來像
+   * 工程示意圖而不是圖騰。使用者的說法是「不符合底圖那種程度的精細」。
+   *
+   * 這裡不動 chart-fingerprint-engine 產生的幾何（畫面上的 SVG 也在用同一份），
+   * 只改繪製方式，讓它像「發光的刻紋」而不是「線稿」：
+   *   1. 每一筆都畫兩層：先用 shadowBlur 畫一層光暈，再疊一筆清晰的細線。
+   *   2. 光暈那層用 lighter 疊加，重疊處的亮度會自然累積，像真的光。
+   *   3. 輻條做成向外淡出的漸層，讀起來是「光線」不是「車輪的輪輻」。
+   *   4. 節點畫成有光暈的星點，不是實心圓。
+   *   5. 最外圈加一圈刻度，增加「星盤儀器」的密度感。
+   */
 
-  fp.rings.forEach((ring) => {
-    context.beginPath();
-    context.arc(cx, cy, ring.radius * artScale, 0, Math.PI * 2);
-    context.strokeStyle = ring.color;
-    context.globalAlpha = 0.55;
-    context.lineWidth = ring.width * artScale;
-    if (ring.dash) context.setLineDash([3 * artScale, 5 * artScale]); else context.setLineDash([]);
+  /** 畫一筆帶光暈的線：先發光、再壓一筆清晰的。 */
+  const glowStroke = (path: () => void, color: string, lineWidth: number, alpha: number, blur: number) => {
+    context.save();
+    context.globalCompositeOperation = 'lighter';
+    context.shadowColor = color;
+    context.shadowBlur = blur;
+    context.strokeStyle = color;
+    context.globalAlpha = alpha * 0.55;
+    context.lineWidth = lineWidth * 1.6;
+    path();
     context.stroke();
+    context.restore();
+
+    context.save();
+    context.shadowBlur = 0;
+    context.strokeStyle = color;
+    context.globalAlpha = alpha;
+    context.lineWidth = lineWidth;
+    path();
+    context.stroke();
+    context.restore();
+  };
+
+  // 中央的暈光。半徑跟著圖騰大小走，放大時才不會顯得中心空掉。
+  const halo = context.createRadialGradient(cx, cy, 10, cx, cy, artSize * 0.52);
+  halo.addColorStop(0, `${fp.coreColor}55`);
+  halo.addColorStop(0.45, `${fp.coreColor}1c`);
+  halo.addColorStop(1, 'rgba(0,0,0,0)');
+  context.save();
+  context.globalCompositeOperation = 'lighter';
+  context.fillStyle = halo;
+  context.fillRect(cx - artSize * 0.6, cy - artSize * 0.6, artSize * 1.2, artSize * 1.2);
+  context.restore();
+
+  // 同心環
+  fp.rings.forEach((ring) => {
+    const radius = ring.radius * artScale;
+    glowStroke(() => {
+      context.beginPath();
+      context.setLineDash(ring.dash ? [3 * artScale, 5 * artScale] : []);
+      context.arc(cx, cy, radius, 0, Math.PI * 2);
+    }, ring.color, Math.max(1, ring.width * artScale), 0.62, 18);
   });
   context.setLineDash([]);
-  context.globalAlpha = 0.28;
-  fp.spokes.forEach((spoke) => {
+
+  // 最外圈刻度：把星盤儀器的密度感補上來。
+  // rings 目前一定有 3~5 條，但空陣列會讓 Math.max 回傳 -Infinity，
+  // 刻度就會畫在 NaN 座標上。加個底線比之後追這種畫面錯誤便宜。
+  const outerRadius = (fp.rings.length ? Math.max(...fp.rings.map((ring) => ring.radius)) : 130) * artScale;
+  context.save();
+  context.globalCompositeOperation = 'lighter';
+  context.strokeStyle = fp.palette[0];
+  for (let index = 0; index < 72; index += 1) {
+    const angle = (Math.PI * 2 * index) / 72;
+    const long = index % 6 === 0;
+    const inner = outerRadius + 6 * artScale;
+    const outer = inner + (long ? 16 : 8) * artScale;
+    context.globalAlpha = long ? 0.5 : 0.24;
+    context.lineWidth = (long ? 1.4 : 0.8) * artScale;
     context.beginPath();
-    context.moveTo(sx(spoke.x1), sy(spoke.y1));
-    context.lineTo(sx(spoke.x2), sy(spoke.y2));
-    context.strokeStyle = spoke.color;
-    context.lineWidth = spoke.width * artScale;
+    context.moveTo(cx + Math.cos(angle) * inner, cy + Math.sin(angle) * inner);
+    context.lineTo(cx + Math.cos(angle) * outer, cy + Math.sin(angle) * outer);
     context.stroke();
-  });
-  context.globalAlpha = 1;
-  context.beginPath();
-  fp.corePolygon.forEach((point, index) => {
-    const px = sx(point.x);
-    const py = sy(point.y);
-    if (index === 0) context.moveTo(px, py); else context.lineTo(px, py);
-  });
-  context.closePath();
-  context.fillStyle = fp.coreColor;
-  context.globalAlpha = 0.16;
-  context.fill();
-  context.globalAlpha = 0.8;
-  context.lineWidth = 1.4 * artScale;
-  context.strokeStyle = fp.coreColor;
-  context.stroke();
-  context.globalAlpha = 1;
-  fp.nodes.forEach((node) => {
+  }
+  context.restore();
+
+  // 輻條：向外淡出，讀起來是光線不是輪輻。
+  fp.spokes.forEach((spoke) => {
+    const x1 = sx(spoke.x1);
+    const y1 = sy(spoke.y1);
+    const x2 = sx(spoke.x2);
+    const y2 = sy(spoke.y2);
+    const fade = context.createLinearGradient(x1, y1, x2, y2);
+    fade.addColorStop(0, spoke.color);
+    fade.addColorStop(1, 'rgba(0,0,0,0)');
+    context.save();
+    context.globalCompositeOperation = 'lighter';
+    context.globalAlpha = 0.45;
+    context.strokeStyle = fade;
+    context.lineWidth = Math.max(1, spoke.width * artScale * 1.4);
     context.beginPath();
-    context.arc(sx(node.x), sy(node.y), node.size * artScale, 0, Math.PI * 2);
-    context.fillStyle = node.color;
-    context.globalAlpha = 0.85;
-    context.fill();
+    context.moveTo(x1, y1);
+    context.lineTo(x2, y2);
+    context.stroke();
+    context.restore();
   });
-  context.globalAlpha = 1;
+
+  // 核心多邊形：漸層填色 + 發光描邊。
+  const corePath = () => {
+    context.beginPath();
+    fp.corePolygon.forEach((point, index) => {
+      const px = sx(point.x);
+      const py = sy(point.y);
+      if (index === 0) context.moveTo(px, py); else context.lineTo(px, py);
+    });
+    context.closePath();
+  };
+  const coreFill = context.createRadialGradient(cx, cy, 2, cx, cy, 50 * artScale);
+  coreFill.addColorStop(0, `${fp.coreColor}88`);
+  coreFill.addColorStop(1, `${fp.coreColor}14`);
+  context.save();
+  corePath();
+  context.fillStyle = coreFill;
+  context.fill();
+  context.restore();
+  glowStroke(corePath, fp.coreColor, Math.max(1.2, 1.6 * artScale), 0.92, 26);
+
+  // 節點：有光暈的星點。
+  fp.nodes.forEach((node) => {
+    const nx = sx(node.x);
+    const ny = sy(node.y);
+    const radius = Math.max(2, node.size * artScale);
+    context.save();
+    context.globalCompositeOperation = 'lighter';
+    const spark = context.createRadialGradient(nx, ny, 0, nx, ny, radius * 4);
+    spark.addColorStop(0, node.color);
+    spark.addColorStop(0.28, `${node.color}66`);
+    spark.addColorStop(1, 'rgba(0,0,0,0)');
+    context.fillStyle = spark;
+    context.beginPath();
+    context.arc(nx, ny, radius * 4, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+
+    context.save();
+    context.fillStyle = '#fdf9ef';
+    context.globalAlpha = 0.95;
+    context.beginPath();
+    context.arc(nx, ny, radius * 0.55, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+  });
 
   // 卦碼
   context.fillStyle = 'rgba(174,184,214,0.7)';
@@ -160,10 +260,7 @@ export async function renderImprintShareImage(content: ImprintShareContent): Pro
     });
   }
 
-  context.textAlign = 'center';
-  context.fillStyle = '#d8b875';
-  context.font = '600 28px "Noto Serif TC", serif';
-  context.fillText('萬象命書 FateVerse', centerX, height - 56);
+  drawShareFooter(context, { height, callToAction: '掃碼生成你自己的命之圖騰' });
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('產生分享圖失敗，請再試一次。'))), 'image/png');
