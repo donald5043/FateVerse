@@ -1,4 +1,4 @@
-import { Moon, RefreshCw, Sparkles, Star, Sun } from 'lucide-react';
+import { ImageDown, Moon, RefreshCw, Sparkles, Star, Sun } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import BackToReportLink from '../components/common/BackToReportLink';
@@ -6,6 +6,8 @@ import Disclaimer from '../components/common/Disclaimer';
 import TarotFlipCard from '../components/common/TarotFlipCard';
 import { getBirthCards, drawSpread, type TarotSpreadCard } from '../engines/tarot-engine';
 import { useFateStore } from '../store/useFateStore';
+import { shareOrDownload } from '../utils/share-file';
+import { renderTarotShareImage } from '../utils/tarot-share-image';
 
 const POSITION_ICONS = { 過去: Moon, 現在: Sun, 未來: Star } as const;
 
@@ -14,6 +16,8 @@ export default function TarotPage() {
   const [spread, setSpread] = useState<TarotSpreadCard[]>([]);
   const [flipped, setFlipped] = useState<boolean[]>([false, false, false]);
   const [drawCount, setDrawCount] = useState(0);
+  const [sharing, setSharing] = useState(false);
+  const [shareError, setShareError] = useState('');
   const birthCards = profile?.birthDate
     ? getBirthCards(profile.birthDate.replaceAll('-', '').split('').map(Number))
     : undefined;
@@ -30,6 +34,21 @@ export default function TarotPage() {
     setSpread(drawSpread());
     setFlipped([false, false, false]);
     setDrawCount((count) => count + 1);
+    setShareError('');
+  };
+
+  const share = async () => {
+    if (sharing) return;
+    setSharing(true);
+    setShareError('');
+    try {
+      const blob = await renderTarotShareImage(spread);
+      await shareOrDownload(blob, `fateverse-tarot-${Date.now()}.png`, '我抽到的三張牌｜萬象命書');
+    } catch (reason) {
+      setShareError(reason instanceof Error ? reason.message : '產生分享圖失敗，請再試一次。');
+    } finally {
+      setSharing(false);
+    }
   };
   const flipAll = () => setFlipped([true, true, true]);
   const flipOne = (index: number) => setFlipped((current) => current.map((value, i) => (i === index ? true : value)));
@@ -70,6 +89,18 @@ export default function TarotPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {allFlipped && (
+        <div className="reveal mx-auto mt-8 max-w-4xl text-center">
+          <button className="btn-primary" type="button" disabled={sharing} onClick={() => void share()}>
+            <ImageDown size={17} />{sharing ? '產生中…' : '分享這三張牌'}
+          </button>
+          <p className="mt-2.5 text-xs leading-5 text-mist/70">
+            圖上只有這三張牌，不含你的生日或任何個人資料。圖片在你的裝置上繪製，不會上傳。
+          </p>
+          {shareError && <p className="mt-2 text-sm text-rose-200" role="alert">{shareError}</p>}
         </div>
       )}
 

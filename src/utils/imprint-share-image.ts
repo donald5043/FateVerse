@@ -1,20 +1,23 @@
 import type { ChartFingerprint } from '../engines/chart-fingerprint-engine';
 import type { SkyFact } from '../engines/birthday-sky-engine';
+import { loadImage } from './load-image';
 
 export interface ImprintShareContent {
   name?: string;
   fingerprint: ChartFingerprint;
   intro: string;
   facts: SkyFact[];
-}
-
-function loadImage(source: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error('圖騰底圖載入失敗。'));
-    image.src = source;
-  });
+  /**
+   * 要不要把「出生那天的快照」畫進圖裡。預設 false。
+   *
+   * 那一段會洩漏出生日期——不只是 intro 裡的「1985 年 7 月 19 日」，
+   * 農曆、一年中的第幾天、距離今天幾天，每一項單獨都足以反推出確切日期。
+   * 這張圖是設計來貼到社群上的，所以預設只畫圖騰，要帶生日得自己勾。
+   *
+   * 命盤分享卡（share-card.ts）本來就守著「不含生日與出生時間」，
+   * 這裡沿用同一條線。
+   */
+  includeBirthday?: boolean;
 }
 
 function drawImageCover(context: CanvasRenderingContext2D, image: HTMLImageElement, width: number, height: number) {
@@ -70,10 +73,12 @@ export async function renderImprintShareImage(content: ImprintShareContent): Pro
     context.fillText(`${content.name} 的命之圖騰`, centerX, 195);
   }
 
-  // 圖騰：把 fingerprint 圖元縮放到分享圖上半部。
-  const artScale = 560 / content.fingerprint.size;
+  // 圖騰：不畫生日快照時就沒有下半部要留，圖騰可以放大並置中，版面才不會空掉。
+  const withBirthday = content.includeBirthday === true;
+  const artSize = withBirthday ? 560 : 720;
+  const artScale = artSize / content.fingerprint.size;
   const artOffsetX = centerX - (content.fingerprint.size * artScale) / 2;
-  const artOffsetY = 240;
+  const artOffsetY = withBirthday ? 240 : 300;
   const fp = content.fingerprint;
   const cx = artOffsetX + (content.fingerprint.size / 2) * artScale;
   const cy = artOffsetY + (content.fingerprint.size / 2) * artScale;
@@ -135,23 +140,25 @@ export async function renderImprintShareImage(content: ImprintShareContent): Pro
   context.font = '400 24px ui-monospace, monospace';
   context.fillText(`${fp.binaryCode} · 卦 ${fp.hexagramIndex}`, centerX, artOffsetY + fp.size * artScale + 46);
 
-  // 出生那天快照
-  let factY = artOffsetY + fp.size * artScale + 110;
-  context.fillStyle = '#aeb8d6';
-  context.font = '400 28px "Noto Sans TC", sans-serif';
-  context.fillText(content.intro.length > 30 ? content.intro.slice(0, 30) : content.intro, centerX, factY);
-  factY += 54;
+  // 出生那天快照：只有使用者明確勾選才畫，因為它會洩漏出生日期。
+  if (withBirthday) {
+    let factY = artOffsetY + fp.size * artScale + 110;
+    context.fillStyle = '#aeb8d6';
+    context.font = '400 28px "Noto Sans TC", sans-serif';
+    context.fillText(content.intro.length > 30 ? content.intro.slice(0, 30) : content.intro, centerX, factY);
+    factY += 54;
 
-  context.font = '400 30px "Noto Sans TC", sans-serif';
-  content.facts.slice(0, 6).forEach((fact) => {
-    context.fillStyle = '#778199';
-    context.textAlign = 'right';
-    context.fillText(fact.label, centerX - 20, factY);
-    context.fillStyle = '#f5f0e6';
-    context.textAlign = 'left';
-    context.fillText(fact.value.length > 18 ? `${fact.value.slice(0, 18)}…` : fact.value, centerX + 20, factY);
-    factY += 46;
-  });
+    context.font = '400 30px "Noto Sans TC", sans-serif';
+    content.facts.slice(0, 6).forEach((fact) => {
+      context.fillStyle = '#778199';
+      context.textAlign = 'right';
+      context.fillText(fact.label, centerX - 20, factY);
+      context.fillStyle = '#f5f0e6';
+      context.textAlign = 'left';
+      context.fillText(fact.value.length > 18 ? `${fact.value.slice(0, 18)}…` : fact.value, centerX + 20, factY);
+      factY += 46;
+    });
+  }
 
   context.textAlign = 'center';
   context.fillStyle = '#d8b875';

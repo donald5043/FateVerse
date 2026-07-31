@@ -1,5 +1,6 @@
-import { Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { drawDailyCard } from '../../engines/tarot-engine';
 import { useFateStore } from '../../store/useFateStore';
 import TarotFlipCard from './TarotFlipCard';
@@ -55,9 +56,21 @@ export default function DailyTarotCard({ today }: { today?: Date }) {
             <span className="text-[11px] font-semibold tracking-wider text-violet-200">今天可以做的一件事</span>
             <p className="mt-1.5 leading-7 text-cream">{daily.advice}</p>
           </div>
-          <p className="mt-auto pt-3 text-[11px] leading-5 text-mist/60">
+          <p className="mt-3 text-[11px] leading-5 text-mist/60">
             翻開之前你希望是哪一張？如果現在有點失望，那個失望比這張牌更值得想一下。
           </p>
+          {/*
+            下一步放在這裡，不放在首頁的目錄裡。
+            翻開牌的那一秒是使用者最想再多看一點的時候——這是延續，
+            不是又一個入口。三張牌那頁抽完可以直接產一張圖分享。
+          */}
+          <Link
+            to="/tarot"
+            className="group mt-auto inline-flex items-center gap-1.5 pt-3 text-sm font-semibold text-violet-200 transition hover:text-cream"
+          >
+            抽三張牌，看過去現在未來
+            <ArrowRight className="transition group-hover:translate-x-0.5" size={15} />
+          </Link>
         </>
       ) : (
         <p className="mt-auto pt-4 text-center text-[11px] text-mist/60">

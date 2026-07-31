@@ -60,13 +60,33 @@ describe('介面表面積', () => {
   });
 
   it('首頁不再直接列出實驗性功能', () => {
+    /*
+     * 這條守的是「首頁不要變回一份目錄」，不是「站上任何地方都不准連過去」。
+     *
+     * 情境入口是另一回事：使用者在首頁翻開今日一張牌之後，卡片裡出現
+     * 「抽三張牌」——那是他剛做完的事的下一步，不是目錄的第 14 項。
+     * 那個連結寫在 DailyTarotCard 裡，本來就不在這個檔案的檢查範圍，
+     * 這是刻意的區分，不是繞過檢查。同理，報告讀完之後連到宇宙印記。
+     */
     const source = read('src/pages/HomePage.tsx');
-    // 這些頁面仍然存在、網址也沒動，只是不該從首頁直接曝光。
     ['/mirror', '/ritual', '/narrative', '/imprint', '/capsule', '/palm', '/fortune', '/tarot', '/daily']
       .forEach((route) => {
-        expect(source, `首頁不該直接連到 ${route}，請放進 /lab`).not.toContain(`"${route}"`);
+        expect(source, `首頁本體不該直接連到 ${route}；要曝光請放在情境入口或 /lab`).not.toContain(`"${route}"`);
       });
     expect(source, '首頁要留一個通往實驗室的入口').toContain('/lab');
+  });
+
+  it('會產出分享圖的功能，都有情境入口不是只躺在實驗室裡', () => {
+    // 塔羅三張牌與宇宙印記是這個站唯一「拿得走、貼得出去」的產出。
+    // 只放在 /lab 目錄第 N 項等於沒有人會看到。
+    expect(
+      read('src/components/common/DailyTarotCard.tsx'),
+      '翻開今日一張牌之後，要有連到三張牌的下一步',
+    ).toContain('to="/tarot"');
+    expect(
+      read('src/pages/ReportPage.tsx'),
+      '報告讀完結論之後，要有連到宇宙印記的入口',
+    ).toContain('to="/imprint"');
   });
 
   it('收進實驗室的功能，路由全部還活著', () => {

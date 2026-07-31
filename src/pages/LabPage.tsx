@@ -12,7 +12,26 @@ import Disclaimer from '../components/common/Disclaimer';
  * 收進來不等於砍掉：網址一個都沒動，之前分享出去的連結全部還能開。
  */
 
+/**
+ * 可以分享出去的那幾個。
+ *
+ * 塔羅三張牌與宇宙印記都會產出一張 1080×1350 的圖，是這個站唯一
+ * 「拿得走、貼得出去」的東西。它們的主要入口在情緒高點上（首頁翻完今日牌之後、
+ * 報告讀完結論之後），這裡是備援——但既然來了，就該排在最前面並講清楚。
+ */
+const SHAREABLE = new Set(['/tarot', '/imprint']);
+
 const EXPERIMENTS = [
+  {
+    to: '/tarot',
+    title: '塔羅三張牌',
+    text: '心裡想一個問題，抽三張看過去、現在、未來。抽完可以直接產一張圖分享。',
+  },
+  {
+    to: '/imprint',
+    title: '宇宙印記',
+    text: '你的命之圖騰，和你出生那天實際的天空。整張存成圖片帶走。',
+  },
   {
     to: '/mirror',
     title: '巴納姆鏡子',
@@ -34,19 +53,9 @@ const EXPERIMENTS = [
     text: '把命盤寫成一段第一人稱的故事，讀起來像小說而不是報告。',
   },
   {
-    to: '/imprint',
-    title: '宇宙印記',
-    text: '你的命之圖騰，和你出生那天實際的天空。',
-  },
-  {
     to: '/capsule',
     title: '時間膠囊',
     text: '寫一封給未來自己的信，到期才能打開。存在你自己的裝置上。',
-  },
-  {
-    to: '/tarot',
-    title: '塔羅三牌陣',
-    text: '過去、現在、未來各抽一張。首頁的今日一張牌是它的簡版。',
   },
   {
     to: '/daily',
@@ -88,7 +97,12 @@ export default function LabPage() {
             className="group flex items-start gap-4 border-b border-white/[0.06] py-4 transition hover:border-gold/40"
           >
             <div className="min-w-0 flex-1">
-              <h2 className="font-serif text-base font-bold text-cream transition group-hover:text-gold">{item.title}</h2>
+              <h2 className="flex flex-wrap items-center gap-2 font-serif text-base font-bold text-cream transition group-hover:text-gold">
+                {item.title}
+                {SHAREABLE.has(item.to) && (
+                  <span className="rounded-full border border-gold/30 bg-gold/[0.1] px-2 py-0.5 text-[11px] font-normal text-gold">可以存成圖分享</span>
+                )}
+              </h2>
               <p className="mt-1 text-[13px] leading-6 text-mist">{item.text}</p>
             </div>
             <ArrowRight className="mt-1 shrink-0 text-mist/40 transition group-hover:text-gold" size={15} />

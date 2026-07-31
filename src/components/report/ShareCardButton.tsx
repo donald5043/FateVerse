@@ -1,25 +1,7 @@
 import { ImageDown } from 'lucide-react';
 import { useState } from 'react';
 import { renderShareCard, shareCardToBlob, type ShareCardData } from '../../utils/share-card';
-
-/** 是否能用系統分享送出檔案。不支援時走下載，不報錯。 */
-function canShareFile(file: File): boolean {
-  return typeof navigator !== 'undefined'
-    && typeof navigator.share === 'function'
-    && typeof navigator.canShare === 'function'
-    && navigator.canShare({ files: [file] });
-}
-
-function downloadBlob(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-}
+import { shareOrDownload } from '../../utils/share-file';
 
 /**
  * 產生命盤分享圖。
@@ -38,17 +20,7 @@ export default function ShareCardButton({ data }: { data: Omit<ShareCardData, 'n
       const canvas = document.createElement('canvas');
       renderShareCard({ ...data, nickname }, canvas);
       const blob = await shareCardToBlob(canvas);
-      const file = new File([blob], 'fateverse.png', { type: 'image/png' });
-
-      if (canShareFile(file)) {
-        try {
-          await navigator.share({ files: [file], title: '萬象命書 FateVerse' });
-          return;
-        } catch {
-          // 使用者取消或系統分享失敗時，退回下載。
-        }
-      }
-      downloadBlob(blob, 'fateverse.png');
+      await shareOrDownload(blob, 'fateverse.png', '萬象命書 FateVerse');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : '產生分享圖失敗，請再試一次。');
     } finally {

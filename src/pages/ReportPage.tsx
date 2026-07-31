@@ -1,5 +1,5 @@
 import {
-  ChevronRight, ListTree, RefreshCw, ShieldCheck, Sparkles, Waypoints,
+  ChevronRight, Fingerprint, ListTree, RefreshCw, ShieldCheck, Sparkles, Waypoints,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -195,6 +195,22 @@ export default function ReportPage() {
             <span>{opener.evidence}</span>
           </p>
         </article>
+
+        {/*
+          宇宙印記的入口放在結論下面：剛讀完自己那一句的當下，
+          最想要的是「把它變成一張圖」。放進實驗室目錄裡沒有人會找到。
+        */}
+        <Link
+          to="/imprint"
+          className="group mt-4 flex items-center gap-3 rounded-[20px] border border-gold/25 bg-gold/[0.05] px-5 py-4 transition hover:border-gold/50"
+        >
+          <Fingerprint className="shrink-0 text-gold" size={20} />
+          <span className="min-w-0 flex-1">
+            <span className="block font-serif text-base font-semibold text-cream">把這張盤變成一張圖</span>
+            <span className="mt-0.5 block text-[13px] leading-6 text-mist">命之圖騰與出生那天的天空，可以分享出去</span>
+          </span>
+          <ChevronRight className="shrink-0 text-mist transition group-hover:translate-x-0.5 group-hover:text-gold" size={18} />
+        </Link>
 
         <Collapsible className="mt-4" title="完整摘要與盤面數字" hint="日主、五行總數、四柱與那段較長的總結都在這裡">
           <p className="leading-8 text-mist">{report.summary}</p>

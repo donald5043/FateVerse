@@ -1,4 +1,4 @@
-import { Download, Fingerprint, Globe2, Sparkles, Waypoints } from 'lucide-react';
+import { Fingerprint, Globe2, Share2, Sparkles, Waypoints } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import BackToReportLink from '../components/common/BackToReportLink';
@@ -10,12 +10,15 @@ import { buildChartFingerprint } from '../engines/chart-fingerprint-engine';
 import { buildSoundFingerprint } from '../engines/sound-fingerprint-engine';
 import { useFateStore } from '../store/useFateStore';
 import { renderImprintShareImage } from '../utils/imprint-share-image';
+import { shareOrDownload } from '../utils/share-file';
 
 export default function CosmicImprintPage() {
   const input = useFateStore((state) => state.reportInput);
   const profile = useFateStore((state) => state.profileInput);
   const [downloading, setDownloading] = useState(false);
   const [shareError, setShareError] = useState('');
+  // 預設不把生日快照畫進圖裡：那一段會洩漏確切出生日期，而這張圖是要貼出去的。
+  const [includeBirthday, setIncludeBirthday] = useState(false);
 
   const fingerprint = useMemo(() => (input ? buildChartFingerprint(input) : undefined), [input]);
   const sound = useMemo(() => (input ? buildSoundFingerprint(input) : undefined), [input]);
@@ -33,19 +36,16 @@ export default function CosmicImprintPage() {
     );
   }
 
-  const downloadShare = async () => {
+  const share = async () => {
+    if (downloading) return;
     setDownloading(true);
     setShareError('');
     try {
-      const blob = await renderImprintShareImage({ name: profile?.name, fingerprint, intro: sky.intro, facts: sky.facts });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `fateverse-imprint-${Date.now()}.png`;
-      link.click();
-      URL.revokeObjectURL(url);
+      const blob = await renderImprintShareImage({ name: profile?.name, fingerprint, intro: sky.intro, facts: sky.facts, includeBirthday });
+      // 手機上「下載」等於死路：存進相簿還要自己開 IG、找檔案。優先走系統分享。
+      await shareOrDownload(blob, `fateverse-imprint-${Date.now()}.png`, '我的宇宙印記｜萬象命書');
     } catch (reason) {
-      setShareError(reason instanceof Error ? reason.message : '產生分享圖失敗。');
+      setShareError(reason instanceof Error ? reason.message : '產生分享圖失敗，請再試一次。');
     } finally {
       setDownloading(false);
     }
@@ -90,8 +90,24 @@ export default function CosmicImprintPage() {
 
       {shareError && <p className="mx-auto mt-6 max-w-4xl rounded-xl border border-rose-200/20 bg-rose-200/[0.08] p-3 text-sm text-rose-100" role="alert">{shareError}</p>}
 
-      <div className="mx-auto mt-8 flex max-w-4xl flex-wrap justify-center gap-3">
-        <button className="btn-primary" type="button" disabled={downloading} onClick={() => void downloadShare()}><Download size={17} />{downloading ? '產生中…' : '下載宇宙印記分享圖'}</button>
+      <div className="mx-auto mt-8 max-w-md rounded-2xl border border-gold/[0.16] bg-white/[0.03] p-4">
+        <label className="flex items-start gap-2.5 text-sm leading-6 text-cream">
+          <input
+            type="checkbox"
+            className="mt-1 size-4 shrink-0 accent-gold"
+            checked={includeBirthday}
+            onChange={(event) => setIncludeBirthday(event.target.checked)}
+          />
+          <span>也把「出生那天的世界」放進圖裡</span>
+        </label>
+        <p className="mt-1.5 pl-6.5 text-[11px] leading-5 text-mist/80">
+          勾了之後，圖上會出現你的出生日期與農曆——貼到公開的地方等於公開生日。
+          不勾的話圖上只有命之圖騰與卦碼，看不出你是誰。
+        </p>
+      </div>
+
+      <div className="mx-auto mt-4 flex max-w-4xl flex-wrap justify-center gap-3">
+        <button className="btn-primary" type="button" disabled={downloading} onClick={() => void share()}><Share2 size={17} />{downloading ? '產生中…' : '分享我的宇宙印記'}</button>
         <Link className="btn-secondary" to="/report"><Sparkles size={17} />回到完整報告</Link>
       </div>
       <div className="mx-auto mt-10 max-w-4xl"><Disclaimer /></div>
