@@ -61,30 +61,58 @@ describe('分享圖的 QR code', () => {
     });
   });
 
-  it('畫出來時模組對齊整數像素，而且留了白邊', () => {
-    // 模組寬度若不是整數，相鄰模組之間會出現反鋸齒灰縫，掃描率會掉。
-    const rects: { x: number; y: number; w: number; h: number }[] = [];
-    let filled = '';
+  it('畫出來時：定位圖案保持實心、資料模組是圓點、格線對齊整數像素', () => {
+    /*
+     * 造型化之後不能只數方塊了。這裡驗三件事：
+     * 1. 三個定位圖案畫成完整方框（辨識器靠它們找方向），不是拆成圓點
+     * 2. 其餘資料模組畫成圓點，數量要和矩陣裡扣掉定位區的 '1' 一樣多
+     * 3. 圓點中心落在整數像素上，避免反鋸齒把模組糊掉
+     */
+    const dots: { x: number; y: number; r: number }[] = [];
+    let fills = 0;
     const context = {
       save: () => undefined,
       restore: () => undefined,
-      set fillStyle(value: string) { filled = value; },
-      get fillStyle() { return filled; },
-      fillRect: (x: number, y: number, w: number, h: number) => { rects.push({ x, y, w, h }); },
+      fillStyle: '',
+      strokeStyle: '',
+      lineWidth: 0,
+      beginPath: () => undefined,
+      closePath: () => undefined,
+      moveTo: () => undefined,
+      lineTo: () => undefined,
+      arcTo: () => undefined,
+      arc: (x: number, y: number, r: number) => { dots.push({ x, y, r }); },
+      fill: () => { fills += 1; },
+      stroke: () => undefined,
     } as unknown as CanvasRenderingContext2D;
 
-    const total = drawQr(context, 0, 0, { size: 132 });
-    expect(total).toBe(qrTotalSize(132));
+    const total = drawQr(context, 0, 0, { size: 174, border: 'gold' });
+    expect(total).toBe(qrTotalSize(174));
 
-    // 第一個是留白底，其餘是模組。
-    const [backdrop, ...modules] = rects;
-    expect(backdrop.w, '底色要蓋滿含留白的整塊').toBe(total);
-    modules.forEach((rect) => {
-      expect(Number.isInteger(rect.x), '模組 x 不是整數像素').toBe(true);
-      expect(Number.isInteger(rect.w), '模組寬不是整數像素').toBe(true);
+    const moduleSize = 6;
+    const finderSize = 7;
+    const isFinder = (row: number, col: number) => (
+      (row < finderSize && col < finderSize)
+      || (row < finderSize && col >= SHARE_QR_SIZE - finderSize)
+      || (row >= SHARE_QR_SIZE - finderSize && col < finderSize)
+    );
+
+    let expectedDots = 0;
+    SHARE_QR_ROWS.forEach((line, row) => {
+      [...line].forEach((bit, col) => {
+        if (bit === '1' && !isFinder(row, col)) expectedDots += 1;
+      });
     });
-    // 深色模組數要和矩陣裡的 '1' 一樣多。
-    const expected = SHARE_QR_ROWS.join('').split('').filter((bit) => bit === '1').length;
-    expect(modules).toHaveLength(expected);
+    expect(dots, '圓點數量要等於定位區以外的深色模組數').toHaveLength(expectedDots);
+
+    // fill() 的來源：面板 1 次 + 三個定位圖案各 3 層 + 每顆圓點 1 次。
+    // 扣掉圓點之後剩下的必須正好是 1 + 9，代表定位圖案是實心方框而不是圓點。
+    expect(fills - dots.length, '定位圖案要畫成實心方框，不是拆成圓點').toBe(1 + 3 * 3);
+
+    dots.forEach((dot) => {
+      expect(Number.isInteger(dot.x), `圓點 x=${dot.x} 沒對齊整數像素`).toBe(true);
+      expect(Number.isInteger(dot.y), `圓點 y=${dot.y} 沒對齊整數像素`).toBe(true);
+      expect(dot.r).toBeGreaterThan(moduleSize * 0.3);
+    });
   });
 });

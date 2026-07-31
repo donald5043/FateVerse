@@ -1,6 +1,6 @@
 import type { TarotSpreadCard } from '../engines/tarot-engine';
 import { loadImage } from './load-image';
-import { drawShareFooter } from './share-footer';
+import { drawShareFooter, shareFooterTop } from './share-footer';
 
 /**
  * 把抽到的三張牌畫成可分享的 PNG（1080×1350，IG 直式比例）。
@@ -74,13 +74,23 @@ export async function renderTarotShareImage(spread: TarotSpreadCard[]): Promise<
   context.font = '700 52px "Noto Serif TC", serif';
   context.fillText('我抽到的三張牌', centerX, 190);
 
+  /*
+   * 版面先問頁腳從哪裡開始，再決定牌多大、建議排幾行。
+   *
+   * 這裡踩過和宇宙印記一樣的坑：座標寫死，之後頁腳一變高（QR 為了掃得到
+   * 從 148px 長到 222px），建議框就直接壓進 QR 的留白區——畫面上看起來
+   * 只是靠得近，實際上解碼器已經掃不到了。
+   */
+  const footerTop = shareFooterTop(HEIGHT);
+  const contentBottom = footerTop - 40;
+
   // 三張牌：塔羅牌面是 2:3 直式。
-  const cardWidth = 300;
-  const cardHeight = 450;
+  const cardWidth = 268;
+  const cardHeight = 400;
   const gap = 28;
   const totalWidth = cardWidth * 3 + gap * 2;
   const startX = (WIDTH - totalWidth) / 2;
-  const cardY = 250;
+  const cardY = 225;
 
   for (let index = 0; index < 3; index += 1) {
     const { card, reversed, position } = spread[index];
@@ -137,14 +147,18 @@ export async function renderTarotShareImage(spread: TarotSpreadCard[]): Promise<
    * 改成一個有邊框的區塊，把版面收滿——分享圖是要被貼出去的，留白不能是意外。
    */
   const present = spread.find((item) => item.position === '現在') ?? spread[1];
-  const boxTop = cardY + cardHeight + 190;
+  const boxTop = cardY + cardHeight + 170;
   const boxLeft = 90;
   const boxWidth = WIDTH - boxLeft * 2;
+  const LINE_HEIGHT = 50;
+  const BOX_CHROME = 120;
 
   context.textAlign = 'center';
   context.font = '400 32px "Noto Sans TC", sans-serif';
-  const adviceLines = wrapByWidth(context, present.card.advice, boxWidth - 100).slice(0, 4);
-  const boxHeight = 120 + adviceLines.length * 50;
+  // 排得下幾行就排幾行；寧可少一行，也不要壓到 QR 的留白區。
+  const maxLines = Math.max(1, Math.floor((contentBottom - boxTop - BOX_CHROME) / LINE_HEIGHT));
+  const adviceLines = wrapByWidth(context, present.card.advice, boxWidth - 100).slice(0, Math.min(4, maxLines));
+  const boxHeight = BOX_CHROME + adviceLines.length * LINE_HEIGHT;
 
   roundedPath(context, boxLeft, boxTop, boxWidth, boxHeight, 28);
   context.fillStyle = 'rgba(201,160,240,0.06)';
@@ -162,7 +176,7 @@ export async function renderTarotShareImage(spread: TarotSpreadCard[]): Promise<
   let adviceY = boxTop + 118;
   adviceLines.forEach((line) => {
     context.fillText(line, centerX, adviceY);
-    adviceY += 50;
+    adviceY += LINE_HEIGHT;
   });
 
   drawShareFooter(context, { height: HEIGHT, callToAction: '掃碼抽你自己的三張牌' });

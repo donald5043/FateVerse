@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderImprintShareImage } from '../src/utils/imprint-share-image';
+import { shareFooterTop } from '../src/utils/share-footer';
 import type { ChartFingerprint } from '../src/engines/chart-fingerprint-engine';
 import type { SkyFact } from '../src/engines/birthday-sky-engine';
 
@@ -17,6 +18,7 @@ import type { SkyFact } from '../src/engines/birthday-sky-engine';
 
 function stubCanvas() {
   const drawn: string[] = [];
+  const placed: { text: string; y: number }[] = [];
   const context = {
     fillStyle: '', strokeStyle: '', lineWidth: 0, font: '', globalAlpha: 1,
     textAlign: '' as CanvasTextAlign, lineCap: '' as CanvasLineCap,
@@ -26,7 +28,7 @@ function stubCanvas() {
     createRadialGradient: () => ({ addColorStop: () => undefined }),
     fillRect: () => undefined,
     beginPath: () => undefined, closePath: () => undefined,
-    moveTo: () => undefined, lineTo: () => undefined, arc: () => undefined,
+    moveTo: () => undefined, lineTo: () => undefined, arc: () => undefined, arcTo: () => undefined,
     quadraticCurveTo: () => undefined, bezierCurveTo: () => undefined,
     ellipse: () => undefined, rect: () => undefined, clip: () => undefined,
     translate: () => undefined, rotate: () => undefined, scale: () => undefined,
@@ -34,7 +36,7 @@ function stubCanvas() {
     fill: () => undefined, stroke: () => undefined,
     drawImage: () => undefined,
     measureText: (text: string) => ({ width: [...text].length * 20 }),
-    fillText: (text: string) => { drawn.push(text); },
+    fillText: (text: string, _x: number, y: number) => { drawn.push(text); placed.push({ text, y }); },
   };
   const canvas = {
     width: 0,
@@ -53,7 +55,7 @@ function stubCanvas() {
     set src(_value: string) { queueMicrotask(() => this.onerror?.()); }
   }
   vi.stubGlobal('Image', FailingImage);
-  return drawn;
+  return Object.assign(drawn, { placed });
 }
 
 const fingerprint = {
@@ -103,6 +105,28 @@ describe('宇宙印記分享圖的個資', () => {
     const all = drawn.join('');
     expect(all).toContain('農曆');
     expect(all).toContain('一九八五年六月初二');
+  });
+
+  it('勾了生日快照之後，內容不會壓到頁腳', async () => {
+    /*
+     * 這是使用者回報的畫面問題：勾了「出生那天的快照」之後，
+     * 「距離今天 13,922 天」直接疊在品牌字和 QR 上。
+     *
+     * 原因是版面座標寫死的，沒有人問過頁腳從哪裡開始。
+     * 這條測試就是那個問題的形狀——量的是每一段文字的 y。
+     */
+    const drawn = stubCanvas();
+    await renderImprintShareImage({ name: '示範', fingerprint, intro, facts, includeBirthday: true });
+
+    const footerTop = shareFooterTop(1350);
+    // 頁腳自己畫的那幾行不算，只看頁腳以上的內容有沒有越界。
+    const footerTexts = new Set(['萬象命書 FateVerse', '掃碼生成你自己的命之圖騰', 'fateverse.donald5043.workers.dev']);
+    const spill = drawn.placed.filter((item) => !footerTexts.has(item.text) && item.y > footerTop);
+
+    expect(
+      spill.map((item) => `${item.text}@${item.y}`),
+      `有內容畫到頁腳範圍（y > ${footerTop}）裡`,
+    ).toEqual([]);
   });
 
   it('沒有名字時圖上不出現任何稱謂', async () => {

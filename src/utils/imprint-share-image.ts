@@ -2,7 +2,7 @@ import type { ChartFingerprint } from '../engines/chart-fingerprint-engine';
 import type { SkyFact } from '../engines/birthday-sky-engine';
 import { drawImprintTotem } from './draw-imprint-totem';
 import { loadImage } from './load-image';
-import { drawShareFooter } from './share-footer';
+import { drawShareFooter, shareFooterTop } from './share-footer';
 
 export interface ImprintShareContent {
   name?: string;
@@ -84,11 +84,22 @@ export async function renderImprintShareImage(content: ImprintShareContent): Pro
     context.fillText(`${content.name} 的命之圖騰`, centerX, 195);
   }
 
-  // 圖騰：不畫生日快照時就沒有下半部要留，圖騰可以放大並置中，版面才不會空掉。
+  /*
+   * 版面往上讓出頁腳的空間。
+   *
+   * 之前這裡的座標是寫死的：勾了「出生那天的快照」之後，六列事實一路排到
+   * y=1194，而頁腳從 1146 開始——最後兩列直接壓在品牌字和 QR 上。
+   * 現在改成先問 shareFooterTop() 邊界在哪，再決定圖騰多大、事實排幾列。
+   */
   const withBirthday = content.includeBirthday === true;
-  const artSize = withBirthday ? 560 : 720;
+  const footerTop = shareFooterTop(height);
+  /** 內容和頁腳之間至少留這麼多，才不會擠在一起。 */
+  const FOOTER_GAP = 40;
+  const contentBottom = footerTop - FOOTER_GAP;
+
+  const artSize = withBirthday ? 420 : 700;
   const artOffsetX = centerX - artSize / 2;
-  const artOffsetY = withBirthday ? 240 : 300;
+  const artOffsetY = withBirthday ? 225 : 288;
   const fp = content.fingerprint;
   drawImprintTotem(context, fp, {
     x: artOffsetX,
@@ -104,22 +115,27 @@ export async function renderImprintShareImage(content: ImprintShareContent): Pro
 
   // 出生那天快照：只有使用者明確勾選才畫，因為它會洩漏出生日期。
   if (withBirthday) {
-    let factY = artOffsetY + artSize + 110;
+    const ROW_HEIGHT = 44;
+    let factY = artOffsetY + artSize + 96;
+
     context.fillStyle = '#aeb8d6';
     context.font = '400 28px "Noto Sans TC", sans-serif';
     context.fillText(content.intro.length > 30 ? content.intro.slice(0, 30) : content.intro, centerX, factY);
-    factY += 54;
+    factY += 52;
 
+    // 排得下幾列就畫幾列，不硬塞。寧可少講一項，也不要壓到頁腳。
+    const room = Math.floor((contentBottom - factY) / ROW_HEIGHT) + 1;
     context.font = '400 30px "Noto Sans TC", sans-serif';
-    content.facts.slice(0, 6).forEach((fact) => {
+    content.facts.slice(0, Math.max(0, Math.min(6, room))).forEach((fact) => {
       context.fillStyle = '#778199';
       context.textAlign = 'right';
       context.fillText(fact.label, centerX - 20, factY);
       context.fillStyle = '#f5f0e6';
       context.textAlign = 'left';
       context.fillText(fact.value.length > 18 ? `${fact.value.slice(0, 18)}…` : fact.value, centerX + 20, factY);
-      factY += 46;
+      factY += ROW_HEIGHT;
     });
+    context.textAlign = 'center';
   }
 
   drawShareFooter(context, { height, callToAction: '掃碼生成你自己的命之圖騰' });

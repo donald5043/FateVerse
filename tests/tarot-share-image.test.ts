@@ -1,6 +1,30 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderTarotShareImage } from '../src/utils/tarot-share-image';
 import { buildSpread } from '../src/engines/tarot-engine';
+import { shareFooterTop } from '../src/utils/share-footer';
+
+/*
+ * 攔一下 drawShareFooter，記住它是在第幾個繪製動作時被呼叫的。
+ *
+ * 需要這個是因為「頁腳自己畫在線以下」是正常的，要檢查的是頁腳**之前**的內容。
+ * 用文字當分界不準：drawShareFooter 會先畫 QR 面板、最後才畫品牌字，
+ * 中間那些面板路徑會被誤判成內容越界。
+ */
+const hooks = vi.hoisted(() => ({
+  footerAt: -1 as number,
+  opCount: (() => 0) as () => number,
+}));
+
+vi.mock('../src/utils/share-footer', async () => {
+  const actual = await vi.importActual<typeof import('../src/utils/share-footer')>('../src/utils/share-footer');
+  return {
+    ...actual,
+    drawShareFooter: (context: CanvasRenderingContext2D, options: Parameters<typeof actual.drawShareFooter>[1]) => {
+      hooks.footerAt = hooks.opCount();
+      return actual.drawShareFooter(context, options);
+    },
+  };
+});
 
 /**
  * jsdom 沒有 Canvas 2D，也沒有真的圖片載入，所以這裡用假的 context 記錄
@@ -27,20 +51,39 @@ function stubFailingImages() {
 
 function stubCanvas() {
   const drawn: string[] = [];
+  const placed: { text: string; y: number }[] = [];
+  /*
+   * 依序記下每一次繪製的最大 y。
+   *
+   * 只記文字是不夠的：把建議框壓進 QR 的其實是那個圓角方框本身，
+   * 而框是用路徑畫的，不是 fillText。第一版測試就因此漏抓了這個 bug。
+   */
+  const ops: { kind: 'text' | 'shape'; y: number; label: string }[] = [];
+  const shape = (label: string, ...ys: number[]) => {
+    ops.push({ kind: 'shape', y: Math.max(...ys), label });
+  };
   const context = {
     fillStyle: '', strokeStyle: '', lineWidth: 0, font: '',
     textAlign: '' as CanvasTextAlign,
     createLinearGradient: () => ({ addColorStop: () => undefined }),
-    fillRect: () => undefined,
+    fillRect: (_x: number, y: number, _w: number, h: number) => shape('fillRect', y + h),
     beginPath: () => undefined, closePath: () => undefined,
-    moveTo: () => undefined, lineTo: () => undefined, arcTo: () => undefined,
-    arc: () => undefined, clip: () => undefined,
+    moveTo: (_x: number, y: number) => shape('moveTo', y),
+    lineTo: (_x: number, y: number) => shape('lineTo', y),
+    arcTo: (_x1: number, y1: number, _x2: number, y2: number) => shape('arcTo', y1, y2),
+    arc: (_x: number, y: number, r: number) => shape('arc', y + r),
+    clip: () => undefined,
     save: () => undefined, restore: () => undefined,
     translate: () => undefined, rotate: () => undefined,
     fill: () => undefined, stroke: () => undefined,
     drawImage: () => undefined,
-    measureText: (text: string) => ({ width: [...text].length * 20 }),
-    fillText: (text: string) => { drawn.push(text); },
+    /*
+     * 中文字在 32px 字級下大約就是 32px 寬。
+     * 一開始這裡用固定的 20px／字，結果建議文字在測試裡只佔一行、
+     * 實際畫面卻是兩行——版面越界的測試就永遠測不到真正的高度。
+     */
+    measureText: (text: string) => ({ width: [...text].length * 32 }),
+    fillText: (text: string, _x: number, y: number) => { drawn.push(text); placed.push({ text, y }); ops.push({ kind: 'text', y, label: text }); },
   };
   const canvas = {
     width: 0,
@@ -52,7 +95,7 @@ function stubCanvas() {
     if (tag === 'canvas') return canvas;
     return { style: {}, setAttribute: () => undefined } as unknown as HTMLElement;
   }) as typeof document.createElement);
-  return { canvas, drawn };
+  return { canvas, drawn, placed, ops };
 }
 
 /** 固定一組牌，結果才可重現。魔術師（1）、戀人（6）逆位、星星（17）。 */
@@ -99,6 +142,31 @@ describe('塔羅三張牌分享圖', () => {
     const { drawn } = stubCanvas();
     await expect(renderTarotShareImage(spread)).resolves.toBeInstanceOf(Blob);
     expect(drawn, '牌名等文字資訊仍要完整').toContain('魔術師');
+  });
+
+  it('內容不會壓到頁腳的 QR', async () => {
+    /*
+     * 頁腳為了讓 QR 掃得到，從 148px 長到 222px。當時只改了宇宙印記的版面，
+     * 塔羅這邊座標還是寫死的，建議框就伸進 QR 的留白區——
+     * 畫面上只是靠得近，實際上解碼器已經掃不到了（用 jsqr 實測到的）。
+     */
+    stubFailingImages();
+    const { ops } = stubCanvas();
+    hooks.footerAt = -1;
+    hooks.opCount = () => ops.length;
+    await renderTarotShareImage(spread);
+
+    const footerTop = shareFooterTop(1350);
+    expect(hooks.footerAt, '沒有呼叫 drawShareFooter，測試前提壞了').toBeGreaterThan(-1);
+
+    const spill = ops.slice(0, hooks.footerAt)
+      // 整面背景本來就鋪滿畫布，不算越界。
+      .filter((op) => !(op.label === 'fillRect' && op.y >= 1350))
+      .filter((op) => op.y > footerTop);
+    expect(
+      spill.map((op) => `${op.label}@${Math.round(op.y)}`),
+      `有內容畫到頁腳範圍（y > ${footerTop}）裡`,
+    ).toEqual([]);
   });
 
   it('牌數不是三張就直接拒絕，不畫出半張圖', async () => {
