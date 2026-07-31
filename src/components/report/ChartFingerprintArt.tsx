@@ -1,34 +1,74 @@
+import { useEffect, useRef } from 'react';
 import type { ChartFingerprint } from '../../engines/chart-fingerprint-engine';
+import { drawImprintTotem } from '../../utils/draw-imprint-totem';
+import { loadImage } from '../../utils/load-image';
 
 export default function ChartFingerprintArt({ fingerprint }: { fingerprint: ChartFingerprint }) {
-  const { size } = fingerprint;
-  const center = size / 2;
-  const backgroundSrc = `${import.meta.env.BASE_URL}art/imprint/${fingerprint.theme}.webp`;
-  return (
-    <svg viewBox={`0 0 ${size} ${size}`} className="chart-enter imprint-art mx-auto h-auto w-full max-w-[420px]" role="img" aria-label="由你的命盤與五行意象生成的獨一無二命之圖騰">
-      <defs>
-        <radialGradient id="fp-core-glow">
-          <stop offset="0%" stopColor={fingerprint.coreColor} stopOpacity="0.5" />
-          <stop offset="100%" stopColor={fingerprint.coreColor} stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      <clipPath id="fp-rounded"><rect x="0" y="0" width={size} height={size} rx="20" /></clipPath>
-      <image className="imprint-art-background" href={backgroundSrc} x="0" y="0" width={size} height={size} preserveAspectRatio="xMidYMid slice" clipPath="url(#fp-rounded)" />
-      <rect x="0" y="0" width={size} height={size} fill="rgba(5,9,18,.32)" rx="20" />
-      <circle cx={center} cy={center} r={size * 0.28} fill="url(#fp-core-glow)" />
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-      {fingerprint.rings.map((ring, index) => (
-        <circle key={`ring-${index}`} cx={center} cy={center} r={ring.radius} fill="none" stroke={ring.color} strokeWidth={ring.width} strokeOpacity="0.55" strokeDasharray={ring.dash ? '3 5' : undefined} />
-      ))}
-      {fingerprint.spokes.map((spoke, index) => (
-        <line key={`spoke-${index}`} x1={spoke.x1} y1={spoke.y1} x2={spoke.x2} y2={spoke.y2} stroke={spoke.color} strokeWidth={spoke.width} strokeOpacity="0.28" />
-      ))}
-      <polygon points={fingerprint.corePolygon.map((point) => `${point.x},${point.y}`).join(' ')} fill={fingerprint.coreColor} fillOpacity="0.16" stroke={fingerprint.coreColor} strokeWidth="1.4" strokeOpacity="0.8" />
-      {fingerprint.nodes.map((node, index) => (
-        <circle className="imprint-art-node" key={`node-${index}`} cx={node.x} cy={node.y} r={node.size} fill={node.color} fillOpacity="0.85" style={{ animationDelay: `${index * 170}ms` }} />
-      ))}
-      <circle cx={center} cy={center} r="3" fill={fingerprint.coreColor} />
-      <text x={center} y={size - 12} textAnchor="middle" fill="rgba(174,184,214,0.6)" fontSize="9" fontFamily="ui-monospace, monospace" style={{ letterSpacing: '0.2em' }}>{fingerprint.binaryCode} · 卦 {fingerprint.hexagramIndex}</text>
-    </svg>
+  useEffect(() => {
+    let cancelled = false;
+    const canvas = canvasRef.current;
+    if (!canvas) return undefined;
+
+    const size = fingerprint.size;
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = size * pixelRatio;
+    canvas.height = size * pixelRatio;
+    const context = canvas.getContext('2d');
+    if (!context) return undefined;
+    context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+
+    const paint = async () => {
+      const backgroundSrc = `${import.meta.env.BASE_URL}art/imprint/${fingerprint.theme}.webp`;
+      const motifSrc = `${import.meta.env.BASE_URL}art/imprint/motif-${fingerprint.theme}.webp`;
+      const [backgroundResult, motifResult] = await Promise.allSettled([
+        loadImage(backgroundSrc),
+        loadImage(motifSrc),
+      ]);
+      if (cancelled) return;
+
+      context.clearRect(0, 0, size, size);
+      const fallback = context.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size * 0.7);
+      fallback.addColorStop(0, '#14233a');
+      fallback.addColorStop(1, '#070b16');
+      context.fillStyle = fallback;
+      context.fillRect(0, 0, size, size);
+
+      if (backgroundResult.status === 'fulfilled') {
+        context.drawImage(backgroundResult.value, 0, 0, size, size);
+      }
+
+      const veil = context.createRadialGradient(size / 2, size / 2, size * 0.08, size / 2, size / 2, size * 0.58);
+      veil.addColorStop(0, 'rgba(4,8,18,.5)');
+      veil.addColorStop(0.58, 'rgba(4,8,18,.22)');
+      veil.addColorStop(1, 'rgba(4,8,18,.06)');
+      context.fillStyle = veil;
+      context.fillRect(0, 0, size, size);
+
+      drawImprintTotem(context, fingerprint, {
+        x: 0,
+        y: 0,
+        size,
+        motif: motifResult.status === 'fulfilled' ? motifResult.value : undefined,
+      });
+    };
+
+    void paint();
+    return () => { cancelled = true; };
+  }, [fingerprint]);
+
+  return (
+    <div className="chart-enter imprint-art imprint-canvas-shell mx-auto w-full max-w-[420px]">
+      <canvas
+        ref={canvasRef}
+        className="block h-auto w-full"
+        style={{ aspectRatio: '1' }}
+        role="img"
+        aria-label={`由命盤生成的${fingerprint.theme}元素命之圖騰，第 ${fingerprint.hexagramIndex} 卦`}
+      >
+        由你的命盤與五行意象生成的獨一無二命之圖騰
+      </canvas>
+    </div>
   );
 }

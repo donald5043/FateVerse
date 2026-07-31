@@ -57,17 +57,17 @@ export default function CosmicImprintPage() {
       <div className="mx-auto max-w-2xl text-center">
         <p className="eyebrow text-gold">Cosmic Imprint</p>
         <h1 className="display-title mt-3">你的宇宙印記</h1>
-        <p className="mx-auto mt-5 max-w-xl muted">一張由你的命盤生成、獨一無二的「命之圖騰」，加上你出生那天真實的天空快照。都是可算的事實與程序生成的圖形，不是預言——但它只屬於你。</p>
+        <p className="mx-auto mt-5 max-w-xl muted">影像模型先創作五行材質，命盤資料再把它長成只屬於你的有機圖騰；加上出生那天真實的天空快照。它是可重現的個人印記，不是預言。</p>
       </div>
 
       <div className="mx-auto mt-10 grid max-w-4xl gap-6 lg:grid-cols-2 lg:items-start">
         <article className="glass-card p-6 sm:p-7">
           <h2 className="flex items-center gap-2.5 font-serif text-xl font-semibold text-cream"><Fingerprint className="text-gold" size={20} />命之圖騰</h2>
           <div className="mt-5"><ChartFingerprintArt fingerprint={fingerprint} /></div>
-          <p className="mt-4 text-sm leading-6 text-mist">五行主調會先選出一幅由影像模型生成的元素世界，再疊上你的命盤幾何：外圈與輻條的疏密來自命盤種子，中央五角星正比於五行占比，落點則對應行星位置。同一份命盤永遠會得到同一張圖。</p>
+          <p className="mt-4 text-sm leading-6 text-mist">五行主調會選出對應的元素世界與手繪刻紋材質；命盤種子決定刻紋帶的疏密與曲率，五行比例長成中央印記，行星落點化為星芒。同一份命盤永遠會得到同一張圖。</p>
           <div className="mt-3 flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-3">
             <Waypoints className="shrink-0 text-gold" size={16} />
-            <p className="text-xs leading-5 text-mist">底部的 <span className="font-mono text-cream">{fingerprint.binaryCode}</span> 是把你的五行與日主陰陽編成的二進位卦碼（第 {fingerprint.hexagramIndex} 號）——呼應萊布尼茲 1703 年發現的「易經即二進位」。</p>
+            <p className="text-xs leading-5 text-mist">圖騰下方的六爻來自 <span className="font-mono text-cream">{fingerprint.binaryCode}</span>，是把五行與日主陰陽編成的第 {fingerprint.hexagramIndex} 號卦碼——資料仍由瀏覽器本機計算，影像模型只提供材質。</p>
           </div>
         </article>
 
@@ -102,7 +102,7 @@ export default function CosmicImprintPage() {
         </label>
         <p className="mt-1.5 pl-6.5 text-[11px] leading-5 text-mist/80">
           勾了之後，圖上會出現你的出生日期與農曆——貼到公開的地方等於公開生日。
-          不勾的話圖上只有命之圖騰與卦碼，看不出你是誰。
+          不勾的話圖上只有命之圖騰與卦象，看不出你的出生日期。
         </p>
       </div>
 

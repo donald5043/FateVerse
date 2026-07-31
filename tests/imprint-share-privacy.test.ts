@@ -19,13 +19,17 @@ function stubCanvas() {
   const drawn: string[] = [];
   const context = {
     fillStyle: '', strokeStyle: '', lineWidth: 0, font: '', globalAlpha: 1,
-    textAlign: '' as CanvasTextAlign,
+    textAlign: '' as CanvasTextAlign, lineCap: '' as CanvasLineCap,
+    globalCompositeOperation: 'source-over' as GlobalCompositeOperation,
+    shadowColor: '', shadowBlur: 0, filter: '',
     createLinearGradient: () => ({ addColorStop: () => undefined }),
     createRadialGradient: () => ({ addColorStop: () => undefined }),
     fillRect: () => undefined,
     beginPath: () => undefined, closePath: () => undefined,
     moveTo: () => undefined, lineTo: () => undefined, arc: () => undefined,
-    setLineDash: () => undefined,
+    quadraticCurveTo: () => undefined, bezierCurveTo: () => undefined,
+    ellipse: () => undefined, rect: () => undefined, clip: () => undefined,
+    translate: () => undefined, rotate: () => undefined, scale: () => undefined,
     save: () => undefined, restore: () => undefined,
     fill: () => undefined, stroke: () => undefined,
     drawImage: () => undefined,
@@ -84,13 +88,13 @@ describe('宇宙印記分享圖的個資', () => {
       .forEach((banned) => expect(all, `圖上不該出現「${banned}」`).not.toContain(banned));
   });
 
-  it('預設仍然畫得出圖騰與卦碼，不是整張空的', async () => {
+  it('預設仍然畫得出圖騰與卦象，不是整張空的', async () => {
     const drawn = stubCanvas();
     await renderImprintShareImage({ name: '示範', fingerprint, intro, facts });
     const all = drawn.join('');
     expect(all).toContain('宇 宙 印 記');
     expect(all).toContain('萬象命書');
-    expect(all, '卦碼是從五行推的，粒度粗，不足以反推生日').toContain('101000');
+    expect(all, '卦象是從五行推的，粒度粗，不足以反推生日').toContain('第 40 卦');
   });
 
   it('使用者明確勾選時才畫上去', async () => {
