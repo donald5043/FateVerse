@@ -1,11 +1,12 @@
 import { Menu, ScrollText, Settings, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import BrandMark from '../components/common/BrandMark';
 import { RouteSystemArtwork } from '../components/common/SystemArtwork';
 import Starfield from '../components/common/Starfield';
 import { useRouteScrollReset } from '../hooks/useRouteScrollReset';
 import { useFateStore } from '../store/useFateStore';
+import { initPointerGlow } from '../utils/pointer-glow';
 
 /*
  * 導覽只放三件事，加上實驗室和關於。
@@ -22,6 +23,9 @@ const links = [
 ] as const;
 
 export default function AppLayout() {
+  // 游標星光：整站一個監聽器，靠 data-glow 屬性決定哪些卡片會發光。
+  useEffect(() => initPointerGlow(), []);
+
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const hasReport = useFateStore((state) => Boolean(state.reportInput));

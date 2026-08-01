@@ -320,13 +320,23 @@ body::after {
   .spin-reverse { animation: spin-ccw 70s linear infinite; }
   .pulse-glow { animation: pulse-glow 4.2s ease-in-out infinite; }
   .pulse-glow-fast { animation: pulse-glow 3.6s ease-in-out infinite; }
-  .card-glow { animation: card-glow 4.4s ease-in-out infinite; }
-  .card-reveal-glow { animation: card-reveal 0.55s cubic-bezier(.22, .72, .24, 1) both, card-glow 4.4s ease-in-out infinite; }
+  /* 光暈本身是靜態的（只畫一次進圖層），呼吸感靠偽元素的 opacity——
+     直接動 box-shadow 的話每一幀都要重畫整塊陰影。 */
+  .card-reveal-glow { position: relative; animation: card-reveal 0.55s cubic-bezier(.22, .72, .24, 1) both; }
+  .card-reveal-glow::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: 0 24px 90px rgba(88, 64, 158, 0.36), 0 0 34px rgba(167, 139, 250, 0.22);
+    animation: soft-pulse 4.4s ease-in-out infinite;
+  }
   @keyframes twinkle { 0%, 100% { opacity: .2; } 50% { opacity: .9; } }
   @keyframes spin-cw { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   @keyframes spin-ccw { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
   @keyframes pulse-glow { 0%, 100% { opacity: .5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.06); } }
-  @keyframes card-glow { 0%, 100% { box-shadow: 0 24px 80px rgba(88, 64, 158, 0.28), 0 0 0 rgba(167, 139, 250, 0); } 50% { box-shadow: 0 24px 90px rgba(88, 64, 158, 0.36), 0 0 34px rgba(167, 139, 250, 0.22); } }
+  @keyframes soft-pulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
   .route-enter { animation: route-enter 0.42s cubic-bezier(.22, .72, .24, 1) both; }
   .mobile-menu-enter { transform-origin: top; animation: menu-enter 0.2s ease-out both; }
   .chart-enter { transform-origin: center; animation: chart-enter 0.72s cubic-bezier(.22, .72, .24, 1) both; }
@@ -334,7 +344,6 @@ body::after {
   .brand-orbit svg { animation: orbit-pulse 5s ease-in-out infinite; }
   .brand-motion:hover .brand-orbit { transform: rotate(12deg) scale(1.04); }
   .brand-orbit { transition: transform 260ms ease, box-shadow 260ms ease; }
-  .guidance-spark { animation: guidance-glow 3.6s ease-in-out infinite; }
   .meter-fill { width: var(--meter-width); transform-origin: left; animation: meter-grow 0.75s cubic-bezier(.22, .72, .24, 1) both; }
   .stagger-grid > * { animation: reveal 0.5s cubic-bezier(.22, .72, .24, 1) both; }
   .stagger-grid > :nth-child(2) { animation-delay: 55ms; }
@@ -343,7 +352,11 @@ body::after {
   .stagger-grid > :nth-child(5) { animation-delay: 220ms; }
   .fv-seal { animation: seal-stamp 0.7s cubic-bezier(.2, 1.4, .3, 1) both; }
   .float-y { animation: float-y 9s ease-in-out infinite; }
-  .shimmer-gold { animation: shimmer 6s linear infinite; }
+  /* 原本是無限循環：標題上永遠有一道光在跑，久了就變成背景雜訊，
+     而且 background-position 每一幀都要重畫。改成進場掃一次，
+     滑過去再掃一次——有意義的時刻才動。 */
+  .shimmer-gold { animation: shimmer 2.6s cubic-bezier(.4, 0, .2, 1) .35s 1 both; }
+  .shimmer-gold:hover { animation: shimmer 1.4s cubic-bezier(.4, 0, .2, 1) 1 both; }
   .system-artwork img { animation: system-artwork-drift 16s ease-in-out infinite alternate; }
   .system-artwork-glow { animation: system-artwork-glow 7s ease-in-out infinite; }
   .card3d.flipped .tarot-card-image:not(.tarot-card-image-reversed) { animation: tarot-art-drift 9s ease-in-out 0.75s infinite alternate; }
@@ -366,7 +379,6 @@ body::after {
   @keyframes chart-enter { from { opacity: 0; transform: scale(.975) rotate(-.45deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
   @keyframes card-reveal { 0% { opacity: 0; transform: perspective(900px) rotateY(-3deg) translateY(14px); } 100% { opacity: 1; transform: perspective(900px) rotateY(0) translateY(0); } }
   @keyframes orbit-pulse { 0%, 100% { transform: rotate(0); opacity: .9; } 50% { transform: rotate(18deg); opacity: 1; } }
-  @keyframes guidance-glow { 0%, 100% { box-shadow: 0 0 0 rgba(216, 184, 117, 0); } 50% { box-shadow: 0 0 28px rgba(216, 184, 117, .18); } }
   @keyframes meter-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
   @keyframes system-artwork-drift { from { transform: scale(1.01) translate3d(-0.35%, 0, 0); } to { transform: scale(1.045) translate3d(0.45%, -0.7%, 0); } }
   @keyframes system-artwork-glow { 0%, 100% { opacity: .45; transform: scale(.9); } 50% { opacity: 1; transform: scale(1.12); } }
@@ -378,10 +390,57 @@ body::after {
   @keyframes imprint-canvas-breathe { from { transform: scale(1.004); } to { transform: scale(1.025); } }
 }
 
+/* ── 游標星光 ────────────────────────────────────────────────
+   卡片在游標位置透出一圈微光。只在有精準指標的裝置上啟用：
+   手機沒有 hover，效果看不到，但每次滑動都要付出寫 CSS 變數的成本。
+
+   關鍵在於漸層是**固定**的，只有 transform 在動——合成器就能處理，
+   不觸發重繪。寫成 radial-gradient(... at var(--x) var(--y)) 的話，
+   游標每移動一格就要把整張卡片重畫一次。 */
+@media (hover: hover) and (pointer: fine) {
+  @media (prefers-reduced-motion: no-preference) {
+    [data-glow] { position: relative; overflow: hidden; }
+    [data-glow]::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 420px;
+      height: 420px;
+      margin: -210px 0 0 -210px;
+      border-radius: 9999px;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(circle, rgba(244, 226, 186, .10), rgba(244, 226, 186, 0) 34%),
+        radial-gradient(circle, rgba(216, 184, 117, .17), rgba(216, 184, 117, 0) 58%);
+      opacity: 0;
+      transition: opacity .32s ease;
+      transform: translate3d(var(--gx, 50%), var(--gy, 50%), 0);
+    }
+    [data-glow]:hover::after { opacity: 1; }
+    /* 卡片內容要浮在光暈上面，否則文字會被蓋掉。 */
+    [data-glow] > * { position: relative; z-index: 1; }
+  }
+}
+
+/* ── 捲動揭示 ────────────────────────────────────────────────
+   進入視窗才播。只動 opacity 與 transform。 */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal-on-scroll {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity .62s cubic-bezier(.22, .72, .24, 1), transform .62s cubic-bezier(.22, .72, .24, 1);
+  }
+  .reveal-on-scroll.is-revealed { opacity: 1; transform: translateY(0); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
   .meter-fill { width: var(--meter-width); }
+  /* 關掉動畫不等於關掉內容：沒有這一條，捲動揭示的元素會永遠停在透明。 */
+  .reveal-on-scroll { opacity: 1; transform: none; }
 }
 
 @media print {

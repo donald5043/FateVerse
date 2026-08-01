@@ -187,7 +187,7 @@ export default function ReportPage() {
           在讀者還不知道自己是什麼樣的人之前，就是四個看不懂的專有名詞。
           完整摘要與那些數字沒有消失，收在下面的摺疊區裡。
         */}
-        <article id="summary" className="relative mt-7 overflow-hidden rounded-[2rem] border border-gold/25 bg-gradient-to-br from-[#182143] via-[#11182f] to-[#0b1020] p-6 shadow-glow sm:p-9">
+        <article id="summary" data-glow className="relative mt-7 overflow-hidden rounded-[2rem] border border-gold/25 bg-gradient-to-br from-[#182143] via-[#11182f] to-[#0b1020] p-6 shadow-glow sm:p-9">
           <div className="pointer-events-none absolute -right-20 -top-24 size-72 rounded-full border border-gold/10" />
           <p className="relative font-serif text-2xl leading-10 text-cream sm:text-3xl sm:leading-[1.5]">{opener.line}</p>
           <p className="relative mt-5 flex items-start gap-2.5 text-[15px] leading-8 text-gold">
@@ -234,7 +234,7 @@ export default function ReportPage() {
               const tone = ({ bazi: 'text-gold', zodiac: 'text-emerald-300', ziwei: 'text-violet-400', western: 'text-teal-300', numerology: 'text-rose-400', tarot: 'text-fuchsia-300', name: 'text-amber-200' } as Record<string, string>)[id] ?? 'text-gold';
               const detailTab = ({ bazi: 'bazi', ziwei: 'ziwei', western: 'western', numerology: 'numerology', name: 'name' } as Record<string, ReportTab>)[id];
               return (
-                <article className="flex flex-col rounded-[20px] border border-white/10 bg-white/[0.045] p-5" key={id}>
+                <article data-glow className="flex flex-col rounded-[20px] border border-white/10 bg-white/[0.045] p-5" key={id}>
                   <span className={`text-[11px] font-bold tracking-[0.12em] ${tone}`}>{system}</span>
                   <h3 className="mt-1.5 font-serif text-lg font-semibold text-cream">{headline}</h3>
                   {/* 這一段的標題寫著「先給你一句最重要的話」，那就真的只給一句。

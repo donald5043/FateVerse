@@ -6,6 +6,7 @@ import DailyHoroscopeCard from '../components/common/DailyHoroscopeCard';
 import DailyTarotCard from '../components/common/DailyTarotCard';
 import Disclaimer from '../components/common/Disclaimer';
 import StarChartWheel from '../components/common/StarChartWheel';
+import { useReveal } from '../hooks/useReveal';
 import { useFateStore } from '../store/useFateStore';
 import { preferredScrollBehavior } from '../utils/scroll';
 
@@ -41,6 +42,9 @@ function scrollToToday(): void {
 
 export default function HomePage() {
   const hasChart = useFateStore((state) => Boolean(state.reportInput));
+  // 捲進視窗才播進場動畫。原本的 .reveal 是掛載就播，第一屏以外的都白播了。
+  const chartPanel = useReveal<HTMLDivElement>();
+  const synastrySection = useReveal<HTMLElement>();
 
   return (
     <>
@@ -124,7 +128,11 @@ export default function HomePage() {
 
       {/* 二、完整命盤 */}
       <section className="page-container py-8">
-        <div className="rounded-[26px] border border-gold/25 bg-gradient-to-br from-gold/[0.07] via-white/[0.02] to-transparent p-7 sm:p-9">
+        <div
+          ref={chartPanel}
+          data-glow
+          className="reveal-on-scroll rounded-[26px] border border-gold/25 bg-gradient-to-br from-gold/[0.07] via-white/[0.02] to-transparent p-7 sm:p-9"
+        >
           <div className="grid gap-7 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
             <div>
               <p className="font-display text-base italic tracking-[0.12em] text-vermilion">Your full chart</p>
@@ -156,7 +164,7 @@ export default function HomePage() {
       </section>
 
       {/* 三、兩人合盤 */}
-      <section className="page-container py-8">
+      <section ref={synastrySection} className="reveal-on-scroll page-container py-8">
         <div className="flex items-baseline gap-4">
           <div>
             <p className="font-display text-base italic tracking-[0.12em] text-gold">Two charts</p>
