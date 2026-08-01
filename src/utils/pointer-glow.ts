@@ -1,8 +1,11 @@
 /**
- * 游標星光：卡片會在你的游標位置透出一圈微光。
+ * 星光：卡片會透出一圈微光，桌機跟著游標走，手機在你點的位置亮一下。
  *
  * 為什麼做這個而不是再加一組環境動畫：站上已經有二十幾組無限循環的動畫，
  * 看久了會變成壁紙。真正讓人覺得「這頁是活的」的是**會回應你**的東西。
+ *
+ * 為什麼手機也要有：手機直式是這個站的主要瀏覽情境。第一版只做了 hover，
+ * 等於大部分使用者完全看不到新效果——那不是「桌機加強」，是「手機沒有」。
  *
  * 效能上的三個約束，缺一個就會拖垮捲動：
  *
@@ -14,61 +17,98 @@
  * 3. **用 rAF 收斂。** pointermove 一秒可以觸發上百次，但畫面一秒只有 60 幀。
  *    多的那些全部丟掉，每幀只寫一次 CSS 變數。
  *
- * 只在有精準游標的裝置上啟用：手機沒有 hover，這個效果沒有意義，
- * 而且觸控時每次滑動都寫 CSS 變數只是白白付出成本。
+ * 手機不追蹤移動：觸控時手指一路滑過去會連續觸發，而那期間光暈被手指擋住，
+ * 付出的成本沒有換到任何東西。所以只在按下的那一刻標一次位置。
  */
 
-/** 只在滑鼠這類精準指標裝置上啟用。 */
+/** 有精準指標（滑鼠）才追蹤移動。 */
 const FINE_POINTER = '(hover: hover) and (pointer: fine)';
+
+/** 觸控亮起後維持多久。太短看不到，太長會拖在畫面上。 */
+const TOUCH_GLOW_MS = 900;
 
 export function initPointerGlow(): () => void {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return () => {};
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return () => {};
 
-  const finePointer = window.matchMedia(FINE_POINTER);
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  if (!finePointer.matches || reducedMotion.matches) return () => {};
+  const finePointer = window.matchMedia(FINE_POINTER).matches;
 
   let frame = 0;
   let pendingTarget: HTMLElement | undefined;
   let pendingX = 0;
   let pendingY = 0;
   let lastTarget: HTMLElement | undefined;
+  let touchTimer = 0;
+  let touchTarget: HTMLElement | undefined;
+
+  const clearVars = (element: HTMLElement | undefined) => {
+    element?.style.removeProperty('--gx');
+    element?.style.removeProperty('--gy');
+  };
+
+  const positionOn = (target: HTMLElement, clientX: number, clientY: number) => {
+    const rect = target.getBoundingClientRect();
+    target.style.setProperty('--gx', `${clientX - rect.left}px`);
+    target.style.setProperty('--gy', `${clientY - rect.top}px`);
+  };
 
   const flush = () => {
     frame = 0;
     if (!pendingTarget) return;
-    pendingTarget.style.setProperty('--gx', `${pendingX}px`);
-    pendingTarget.style.setProperty('--gy', `${pendingY}px`);
+    positionOn(pendingTarget, pendingX, pendingY);
   };
 
   const onPointerMove = (event: PointerEvent) => {
-    // 觸控筆與手指不走這條路：它們沒有 hover，光暈只會在點到的瞬間閃一下。
+    // 只有滑鼠走這條路：觸控與觸控筆沒有 hover，追蹤移動是白付成本。
     if (event.pointerType !== 'mouse') return;
 
     const target = (event.target as Element | null)?.closest<HTMLElement>('[data-glow]') ?? undefined;
-
     if (target !== lastTarget) {
       // 離開上一張卡片時把變數清掉，避免下次進來時光暈從舊位置跳過來。
-      lastTarget?.style.removeProperty('--gx');
-      lastTarget?.style.removeProperty('--gy');
+      clearVars(lastTarget);
       lastTarget = target;
     }
     if (!target) return;
 
-    const rect = target.getBoundingClientRect();
     pendingTarget = target;
-    pendingX = event.clientX - rect.left;
-    pendingY = event.clientY - rect.top;
+    pendingX = event.clientX;
+    pendingY = event.clientY;
     // 一幀只寫一次；這一幀已經排過就直接丟掉這次事件。
     if (!frame) frame = window.requestAnimationFrame(flush);
   };
 
-  document.addEventListener('pointermove', onPointerMove, { passive: true });
+  const onPointerDown = (event: PointerEvent) => {
+    // 滑鼠已經有 hover 版本了，這裡只服務觸控。
+    if (event.pointerType === 'mouse') return;
+
+    const target = (event.target as Element | null)?.closest<HTMLElement>('[data-glow]') ?? undefined;
+    if (!target) return;
+
+    if (touchTimer) window.clearTimeout(touchTimer);
+    if (touchTarget && touchTarget !== target) {
+      touchTarget.classList.remove('is-touch-glow');
+      clearVars(touchTarget);
+    }
+
+    positionOn(target, event.clientX, event.clientY);
+    target.classList.add('is-touch-glow');
+    touchTarget = target;
+    touchTimer = window.setTimeout(() => {
+      touchTimer = 0;
+      target.classList.remove('is-touch-glow');
+    }, TOUCH_GLOW_MS);
+  };
+
+  if (finePointer) document.addEventListener('pointermove', onPointerMove, { passive: true });
+  document.addEventListener('pointerdown', onPointerDown, { passive: true });
 
   return () => {
     document.removeEventListener('pointermove', onPointerMove);
+    document.removeEventListener('pointerdown', onPointerDown);
     if (frame) window.cancelAnimationFrame(frame);
-    lastTarget?.style.removeProperty('--gx');
-    lastTarget?.style.removeProperty('--gy');
+    if (touchTimer) window.clearTimeout(touchTimer);
+    touchTarget?.classList.remove('is-touch-glow');
+    clearVars(lastTarget);
+    clearVars(touchTarget);
   };
 }

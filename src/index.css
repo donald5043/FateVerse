@@ -390,37 +390,47 @@ body::after {
   @keyframes imprint-canvas-breathe { from { transform: scale(1.004); } to { transform: scale(1.025); } }
 }
 
-/* ── 游標星光 ────────────────────────────────────────────────
-   卡片在游標位置透出一圈微光。只在有精準指標的裝置上啟用：
-   手機沒有 hover，效果看不到，但每次滑動都要付出寫 CSS 變數的成本。
+/* ── 星光 ────────────────────────────────────────────────────
+   卡片會透出一圈微光：桌機跟著游標走，手機在你點的位置亮一下。
 
    關鍵在於漸層是**固定**的，只有 transform 在動——合成器就能處理，
    不觸發重繪。寫成 radial-gradient(... at var(--x) var(--y)) 的話，
-   游標每移動一格就要把整張卡片重畫一次。 */
+   位置每變一次就要把整張卡片重畫一次。
+
+   基礎樣式不放在 hover 的媒體查詢裡：手機才是主要瀏覽情境，
+   把效果整個關掉等於大部分使用者什麼都看不到。 */
+@media (prefers-reduced-motion: no-preference) {
+  [data-glow] { position: relative; overflow: hidden; }
+  [data-glow]::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 420px;
+    height: 420px;
+    margin: -210px 0 0 -210px;
+    border-radius: 9999px;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(circle, rgba(244, 226, 186, .10), rgba(244, 226, 186, 0) 34%),
+      radial-gradient(circle, rgba(216, 184, 117, .17), rgba(216, 184, 117, 0) 58%);
+    opacity: 0;
+    transition: opacity .32s ease;
+    transform: translate3d(var(--gx, 50%), var(--gy, 50%), 0);
+  }
+  /* 卡片內容要浮在光暈上面，否則文字會被蓋掉。 */
+  [data-glow] > * { position: relative; z-index: 1; }
+
+  /* 手機：點下去的位置亮一下再淡出。用 class 而不是 :active，
+     因為 :active 一放開就消失，來不及看到。 */
+  [data-glow].is-touch-glow::after { opacity: 1; transition: opacity .18s ease; }
+}
+
+/* 桌機：光暈跟著游標。只有這個觸發方式需要精準指標。 */
 @media (hover: hover) and (pointer: fine) {
   @media (prefers-reduced-motion: no-preference) {
-    [data-glow] { position: relative; overflow: hidden; }
-    [data-glow]::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 420px;
-      height: 420px;
-      margin: -210px 0 0 -210px;
-      border-radius: 9999px;
-      pointer-events: none;
-      z-index: 0;
-      background:
-        radial-gradient(circle, rgba(244, 226, 186, .10), rgba(244, 226, 186, 0) 34%),
-        radial-gradient(circle, rgba(216, 184, 117, .17), rgba(216, 184, 117, 0) 58%);
-      opacity: 0;
-      transition: opacity .32s ease;
-      transform: translate3d(var(--gx, 50%), var(--gy, 50%), 0);
-    }
     [data-glow]:hover::after { opacity: 1; }
-    /* 卡片內容要浮在光暈上面，否則文字會被蓋掉。 */
-    [data-glow] > * { position: relative; z-index: 1; }
   }
 }
 

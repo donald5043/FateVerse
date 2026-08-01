@@ -104,11 +104,29 @@ describe('動態效果的成本', () => {
     ).toBe(false);
   });
 
-  it('互動特效只在有精準指標的裝置上啟用', () => {
-    // 手機沒有 hover，光暈看不到，但每次滑動仍要付出寫 CSS 變數的成本。
-    expect(css).toContain('(hover: hover) and (pointer: fine)');
+  it('星光的基礎樣式不能整個關在 hover 的媒體查詢裡', () => {
+    /*
+     * 這是實際犯過的錯：第一版把 [data-glow]::after 整組放進
+     * `(hover: hover) and (pointer: fine)`，結果手機——也就是主要瀏覽情境——
+     * 完全看不到新效果。只有「跟著游標移動」需要精準指標，
+     * 「亮起來」這件事本身不需要。
+     */
+    const hoverBlockStart = css.indexOf('@media (hover: hover) and (pointer: fine)');
+    const baseRule = css.indexOf('[data-glow]::after');
+    expect(hoverBlockStart, '找不到 hover 區塊').toBeGreaterThan(-1);
+    expect(baseRule, '找不到星光的基礎樣式').toBeGreaterThan(-1);
+    expect(
+      baseRule < hoverBlockStart,
+      '[data-glow]::after 必須在 hover 媒體查詢之外，否則手機看不到',
+    ).toBe(true);
+    // 手機的觸發方式要存在。
+    expect(css, '缺少觸控時的亮起樣式').toContain('.is-touch-glow::after');
+  });
+
+  it('只有「跟著游標」需要精準指標，程式端也要分開處理', () => {
     const source = readFileSync(resolve(__dirname, '../src/utils/pointer-glow.ts'), 'utf8');
-    expect(source, '程式端也要擋掉，不能只靠 CSS').toContain('(hover: hover) and (pointer: fine)');
+    expect(source, 'pointermove 要在精準指標時才掛').toContain('if (finePointer) document.addEventListener(\'pointermove\'');
+    expect(source, 'pointerdown 要無條件掛，手機才有效果').toContain('document.addEventListener(\'pointerdown\'');
     expect(source, '要尊重 prefers-reduced-motion').toContain('prefers-reduced-motion');
   });
 
