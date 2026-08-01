@@ -187,10 +187,11 @@ export default function ReportPage() {
           在讀者還不知道自己是什麼樣的人之前，就是四個看不懂的專有名詞。
           完整摘要與那些數字沒有消失，收在下面的摺疊區裡。
         */}
-        <article id="summary" data-glow className="relative mt-7 overflow-hidden rounded-[2rem] border border-gold/25 bg-gradient-to-br from-[#182143] via-[#11182f] to-[#0b1020] p-6 shadow-glow sm:p-9">
+        {/* revelation：這是使用者輸入生日想看到的那一刻，讓兩句話依序降落。 */}
+        <article id="summary" data-glow className="revelation relative mt-7 overflow-hidden rounded-[2rem] border border-gold/25 bg-gradient-to-br from-[#182143] via-[#11182f] to-[#0b1020] p-6 shadow-glow sm:p-9">
           <div className="pointer-events-none absolute -right-20 -top-24 size-72 rounded-full border border-gold/10" />
-          <p className="relative font-serif text-2xl leading-10 text-cream sm:text-3xl sm:leading-[1.5]">{opener.line}</p>
-          <p className="relative mt-5 flex items-start gap-2.5 text-[15px] leading-8 text-gold">
+          <p className="revelation-line relative font-serif text-2xl leading-10 text-cream sm:text-3xl sm:leading-[1.5]">{opener.line}</p>
+          <p className="revelation-evidence relative mt-5 flex items-start gap-2.5 text-[15px] leading-8 text-gold">
             <Sparkles className="mt-1.5 shrink-0" size={17} />
             <span>{opener.evidence}</span>
           </p>

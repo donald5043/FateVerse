@@ -130,11 +130,62 @@ describe('動態效果的成本', () => {
     expect(source, '要尊重 prefers-reduced-motion').toContain('prefers-reduced-motion');
   });
 
-  it('捲動揭示的元素在關閉動畫時仍然看得見', () => {
-    // 少一段動畫可以，內容永遠停在透明不行。
-    const reduceBlock = /@media \(prefers-reduced-motion: reduce\) \{([\s\S]*?)\n\}/.exec(css);
-    expect(reduceBlock, '找不到 reduce 區塊').not.toBeNull();
-    expect(reduceBlock![1]).toContain('.reveal-on-scroll { opacity: 1');
+  it('關閉動態時，靠動畫才會顯示的東西仍然看得見', () => {
+    // 少一段動畫可以，內容永遠停在透明或畫到一半不行。
+    // 掃過所有 reduce 區塊：曾經因為多開了一個區塊，讓這條測試只讀到前面那個。
+    const blocks = [...css.matchAll(/@media \(prefers-reduced-motion: reduce\) \{([\s\S]*?)\n\}/g)]
+      .map((match) => match[1])
+      .join('\n');
+    expect(blocks, '找不到任何 reduce 區塊').not.toBe('');
+    expect(blocks, '捲動揭示的元素會永遠停在透明').toContain('.reveal-on-scroll { opacity: 1');
+    expect(blocks, '星座連線會停在沒畫完的狀態').toContain('.fv-constellation line');
+  });
+
+  it('一次性效果不會被誤加上 infinite', () => {
+    /*
+     * 星座連線與揭示光掃都會動到需要重繪的屬性（stroke-dashoffset、
+     * 大面積漸層位移）。它們之所以划算，完全建立在「只播一次」上——
+     * 一旦有人加上 infinite，就會變成永遠在重繪的背景成本。
+     */
+    ['draw-constellation', 'revelation-sweep', 'revelation-rise'].forEach((name) => {
+      const usages = [...css.matchAll(new RegExp(`animation:[^;]*\\b${name}\\b[^;]*;`, 'g'))].map((m) => m[0]);
+      expect(usages.length, `找不到 ${name} 的用法`).toBeGreaterThan(0);
+      usages.forEach((usage) => {
+        expect(/\binfinite\b/.test(usage), `${name} 不該是無限循環：${usage}`).toBe(false);
+      });
+    });
+  });
+
+  it('揭示時刻的光掃只用 transform 位移', () => {
+    const block = /\.revelation::before\s*\{([^}]+)\}/.exec(css);
+    expect(block, '找不到 .revelation::before').not.toBeNull();
+    expect(block![1], '光掃要靠 transform，不要動 background-position').toContain('translate3d');
+    expect(block![1]).not.toContain('background-position');
+  });
+
+  it('星光不去改子元素的 position', () => {
+    /*
+     * 實際造成過的版面災難：為了把內容墊到光暈上面，寫了
+     * `[data-glow] > * { position: relative; z-index: 1; }`。
+     * 它的權重跟 Tailwind 的 .absolute 一樣，但排在後面，於是每一張
+     * data-glow 卡片裡的絕對定位裝飾元素都變回 relative——報告首屏的
+     * 裝飾圓環從「浮在角落」變成 288px 高的區塊，把結論往下推出螢幕。
+     *
+     * 堆疊的問題要用堆疊解決：卡片 isolate，光暈 z-index: -1。
+     */
+    // 註解裡就寫著那條壞掉的規則當反例，所以要先把註解拿掉再檢查。
+    const code = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    const offender = /\[data-glow\]\s*>\s*\*\s*\{([^}]*)\}/.exec(code);
+    expect(
+      offender && /position\s*:/.test(offender[1]),
+      '不要用 [data-glow] > * 覆寫子元素的 position，那會蓋掉 Tailwind 的 absolute',
+    ).toBeFalsy();
+
+    const base = /\[data-glow\]\s*\{([^}]+)\}/.exec(css);
+    expect(base, '找不到 [data-glow] 的基礎樣式').not.toBeNull();
+    expect(base![1], '卡片要自成堆疊脈絡，光暈才不會穿到外面').toContain('isolation: isolate');
+    const glow = /\[data-glow\]::after\s*\{([^}]+)\}/.exec(css);
+    expect(glow![1], '光暈要沉在內容下面').toContain('z-index: -1');
   });
 
   it('捲動揭示共用一個 observer，而且播完就取消觀察', () => {

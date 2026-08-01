@@ -390,6 +390,23 @@ body::after {
   @keyframes imprint-canvas-breathe { from { transform: scale(1.004); } to { transform: scale(1.025); } }
 }
 
+/* ── 星座連線 ────────────────────────────────────────────────
+   載入時把幾顆星連起來，線像被描出來一樣浮現，播完就是靜態線稿。
+
+   描線用 stroke-dashoffset，那確實需要重繪——但它一輩子只播這一次，
+   之後永遠不再佔用一幀。「無限動畫只能動 transform／opacity」那條預算
+   管的是持續成本，一次性動畫本來就是視覺份量最划算的地方。 */
+@media (prefers-reduced-motion: no-preference) {
+  .fv-constellation line {
+    stroke: rgba(216, 184, 117, .13);
+    stroke-width: .1;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: draw-constellation 2.2s cubic-bezier(.25, .6, .3, 1) both;
+  }
+  @keyframes draw-constellation { to { stroke-dashoffset: 0; } }
+}
+
 /* ── 星光 ────────────────────────────────────────────────────
    卡片會透出一圈微光：桌機跟著游標走，手機在你點的位置亮一下。
 
@@ -400,7 +417,9 @@ body::after {
    基礎樣式不放在 hover 的媒體查詢裡：手機才是主要瀏覽情境，
    把效果整個關掉等於大部分使用者什麼都看不到。 */
 @media (prefers-reduced-motion: no-preference) {
-  [data-glow] { position: relative; overflow: hidden; }
+  /* isolation 讓卡片自己成為一個堆疊脈絡，光暈才能用 z-index: -1
+     沉到內容底下、又不會穿到卡片外面去。 */
+  [data-glow] { position: relative; overflow: hidden; isolation: isolate; }
   [data-glow]::after {
     content: '';
     position: absolute;
@@ -411,7 +430,9 @@ body::after {
     margin: -210px 0 0 -210px;
     border-radius: 9999px;
     pointer-events: none;
-    z-index: 0;
+    /* 負的 z-index：畫在卡片自己的背景之上、所有內容之下。
+       這樣就不必去動子元素的 position（見下面那段註解）。 */
+    z-index: -1;
     background:
       radial-gradient(circle, rgba(244, 226, 186, .10), rgba(244, 226, 186, 0) 34%),
       radial-gradient(circle, rgba(216, 184, 117, .17), rgba(216, 184, 117, 0) 58%);
@@ -419,8 +440,19 @@ body::after {
     transition: opacity .32s ease;
     transform: translate3d(var(--gx, 50%), var(--gy, 50%), 0);
   }
-  /* 卡片內容要浮在光暈上面，否則文字會被蓋掉。 */
-  [data-glow] > * { position: relative; z-index: 1; }
+  /*
+   * 這裡曾經寫成 `[data-glow] > * { position: relative; z-index: 1; }`，
+   * 用意是把內容墊到光暈上面。它造成了一個真實的版面災難：
+   *
+   * 那條選擇器的權重跟 Tailwind 的 .absolute 一樣，但因為排在後面，
+   * 於是**每一張加了 data-glow 的卡片，裡面所有絕對定位的裝飾元素
+   * 都變回了 relative**——原本浮在角落的裝飾圓環變成 288px 高的區塊，
+   * 把報告首屏那兩句話往下推了三百多像素。截圖上看起來就是一個
+   * 幾乎全空的大盒子，結論被擠到螢幕外。
+   *
+   * 正解是不要碰子元素：讓卡片自己 isolate，光暈用 z-index: -1
+   * 沉到內容底下。堆疊的問題就用堆疊解決，不要拿定位去換。
+   */
 
   /* 手機：點下去的位置亮一下再淡出。用 class 而不是 :active，
      因為 :active 一放開就消失，來不及看到。 */
@@ -431,6 +463,43 @@ body::after {
 @media (hover: hover) and (pointer: fine) {
   @media (prefers-reduced-motion: no-preference) {
     [data-glow]:hover::after { opacity: 1; }
+  }
+}
+
+/* ── 揭示時刻 ────────────────────────────────────────────────
+   報告首屏那兩句話是整個站的高潮：使用者輸入生日，就是為了讀到那一句。
+   原本它和其他區塊一樣直接出現，等於把最重要的一刻和背景資訊等價處理。
+
+   現在改成有順序地降落：結論先浮上來，一道光掃過，依據再跟上。
+   全部是一次性的，播完就不再有任何成本。
+
+   光掃用 transform 位移一層固定的漸層，不動 background-position。 */
+@media (prefers-reduced-motion: no-preference) {
+  .revelation { position: relative; overflow: hidden; }
+  .revelation::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 55%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+    background: linear-gradient(100deg, transparent, rgba(244, 226, 186, .13) 45%, rgba(255, 255, 255, .06) 55%, transparent);
+    transform: translate3d(-120%, 0, 0);
+    animation: revelation-sweep 1.5s cubic-bezier(.3, .5, .2, 1) .45s both;
+  }
+  @keyframes revelation-sweep {
+    from { transform: translate3d(-120%, 0, 0); }
+    to { transform: translate3d(320%, 0, 0); }
+  }
+
+  /* 結論先、依據後：兩句話依序降落，讀起來才有「揭曉」的節奏。 */
+  .revelation-line { animation: revelation-rise .75s cubic-bezier(.22, .72, .24, 1) both; }
+  .revelation-evidence { animation: revelation-rise .75s cubic-bezier(.22, .72, .24, 1) .55s both; }
+  @keyframes revelation-rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 }
 
@@ -451,6 +520,9 @@ body::after {
   .meter-fill { width: var(--meter-width); }
   /* 關掉動畫不等於關掉內容：沒有這一條，捲動揭示的元素會永遠停在透明。 */
   .reveal-on-scroll { opacity: 1; transform: none; }
+  /* 直接顯示畫完的線稿，不要停在沒畫完的狀態。 */
+  .fv-constellation line { stroke: rgba(216, 184, 117, .13); stroke-width: .1; }
+  .revelation-line, .revelation-evidence { opacity: 1; transform: none; }
 }
 
 @media print {
