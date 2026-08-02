@@ -18,10 +18,35 @@
     <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!--
+      字型不能擋住第一個像素。
+
+      這原本是一個普通的 `rel="stylesheet"`，也就是**瀏覽器要先跟
+      fonts.googleapis.com 要到這份 CSS，才會畫出任何東西**——在那之前
+      使用者面對的是全白畫面。而且這裡要的是四套字型、其中兩套是中文，
+      成本一點都不小。載入量測（scripts/measure-load.mjs）在慢速 4G 下
+      量到的差距是：擋掉外部字型，第一個像素從十幾秒變成 0.54 秒。
+
+      改成 media="print"：瀏覽器照樣立刻開始下載，但因為它宣告自己只用於
+      列印，所以不擋畫面。下載完再把 media 換回 all，字型就套上去。
+      網址裡本來就有 display=swap，代表這個專案早就接受了「先用系統字型
+      顯示、字型到了再換」——現在只是讓那件事真的發生。
+
+      noscript 的那份保留給關掉 JavaScript 的情況：那時沒有 onload 可用，
+      擋住畫面也比永遠看不到正確字型好。
+    -->
     <link
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Noto+Serif+TC:wght@500;600;700;900&family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Noto+Serif+TC:wght@500;600;700;900&family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
     <title>萬象命書 FateVerse</title>
   </head>
   <body>

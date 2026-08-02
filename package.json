@@ -15,6 +15,7 @@
     "measure:rare": "vite-node scripts/measure-rare-features.ts",
     "measure:pairs": "vite-node scripts/measure-pair-features.ts",
     "gen:qr": "vite-node scripts/generate-qr-matrix.ts",
+    "measure:load": "node scripts/measure-load.mjs",
     "verify:references": "vite-node scripts/verify-lunar.ts && vite-node scripts/verify-tesseract.ts && vite-node scripts/verify-fuse.ts",
     "preview": "npm run build && wrangler dev",
     "deploy": "npm run build && wrangler deploy"
