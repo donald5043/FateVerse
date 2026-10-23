@@ -22,6 +22,7 @@ import HouseSystemComparison from '../components/report/HouseSystemComparison';
 import ReportActions from '../components/report/ReportActions';
 import ShareCardButton from '../components/report/ShareCardButton';
 import ZiweiChart from '../components/report/ZiweiChart';
+import ZiweiDatasetPanel from '../components/report/ZiweiDatasetPanel';
 import { buildSystemMatrix, generateFusionReading, generateSystemConclusions, generateTimelineReading } from '../engines/fusion-engine';
 import { computeFateSnapshot } from '../engines/fate-snapshot-engine';
 import { buildUnifiedElementProfile } from '../engines/integration-engine';
@@ -342,6 +343,7 @@ export default function ReportPage() {
         {ziweiError && <div className="mb-4 rounded-xl border border-rose-200/20 bg-rose-200/[0.08] p-3 text-sm text-rose-100" role="alert">{ziweiError}</div>}
         {ziweiNotice && <div className="mb-4 rounded-xl border border-emerald-200/20 bg-emerald-200/[0.08] p-3 text-sm text-emerald-100" role="status">{ziweiNotice}</div>}
         <article className="glass-card overflow-hidden p-3 sm:p-6"><ZiweiChart result={input.ziwei} /><ZiweiKeyPalaceInsights result={input.ziwei} /></article>
+        {profile && <ZiweiDatasetPanel profile={profile} />}
       </div>}
 
       {tab === 'name' && input.nameAnalysis && <div key="name" className="reveal mt-7">

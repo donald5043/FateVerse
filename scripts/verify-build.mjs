@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { analyzeFirstLoad, BLOCKING_GZIP_BUDGET, formatKb } from './first-load.mjs';
 
@@ -81,3 +82,26 @@ console.log(
   `Build check passed (base ${base}): ${buildAssets.length} assets verified`
   + `${firstLoad ? `, 首屏 ${formatKb(firstLoad.blockingGzip)} / ${formatKb(BLOCKING_GZIP_BUDGET)}` : ''}.`,
 );
+
+// A successful application build must also ship the lookup tables and their
+// offline cache entries; missing data otherwise only surfaces after release.
+const ziweiDirectory = resolve(root, 'dist', 'data', 'ziwei-v4');
+const ziweiManifest = JSON.parse(readFileSync(resolve(ziweiDirectory, 'manifest.json'), 'utf8'));
+const worker = readFileSync(resolve(root, 'dist', 'sw.js'), 'utf8');
+if (ziweiManifest.recordCount !== 674976 || Object.keys(ziweiManifest.years).length !== 77) {
+  throw new Error('Build check failed: incomplete Ziwei dataset manifest.');
+}
+for (let year = 1950; year <= 2026; year++) {
+  const filename = `${year}.bin.gz`;
+  const data = readFileSync(resolve(ziweiDirectory, filename));
+  if (createHash('sha256').update(data).digest('hex') !== ziweiManifest.years[year]?.sha256) {
+    throw new Error(`Build check failed: invalid Ziwei table ${year}.`);
+  }
+  if (!worker.includes(`data/ziwei-v4/${filename}`)) {
+    throw new Error(`Build check failed: Ziwei table ${year} missing from offline cache.`);
+  }
+}
+if (!worker.includes('data/ziwei-v4/manifest.json')) {
+  throw new Error('Build check failed: Ziwei dictionary missing from offline cache.');
+}
+console.log('Ziwei build check passed: 77 years, 674,976 charts, offline cache verified.');

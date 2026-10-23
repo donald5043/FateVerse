@@ -39,6 +39,18 @@ TypeScript、ESLint、Prettier、Vitest、Testing Library、PostCSS、Autoprefix
 - 授權：Unicode License v3（<https://www.unicode.org/license.txt>）。Copyright © Unicode, Inc.
 - 產生方式：`scripts/generate-unihan-data.py`。
 
+## 紫微斗數開源解讀資料集 v4.0
+
+本專案使用了「紫微斗数开源解读数据集 v4.0（674,976 张命盘 × 13 维）」的開頭摘要。
+
+- 來源：[Renhuai123/ziwei-doushu](https://github.com/Renhuai123/ziwei-doushu)，作者：王多鱼AI。
+- 固定發行版本：[v4.0-13d](https://github.com/Renhuai123/ziwei-doushu/releases/tag/v4.0-13d)，內容版本 `ca268829f7a9`。
+- 授權：[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)，上游條款見 [DATASET-LICENSE](https://github.com/Renhuai123/ziwei-doushu/blob/main/DATASET-LICENSE)。原作者及授權未因轉換而改變；原作者並未替 FateVerse 背書。
+- 衍生檔：`public/data/ziwei-v4/manifest.json` 與 `1950.bin.gz` 至 `2026.bin.gz`；產生工具 `scripts/import-ziwei-dataset.py`，來源 SHA-256 固定於 `scripts/ziwei-v4-assets.json`。
+- 修改：僅摘錄每一主題第一個標題下的開頭摘要，略去含「倪／天纪／天紀」的整段文字，不收錄後續核心論斷、古籍引證或《天紀》逐字稿；保留簡體原文。以文字字典與無損索引去重，未用 LLM 改寫。
+- 上游明確將倪海廈《天紀》引文排除於資料集 CC BY 授權之外。本版不匯入該逐字稿及其 CC BY-NC-SA 語料。
+- 上游排盤引擎及核心斷語庫未移入 FateVerse；查表摘要採來源發布時的固定排盤口徑，與 FateVerse 的 iztro 盤面獨立呈現。
+
 ## FateVerse 示範資料
 
 - `public/data/fortune-sticks/sixty-jiazi.json`、`guanyin-100.json`：籤詩本文與吉凶分級為傳統六十甲子籤（媽祖靈籤）與觀音一百籤，屬公有領域古典籤文，逐字校對自公開籤詩資料；隨附的白話摘要、九面向解讀、行動建議與關鍵詞為 FateVerse 自編，CC BY 4.0。各廟版本用字與吉凶分級略有出入，實際解籤請以所在廟宇為準。

@@ -1,8 +1,17 @@
 # FateVerse 參考專案稽核
 
-最後檢查：2026-07-22
+最後檢查：2026-10-23（新增紫微斗數 v4.0 資料集接入；其餘項目保留原稽核紀錄）
 
 本文件記錄 FateVerse 的技術與產品參考來源。參考專案只用於技術選型、資料結構、UI／UX 流程、API 與模組邊界研究；除非個別檔案的授權與來源都已確認，否則不複製其程式碼、資料、Prompt、圖片或文案。
+
+## Renhuai123/ziwei-doushu：已直接引用的資料
+
+- [來源專案](https://github.com/Renhuai123/ziwei-doushu)，作者王多鱼AI；固定 Releases `v4.0-13d`，內容版本 `ca268829f7a9`。
+- 已確認 [DATASET-LICENSE](https://github.com/Renhuai123/ziwei-doushu/blob/main/DATASET-LICENSE)：資料 CC BY 4.0；程式 MIT；《天紀》引文不在資料 CC BY 授權範圍內。
+- 上游 `lib/ziwei/db-analysis.ts` 的 `STAR_DB` 是空物件，核心斷語庫沒有開源；實際可引用的是 Release 的預生成解讀。
+- 實際接入：全 77 年、674,976 張盤、13 主題的開頭摘要，保留原文，排除提及倪師／《天紀》的段落。未複製上游排盤引擎、AI 服務、逐字稿或完整斷語庫。
+- 資料索引與來源 SHA-256、重建方式、流派限制見根目錄 README「紫微斗數 v4.0 本地查表」，授權聲明見 THIRD_PARTY_NOTICES。
+- 不把資料量或確定性生成當作準確預測人生的證據；前端明確標示來源與 iztro 設定獨立，不暗示兩者的盤面完全一致。
 
 ## 可存取性與版本快照
 
