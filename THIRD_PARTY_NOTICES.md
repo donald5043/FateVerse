@@ -43,6 +43,14 @@ TypeScript、ESLint、Prettier、Vitest、Testing Library、PostCSS、Autoprefix
 
 本專案使用了「紫微斗数开源解读数据集 v4.0（674,976 张命盘 × 13 维）」的開頭摘要。
 
+以下依原作者指定格式署名（保留原文）：
+
+```text
+本项目使用了 紫微斗数开源解读数据集 v4.0（674,976 张命盘 × 13 维）
+来源：https://github.com/Renhuai123/ziwei-doushu
+作者：王多鱼AI
+```
+
 - 來源：[Renhuai123/ziwei-doushu](https://github.com/Renhuai123/ziwei-doushu)，作者：王多鱼AI。
 - 固定發行版本：[v4.0-13d](https://github.com/Renhuai123/ziwei-doushu/releases/tag/v4.0-13d)，內容版本 `ca268829f7a9`。
 - 授權：[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)，上游條款見 [DATASET-LICENSE](https://github.com/Renhuai123/ziwei-doushu/blob/main/DATASET-LICENSE)。原作者及授權未因轉換而改變；原作者並未替 FateVerse 背書。
@@ -50,6 +58,9 @@ TypeScript、ESLint、Prettier、Vitest、Testing Library、PostCSS、Autoprefix
 - 修改：僅摘錄每一主題第一個標題下的開頭摘要，略去含「倪／天纪／天紀」的整段文字，不收錄後續核心論斷、古籍引證或《天紀》逐字稿；保留簡體原文。以文字字典與無損索引去重，未用 LLM 改寫。
 - 上游明確將倪海廈《天紀》引文排除於資料集 CC BY 授權之外。本版不匯入該逐字稿及其 CC BY-NC-SA 語料。
 - 上游排盤引擎及核心斷語庫未移入 FateVerse；查表摘要採來源發布時的固定排盤口徑，與 FateVerse 的 iztro 盤面獨立呈現。
+- 2026-10-27 補強：對全部 975 個不重複段落做固定引文比對與來源檢查，保守另刪 34 個整段，共影響 35 個摘要位置；不把刪除判定等同侵權判定。核准範圍以雜湊固定，新文字必須重新檢查。完整方法與限制見 [檢查記錄](docs/ziwei-rights-audit.md)。
+- 原作者完整使用條款與免責聲明另隨資料附於 [SOURCE-LICENSE.txt](public/data/ziwei-v4/SOURCE-LICENSE.txt)，衍生資料的署名與歷次修改說明見 [NOTICE.md](public/data/ziwei-v4/NOTICE.md)。資料按現狀提供、不附擔保，僅供文化探索與反思，不構成預測、診斷或建議。
+- 這些第三方摘要仍依 CC BY 4.0 提供；FateVerse 的程式碼授權不取代第三方授權，也不加設限制摘要再利用的條款或 DRM。
 
 ## FateVerse 示範資料
 

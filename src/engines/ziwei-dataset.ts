@@ -1,6 +1,6 @@
 import type { ProfileInput } from '../types/fate';
 
-export const ZIWEI_DATASET_SOURCE = 'https://github.com/Renhuai123/ziwei-doushu';
+export { ZIWEI_DATASET_SOURCE } from '../data/ziwei-dataset-attribution';
 export const ZIWEI_DATASET_TOPICS = [
   ['overview', '命格總覽'], ['personality', '性格'], ['love', '感情'],
   ['career', '事業'], ['wealth', '財運'], ['health', '健康'],
@@ -65,7 +65,7 @@ async function fetchManifest(signal?: AbortSignal): Promise<DatasetManifest> {
   const response = await fetch(`${base}manifest.json`, { signal });
   if (!response.ok) throw new Error('開源解讀資料暫時無法讀取，請稍後再試。');
   const manifest: DatasetManifest = await response.json();
-  if (manifest.version !== 'v4.0-13d-excerpts-1' || !Array.isArray(manifest.dictionary) ||
+  if (manifest.version !== 'v4.0-13d-excerpts-2' || !Array.isArray(manifest.dictionary) ||
       ZIWEI_DATASET_TOPICS.some(([topic], index) => manifest.topics?.[index] !== topic)) {
     throw new Error('開源資料版本不符，請重新整理網站後再試。');
   }

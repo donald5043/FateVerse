@@ -27,7 +27,7 @@ export default defineConfig({
         clientsClaim: true,
         skipWaiting: true,
         // Include compact year tables, with content revisions, for offline lookup.
-        globPatterns: ['**/*.{js,css,html,svg,png,json,webmanifest,gz}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,json,webmanifest,gz,txt,md}'],
         // 應用主程式包含完整命理計算資料，仍屬單一 chunk，放寬上限讓它進入預快取。
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         navigateFallback: 'index.html',

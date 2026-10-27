@@ -1,5 +1,6 @@
 import { Calculator, Database, Laptop, ScanLine, ShieldCheck } from 'lucide-react';
 import Disclaimer from '../components/common/Disclaimer';
+import ZiweiDatasetAttribution from '../components/report/ZiweiDatasetAttribution';
 
 const principles = [
   { icon: Calculator, title: '可計算的，就精確計算', text: '八字、大運、紫微十二宮、行星星盤、靈數與籤詩比對，都由程式或正式套件產生結構化結果，不用模糊話術。' },
@@ -17,7 +18,7 @@ export default function AboutPage() {
 
       <section className="mt-12 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.035] p-6 sm:p-8"><div className="flex items-center gap-3"><ScanLine className="text-gold" /><h2 className="section-title">資料如何流動</h2></div><div className="mt-7 grid gap-3 sm:grid-cols-4">{['使用者輸入', '程式精確計算', '結構化資料', '規則式整理報告'].map((item, index) => <div className="relative rounded-2xl border border-white/10 bg-[#0e152a] p-4 text-center" key={item}><span className="text-xs text-gold">STEP {index + 1}</span><p className="mt-2 text-sm font-semibold text-cream">{item}</p>{index < 3 && <span className="absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 text-gold sm:block">→</span>}</div>)}</div></section>
 
-      <section className="glass-card mt-10 p-6"><h2 className="font-serif text-xl font-semibold text-cream">紫微開源解讀來源</h2><p className="mt-3 text-sm leading-7 text-mist">本專案使用了王多鱼AI 的「紫微斗数开源解读数据集 v4.0（674,976 张命盘 × 13 维）」開頭摘要，來源為 <a className="text-gold underline" href="https://github.com/Renhuai123/ziwei-doushu" target="_blank" rel="noreferrer">Renhuai123/ziwei-doushu</a>，採 <a className="underline" href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>。保留簡體原文，僅摘錄摘要並排除提及倪師／《天紀》的段落；摘要依來源固定口徑查表，不需 LLM，與本站 iztro 排盤獨立呈現。原作者未替 FateVerse 背書。</p></section>
+      <div className="mt-10"><ZiweiDatasetAttribution /></div>
       <div className="mt-10"><Disclaimer health /></div>
     </section>
   );

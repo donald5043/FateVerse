@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { analyzeFirstLoad, BLOCKING_GZIP_BUDGET, formatKb } from './first-load.mjs';
+import { verifyZiweiRights } from './verify-ziwei-rights.mjs';
 
 /**
  * 驗證建置產物的資源路徑對得上這次建置的 base。
@@ -86,6 +87,7 @@ console.log(
 // A successful application build must also ship the lookup tables and their
 // offline cache entries; missing data otherwise only surfaces after release.
 const ziweiDirectory = resolve(root, 'dist', 'data', 'ziwei-v4');
+verifyZiweiRights(ziweiDirectory);
 const ziweiManifest = JSON.parse(readFileSync(resolve(ziweiDirectory, 'manifest.json'), 'utf8'));
 const worker = readFileSync(resolve(root, 'dist', 'sw.js'), 'utf8');
 if (ziweiManifest.recordCount !== 674976 || Object.keys(ziweiManifest.years).length !== 77) {
@@ -103,5 +105,10 @@ for (let year = 1950; year <= 2026; year++) {
 }
 if (!worker.includes('data/ziwei-v4/manifest.json')) {
   throw new Error('Build check failed: Ziwei dictionary missing from offline cache.');
+}
+for (const notice of ['NOTICE.md', 'SOURCE-LICENSE.txt']) {
+  if (!worker.includes(`data/ziwei-v4/${notice}`)) {
+    throw new Error(`Build check failed: Ziwei attribution/license notice missing from offline cache: ${notice}.`);
+  }
 }
 console.log('Ziwei build check passed: 77 years, 674,976 charts, offline cache verified.');

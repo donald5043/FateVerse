@@ -18,6 +18,7 @@ import struct
 import urllib.request
 
 import zstandard
+from ziwei_rights_policy import add_rights_metadata, filter_summary, load_review
 
 ROOT = Path(__file__).resolve().parents[1]
 CACHE = ROOT / '.cache/ziwei-upstream'
@@ -48,6 +49,7 @@ def opening_summary(text):
 
 
 def read_year(asset):
+    review = load_review()
     year = int(asset['name'][5:9])
     path = CACHE / asset['name']
     expected_hash = asset['digest'].removeprefix('sha256:')
@@ -69,7 +71,7 @@ def read_year(asset):
                 expected_key = f'{date.isoformat()}-{hour}-{gender}'
                 if record['k'] != expected_key:
                     raise ValueError(f'Unexpected record order: {record["k"]} != {expected_key}')
-                rows.append([opening_summary(record['c'][topic]) for topic in TOPICS])
+                rows.append([filter_summary(opening_summary(record['c'][topic]), review) for topic in TOPICS])
     expected_count = (dt.date(year + 1, 1, 1) - dt.date(year, 1, 1)).days * 24
     if len(rows) != expected_count:
         raise ValueError(f'Incomplete year {year}: {len(rows)}')
@@ -117,6 +119,7 @@ def main():
     }
     if total != 674976:
         raise ValueError(f'Wrong total: {total}')
+    add_rights_metadata(manifest, load_review())
     (OUTPUT / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
     print(f'Complete: {total} charts, {len(dictionary)} unique summaries', flush=True)
 
